@@ -1,0 +1,186 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Inventory System{% endblock %}</title>
+
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+
+<body class="bg-slate-100 text-slate-800">
+
+{% if current_user %}
+<header class="fixed left-0 top-0 z-40 w-full border-b border-slate-200 bg-white shadow-sm">
+    <div class="flex items-center justify-between px-4 py-3 md:px-6">
+
+        <div class="flex items-center gap-3">
+
+            {% if current_user.is_admin %}
+            <button
+                id="adminMenuButton"
+                type="button"
+                onclick="openSidebar()"
+                class="rounded-xl bg-slate-900 px-4 py-3 text-white shadow hover:bg-slate-700"
+            >
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            {% endif %}
+
+            <div class="flex items-center gap-3">
+                {% if current_user.profile_picture %}
+                <img
+                    src="{{ current_user.profile_picture.url }}"
+                    class="h-11 w-11 rounded-full border-2 border-blue-500 object-cover md:h-14 md:w-14"
+                    loading="lazy"
+                >
+                {% else %}
+                <div class="h-11 w-11 rounded-full border-2 border-blue-500 bg-gray-300 md:h-14 md:w-14"></div>
+                {% endif %}
+
+                <div class="max-w-[130px] truncate md:max-w-none">
+                    <h2 class="truncate text-sm font-bold text-gray-800 md:text-base">
+                        {{ current_user.username }}
+                    </h2>
+
+                    <p class="truncate text-xs text-gray-500 md:text-sm">
+                        {{ current_user.role }}
+                    </p>
+                </div>
+            </div>
+
+        </div>
+
+        <a
+            href="{% url 'logout' %}"
+            onclick="localStorage.removeItem('adminSidebarOpen')"
+            class="rounded-xl border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-bold text-slate-700 hover:bg-red-500 hover:text-white md:px-5 md:py-3 md:text-base"
+        >
+            Logout
+        </a>
+
+    </div>
+</header>
+{% endif %}
+
+{% if current_user and current_user.is_admin %}
+
+<div
+    id="sidebarOverlay"
+    onclick="closeSidebar()"
+    class="fixed inset-0 z-50 hidden bg-black/40"
+></div>
+
+<aside
+    id="sidebar"
+    class="fixed left-0 top-0 z-[60] h-screen w-72 max-w-[85vw] -translate-x-full overflow-y-auto bg-slate-900 p-5 pt-24 shadow-2xl transition-transform duration-300"
+>
+
+    <div class="flex items-center justify-between border-b border-slate-600 pb-4">
+        <div>
+            <h2 class="text-2xl font-bold text-cyan-300">
+                Admin Panel
+            </h2>
+
+            <p class="mt-1 text-sm text-slate-300">
+                Inventory Controls
+            </p>
+        </div>
+
+        <button
+            type="button"
+            onclick="closeSidebar()"
+            class="rounded-lg px-3 py-2 text-xl text-white hover:bg-slate-700 hover:text-cyan-300"
+        >
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+    </div>
+
+    <div class="mt-6 space-y-3">
+        <p class="text-sm font-bold uppercase tracking-wide text-cyan-300">
+            Inventory
+        </p>
+
+        <a
+            href="{% url 'product_list' %}"
+            class="flex items-center gap-3 rounded-xl bg-slate-700 px-5 py-3 font-semibold text-white hover:bg-cyan-400"
+        >
+            <i class="fa-solid fa-boxes-stacked"></i>
+            <span>Product Inventory</span>
+        </a>
+    </div>
+
+    <div class="mt-8 space-y-3">
+        <p class="text-sm font-bold uppercase tracking-wide text-cyan-300">
+            Categories
+        </p>
+
+        <a
+            href="{% url 'add_category' %}"
+            class="flex items-center gap-3 rounded-xl bg-slate-700 px-5 py-3 font-semibold text-white hover:bg-cyan-400"
+        >
+            <i class="fa-solid fa-plus"></i>
+            <span>Add Category</span>
+        </a>
+
+        <a
+            href="{% url 'category_list' %}"
+            class="flex items-center gap-3 rounded-xl bg-slate-700 px-5 py-3 font-semibold text-white hover:bg-cyan-400"
+        >
+            <i class="fa-solid fa-list"></i>
+            <span>Manage Categories</span>
+        </a>
+    </div>
+
+    <div class="mt-8 space-y-3">
+        <p class="text-sm font-bold uppercase tracking-wide text-cyan-300">
+            Accounts
+        </p>
+
+        <a
+            href="{% url 'account_creation' %}"
+            class="flex items-center gap-3 rounded-xl bg-slate-700 px-5 py-3 font-semibold text-white hover:bg-cyan-400"
+        >
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Add Admin/Staff</span>
+        </a>
+    </div>
+
+</aside>
+
+<script>
+function openSidebar() {
+    document.getElementById("sidebar").classList.remove("-translate-x-full");
+    document.getElementById("sidebarOverlay").classList.remove("hidden");
+    localStorage.setItem("adminSidebarOpen", "true");
+}
+
+function closeSidebar() {
+    document.getElementById("sidebar").classList.add("-translate-x-full");
+    document.getElementById("sidebarOverlay").classList.add("hidden");
+    localStorage.setItem("adminSidebarOpen", "false");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    if (
+        window.innerWidth >= 768 &&
+        localStorage.getItem("adminSidebarOpen") === "true"
+    ) {
+        openSidebar();
+    } else {
+        closeSidebar();
+    }
+});
+</script>
+
+{% endif %}
+
+<main class="{% if current_user %}pt-24 md:pt-28{% endif %}">
+    {% block content %}
+    {% endblock %}
+</main>
+
+</body>
+</html>
