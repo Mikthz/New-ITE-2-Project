@@ -1,0 +1,107 @@
+{% extends "main/admin_panel.html" %}
+{% load static %}
+
+{% block title %} Category List {% endblock %}
+
+{% block content %}
+
+<div class="min-h-screen bg-slate-100 p-4 md:p-6">
+    <div class="mx-auto max-w-6xl rounded-3xl border border-slate-200 bg-white p-5 shadow-sm md:p-8">
+
+        <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <h1 class="text-2xl font-bold text-blue-600 md:text-3xl">
+                Category List
+            </h1>
+
+            <a
+                href="{% url 'add_category' %}"
+                class="rounded-xl bg-blue-500 px-5 py-3 text-center font-bold text-white hover:bg-blue-600"
+            >
+                Add Category
+            </a>
+        </div>
+
+        <div class="mt-6 space-y-5">
+            {% for category in categories %}
+
+            <div class="rounded-2xl border border-slate-300 bg-slate-50 p-4 shadow-sm">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+                    <div class="min-w-0 flex-1">
+                        <p class="font-bold text-slate-800">
+                            {{ category.category_name }}
+                        </p>
+                    </div>
+
+                    <div class="flex flex-wrap gap-2">
+                        <button
+                            type="button"
+                            onclick="toggleEditForm('{{ category.pk }}')"
+                            class="rounded-xl bg-yellow-500 px-4 py-2 font-bold text-white hover:bg-yellow-600"
+                        >
+                            Edit
+                        </button>
+
+                        <form
+                            method="POST"
+                            action="{% url 'delete_category' category.pk %}"
+                            onsubmit="return confirm('Delete this category?');"
+                        >
+                            {% csrf_token %}
+                            <button
+                                type="submit"
+                                class="rounded-xl bg-red-500 px-4 py-2 font-bold text-white hover:bg-red-600"
+                            >
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <form
+                    id="edit-form-{{ category.pk }}"
+                    method="POST"
+                    action="{% url 'edit_category' category.pk %}"
+                    class="mt-4 hidden border-t border-slate-300 pt-4"
+                >
+                    {% csrf_token %}
+
+                    <div class="flex flex-col gap-3 md:flex-row">
+                        <input
+                            type="text"
+                            name="category_name"
+                            value="{{ category.category_name }}"
+                            class="w-full rounded-xl border border-slate-300 bg-white p-3 outline-none focus:border-blue-400"
+                            required
+                        />
+
+                        <button
+                            type="submit"
+                            class="rounded-xl bg-blue-500 px-5 py-3 font-bold text-white hover:bg-blue-600"
+                        >
+                            Save
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            {% empty %}
+
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-5 text-slate-500">
+                No categories found.
+            </div>
+
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+
+<script>
+function toggleEditForm(id) {
+    const form = document.getElementById(`edit-form-${id}`);
+    form.classList.toggle("hidden");
+}
+</script>
+
+{% endblock %}
