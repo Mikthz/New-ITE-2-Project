@@ -9,7 +9,7 @@
     class="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
   >
     <h1 class="mb-8 text-center text-3xl font-bold text-blue-600">
-      Create User
+      Create Staff/Admin Account
     </h1>
 
     <form method="POST" enctype="multipart/form-data" class="space-y-6">
@@ -101,21 +101,18 @@
         />
       </div>
 
-      {% comment %} Gender {% endcomment %}
+      {% comment %} Roles {% endcomment %}
 
       <div>
-        <label class="mb-2 block font-semibold"> Gender </label>
+        <label class="mb-2 block font-semibold"> Role </label>
 
         <select
-          name="gender"
+          name="role"
           class="w-full rounded-xl border border-slate-300 bg-slate-50 p-3 outline-none transition focus:border-blue-400 focus:bg-white"
           required
         >
-          {% for gender in form.gender.field.queryset %}
-
-          <option value="{{ gender.id }}">{{ gender.gender_name }}</option>
-
-          {% endfor %}
+          <option value="Admin">Admin</option>
+          <option value="Staff">Staff</option>
         </select>
       </div>
 

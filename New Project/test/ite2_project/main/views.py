@@ -3,7 +3,7 @@ from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django.core.paginator import Paginator
 
-from .models import Admin, Category, Product, Sale
+from .models import Admin, Category, Product
 from .forms import AdminForm, CategoryForm, ProductForm, SaleForm
 
 

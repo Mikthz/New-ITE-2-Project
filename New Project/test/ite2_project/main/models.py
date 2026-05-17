@@ -211,6 +211,9 @@ class Sale(models.Model):
     )
 
     def save(self, *args, **kwargs):
+        if self.quantity_sold > self.product.stock_quantity:
+            raise ValueError("Not enough stock available.")
+
         if not self.total_price:
             self.total_price = self.product.price * self.quantity_sold
 
