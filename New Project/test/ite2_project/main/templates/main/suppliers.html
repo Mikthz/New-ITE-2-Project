@@ -1,0 +1,96 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Suppliers{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex items-center justify-between">
+
+    <div>
+        <h1 class="text-3xl font-bold text-slate-800">
+            Suppliers
+        </h1>
+
+        <p class="mt-1 text-sm text-slate-500">
+            Manage suppliers and distributors
+        </p>
+    </div>
+
+    <a href="{% url 'create_supplier' %}" class="btn-primary">
+        <i class="fa-solid fa-plus mr-2"></i>
+        Create Supplier
+    </a>
+
+</div>
+
+<div class="card overflow-hidden">
+
+    <div class="border-b border-slate-200 p-5">
+        <input
+            type="text"
+            placeholder="Search suppliers..."
+            class="input"
+        >
+    </div>
+
+    <div class="overflow-x-auto">
+
+        <table class="w-full min-w-[900px]">
+
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Supplier</th>
+                    <th class="p-4">Email</th>
+                    <th class="p-4">Phone</th>
+                    <th class="p-4">Address</th>
+                    <th class="p-4">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for supplier in suppliers %}
+                <tr class="table-row">
+
+                    <td class="p-4 font-semibold">
+                        {{ supplier.supplier_name }}
+                    </td>
+
+                    <td class="p-4">
+                        {{ supplier.email }}
+                    </td>
+
+                    <td class="p-4">
+                        {{ supplier.contact_number }}
+                    </td>
+
+                    <td class="p-4">
+                        {{ supplier.address }}
+                    </td>
+
+                    <td class="p-4">
+                        <div class="flex gap-2">
+
+                            <button class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500 text-white">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+
+                            <button class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500 text-white">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+
+                        </div>
+                    </td>
+
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Quotations{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Quotations</h1>
+        <p class="mt-1 text-sm text-slate-500">Manage customer quotations</p>
+    </div>
+
+    <a href="{% url 'create_quotation' %}" class="btn-primary">
+        <i class="fa-solid fa-plus mr-2"></i>
+        Create Quotation
+    </a>
+</div>
+
+<div class="card overflow-hidden">
+
+    <div class="border-b border-slate-200 p-5">
+        <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <input
+                type="text"
+                placeholder="Search quotations by ID or customer..."
+                class="w-full bg-transparent text-sm outline-none"
+            >
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[900px] text-sm">
+
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Quotation ID</th>
+                    <th class="p-4">Customer</th>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Items</th>
+                    <th class="p-4">Amount</th>
+                    <th class="p-4">Status</th>
+                    <th class="p-4 text-right">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                <tr class="table-row">
+                    <td class="p-4 font-bold text-orange-600">QUO-1001</td>
+                    <td class="p-4">Acme Corporation</td>
+                    <td class="p-4 text-slate-500">2026-01-28</td>
+                    <td class="p-4">8</td>
+                    <td class="p-4 font-bold">₱45,800.00</td>
+                    <td class="p-4"><span class="status-warning">Pending</span></td>
+                    <td class="p-4">
+                        <div class="flex justify-end gap-3">
+                            <i class="fa-regular fa-eye text-slate-500"></i>
+                            <i class="fa-solid fa-pen-to-square text-orange-500"></i>
+                            <i class="fa-solid fa-download text-blue-500"></i>
+                            <i class="fa-solid fa-trash text-red-500"></i>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="table-row">
+                    <td class="p-4 font-bold text-orange-600">QUO-1002</td>
+                    <td class="p-4">Tech Solutions Inc</td>
+                    <td class="p-4 text-slate-500">2026-01-27</td>
+                    <td class="p-4">5</td>
+                    <td class="p-4 font-bold">₱23,400.50</td>
+                    <td class="p-4"><span class="status-success">Accepted</span></td>
+                    <td class="p-4">
+                        <div class="flex justify-end gap-3">
+                            <i class="fa-regular fa-eye text-slate-500"></i>
+                            <i class="fa-solid fa-pen-to-square text-orange-500"></i>
+                            <i class="fa-solid fa-download text-blue-500"></i>
+                            <i class="fa-solid fa-trash text-red-500"></i>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="table-row">
+                    <td class="p-4 font-bold text-orange-600">QUO-1003</td>
+                    <td class="p-4">Global Enterprises</td>
+                    <td class="p-4 text-slate-500">2026-01-26</td>
+                    <td class="p-4">12</td>
+                    <td class="p-4 font-bold">₱89,200.00</td>
+                    <td class="p-4"><span class="status-warning">Pending</span></td>
+                    <td class="p-4">
+                        <div class="flex justify-end gap-3">
+                            <i class="fa-regular fa-eye text-slate-500"></i>
+                            <i class="fa-solid fa-pen-to-square text-orange-500"></i>
+                            <i class="fa-solid fa-download text-blue-500"></i>
+                            <i class="fa-solid fa-trash text-red-500"></i>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr class="table-row">
+                    <td class="p-4 font-bold text-orange-600">QUO-1004</td>
+                    <td class="p-4">StartUp Labs</td>
+                    <td class="p-4 text-slate-500">2026-01-25</td>
+                    <td class="p-4">3</td>
+                    <td class="p-4 font-bold">₱12,500.00</td>
+                    <td class="p-4"><span class="status-danger">Rejected</span></td>
+                    <td class="p-4">
+                        <div class="flex justify-end gap-3">
+                            <i class="fa-regular fa-eye text-slate-500"></i>
+                            <i class="fa-solid fa-pen-to-square text-orange-500"></i>
+                            <i class="fa-solid fa-download text-blue-500"></i>
+                            <i class="fa-solid fa-trash text-red-500"></i>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

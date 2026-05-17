@@ -1,0 +1,52 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Create Supplier{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-800">
+        Create Supplier
+    </h1>
+
+    <p class="mt-1 text-sm text-slate-500">
+        Add a new supplier
+    </p>
+</div>
+
+<div class="card p-8">
+
+    <form method="POST" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {% csrf_token %}
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Supplier Name</label>
+            {{ supplier_form.supplier_name }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Contact Number</label>
+            {{ supplier_form.contact_number }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Email</label>
+            {{ supplier_form.email }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Address</label>
+            {{ supplier_form.address }}
+        </div>
+
+        <div class="md:col-span-2 flex justify-end">
+            <button class="btn-primary">
+                Save Supplier
+            </button>
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

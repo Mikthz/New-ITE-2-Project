@@ -38,12 +38,61 @@ urlpatterns = [
         views.edit_product,
         name='edit_product'
     ),
+    
+    path(
+        'low-stock/',
+        views.low_stock,
+        name='low_stock'
+        ),
 
     path(
         'products/delete/<int:pk>/',
         views.delete_product,
         name='delete_product'
     ),
+    
+    path(
+        'suppliers/',
+        views.suppliers,
+        name='suppliers'
+        ),
+    
+    path(
+        'create-supplier/',
+        views.create_supplier,
+        name='create_supplier'
+        ),
+     
+    path(
+        'quotations/',
+        views.quotations,
+        name='quotations'
+        ),
+    
+    path(
+        'create-quotation/',
+        views.create_quotation,
+        name='create_quotation'
+        ),
+    
+    path(
+        'invoices/',
+        views.invoices,
+        name='invoices'
+        ),
+    
+    path(
+        'create-invoice/',
+        views.create_invoice,
+        name='create_invoice'
+        ),
+
+
+    path(
+        'settings/',
+        views.settings_page,
+        name='settings'
+        ),
 
     path(
         'sales/record/',

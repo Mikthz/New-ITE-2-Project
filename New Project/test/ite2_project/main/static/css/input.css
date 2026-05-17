@@ -3,3 +3,58 @@
 @source "../../templates";
 @source "../../**/*.html";
 @source "../../**/*.py";
+
+@layer components {
+
+    .sidebar-link {
+        @apply flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-orange-50 hover:text-orange-600;
+    }
+
+    .sidebar-sublink {
+        @apply ml-8 block rounded-xl px-4 py-2 text-sm text-slate-500 transition hover:bg-orange-50 hover:text-orange-600;
+    }
+
+    .sidebar-active {
+        @apply bg-orange-50 text-orange-600 border-r-4 border-orange-500 font-semibold;
+    }
+
+    .card {
+        @apply rounded-3xl border border-orange-100 bg-white shadow-sm;
+    }
+
+    .input {
+        @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-orange-400;
+    }
+
+    .btn-primary {
+        @apply rounded-xl bg-orange-500 px-5 py-3 font-semibold text-white transition hover:bg-orange-600;
+    }
+
+    .btn-secondary {
+        @apply rounded-xl border border-orange-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-orange-50;
+    }
+
+    .table-head {
+        @apply border-b bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+    }
+
+    .table-row {
+        @apply border-b border-slate-100 transition hover:bg-orange-50/40;
+    }
+
+    .status-success {
+        @apply rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600;
+    }
+
+    .status-warning {
+        @apply rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600;
+    }
+
+    .status-danger {
+        @apply rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600;
+    }
+
+    .status-neutral {
+        @apply rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500;
+    }
+}

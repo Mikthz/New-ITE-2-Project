@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'ite2_project.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'caldeo_db',
+        'NAME': 'inventory_sys',
         'USER': 'root',
         'PASSWORD': '',
         'HOST': 'localhost',

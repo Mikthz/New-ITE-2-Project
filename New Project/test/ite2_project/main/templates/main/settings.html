@@ -1,0 +1,156 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">Settings</h1>
+    <p class="mt-1 text-sm text-slate-500">Manage your system preferences and configuration</p>
+</div>
+
+<form class="space-y-6">
+
+    <section class="card p-6">
+        <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                <i class="fa-solid fa-building"></i>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-900">
+                Company Information
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div class="md:col-span-2">
+                <label class="mb-2 block text-sm font-semibold">Company Name</label>
+                <input class="input" value="InventoryPro LLC">
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Email</label>
+                <input class="input" value="contact@inventorypro.com">
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Phone</label>
+                <input class="input" value="+1 (555) 123-4567">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="mb-2 block text-sm font-semibold">Address</label>
+                <input class="input" value="123 Business Street, Suite 100">
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">City</label>
+                <input class="input" value="New York">
+            </div>
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                <i class="fa-solid fa-coins"></i>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-900">
+                Financial Settings
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Currency</label>
+                <select class="input">
+                    <option>PHP - Philippine Peso</option>
+                    <option>USD - US Dollar</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Default Tax Rate (%)</label>
+                <input class="input" value="12">
+            </div>
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-900">
+                Notifications
+            </h2>
+        </div>
+
+        <div class="space-y-4">
+            <div class="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
+                <div>
+                    <p class="font-semibold">Email Notifications</p>
+                    <p class="text-sm text-slate-500">Receive email updates about system activities</p>
+                </div>
+                <input type="checkbox" checked>
+            </div>
+
+            <div class="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
+                <div>
+                    <p class="font-semibold">Low Stock Alerts</p>
+                    <p class="text-sm text-slate-500">Get notified when products are running low</p>
+                </div>
+                <input type="checkbox" checked>
+            </div>
+
+            <div class="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
+                <div>
+                    <p class="font-semibold">Invoice Reminders</p>
+                    <p class="text-sm text-slate-500">Send reminders for unpaid invoices</p>
+                </div>
+                <input type="checkbox">
+            </div>
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 text-red-600">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-900">
+                Security
+            </h2>
+        </div>
+
+        <div class="space-y-4">
+            <button type="button" class="w-full rounded-2xl bg-slate-50 p-4 text-left hover:bg-orange-50">
+                <p class="font-semibold">Change Password</p>
+                <p class="text-sm text-slate-500">Update your account password</p>
+            </button>
+
+            <button type="button" class="w-full rounded-2xl bg-slate-50 p-4 text-left hover:bg-orange-50">
+                <p class="font-semibold">Two-Factor Authentication</p>
+                <p class="text-sm text-slate-500">Add an extra layer of security</p>
+            </button>
+
+            <button type="button" class="w-full rounded-2xl bg-slate-50 p-4 text-left hover:bg-orange-50">
+                <p class="font-semibold">Session Management</p>
+                <p class="text-sm text-slate-500">View and manage active sessions</p>
+            </button>
+        </div>
+    </section>
+
+    <div class="flex justify-end">
+        <button class="btn-primary">
+            <i class="fa-solid fa-floppy-disk mr-2"></i>
+            Save Changes
+        </button>
+    </div>
+
+</form>
+
+{% endblock %}

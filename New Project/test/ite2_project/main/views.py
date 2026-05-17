@@ -3,8 +3,8 @@ from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django.core.paginator import Paginator
 
-from .models import Admin, Category, Product
-from .forms import AdminForm, CategoryForm, ProductForm, SaleForm
+from .models import Admin, Category, Product, Supplier
+from .forms import AdminForm, CategoryForm, ProductForm, SaleForm, SupplierForm
 
 
 def get_current_admin(request):
@@ -106,7 +106,17 @@ def add_product(request):
             form.save()
             return redirect('product_list')
 
-    return redirect('product_list')
+    else:
+        form = ProductForm()
+
+    return render(
+        request,
+        'main/create_product.html',
+        {
+            'current_user': current_user,
+            'product_form': form
+        }
+    )
 
 
 def edit_product(request, pk):
@@ -133,6 +143,25 @@ def edit_product(request, pk):
 
     return redirect('product_list')
 
+def low_stock(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    products = Product.objects.filter(
+        stock_quantity__lte=5
+    ).order_by('stock_quantity')
+
+    return render(
+        request,
+        'main/low_stock.html',
+        {
+            'current_user': current_user,
+            'low_stock_products': products
+        }
+    )
+
 
 def delete_product(request, pk):
 
@@ -151,6 +180,106 @@ def delete_product(request, pk):
 
     return redirect('product_list')
 
+def suppliers(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    suppliers = Supplier.objects.all().order_by('supplier_name')
+
+    return render(
+        request,
+        'main/suppliers.html',
+        {
+            'current_user': current_user,
+            'suppliers': suppliers
+        }
+    )
+
+def create_supplier(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    if request.method == 'POST':
+        form = SupplierForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('suppliers')
+
+    else:
+        form = SupplierForm()
+
+    return render(
+        request,
+        'main/create_supplier.html',
+        {
+            'current_user': current_user,
+            'supplier_form': form
+        }
+    )
+
+def quotations(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    return render(
+        request,
+        'main/quotations.html',
+        {
+            'current_user': current_user
+        }
+    )
+    
+def create_quotation(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    return render(
+        request,
+        'main/create_quotation.html',
+        {
+            'current_user': current_user
+        }
+    )
+
+def invoices(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    return render(
+        request,
+        'main/invoices.html',
+        {
+            'current_user': current_user
+        }
+    )
+
+def create_invoice(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    return render(
+        request,
+        'main/create_invoice.html',
+        {
+            'current_user': current_user
+        }
+    )
 
 def record_sale(request):
 
@@ -258,6 +387,19 @@ def delete_category(request, pk):
 
     return redirect('category_list')
 
+def settings_page(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    return render(
+        request,
+        'main/settings.html',
+        {
+            'current_user': current_user
+        }
+    )
 
 def account_creation(request):
 
