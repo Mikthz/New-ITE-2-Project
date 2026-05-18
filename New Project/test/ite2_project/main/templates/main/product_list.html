@@ -15,21 +15,6 @@
         </p>
     </div>
 
-    {% if current_user.is_admin %}
-    <div class="flex gap-3">
-        <button class="rounded-xl border border-orange-300 px-5 py-3 text-sm font-bold text-orange-500 hover:bg-orange-50">
-            <i class="fa-solid fa-upload mr-2"></i>
-            Export
-        </button>
-
-        <button onclick="toggleAddProduct()" class="rounded-xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">
-            <i class="fa-solid fa-plus mr-2"></i>
-            Add Inventory
-        </button>
-    </div>
-    {% endif %}
-</div>
-
 {% if current_user.is_admin %}
 <div class="flex gap-3">
 

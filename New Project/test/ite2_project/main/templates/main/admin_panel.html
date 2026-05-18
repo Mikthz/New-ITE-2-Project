@@ -58,7 +58,6 @@
 
 <div class="min-h-screen lg:flex lg:items-start">
 
-    {% if current_user.is_admin %}
     <aside
         id="sidebar"
         class="fixed left-0 top-0 z-[60] h-screen w-72 -translate-x-full overflow-y-auto border-r border-orange-200 bg-orange-100 p-5 shadow-xl transition-transform duration-300 lg:sticky lg:top-0 lg:self-start lg:translate-x-0 lg:shadow-none"
@@ -102,9 +101,11 @@
                         All Products
                     </a>
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'add_product' %}" class="sidebar-sublink font-bold">
                         Add Product
                     </a>
+                    {% endif %}
 
                     <a href="{% url 'low_stock' %}" class="sidebar-sublink font-bold">
                         Low Stock
@@ -114,17 +115,21 @@
                         Suppliers
                     </a>
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'create_supplier' %}" class="sidebar-sublink font-bold">
                         Create Supplier
                     </a>
+                    {% endif %}
 
                     <a href="{% url 'supplier_products' %}" class="sidebar-sublink font-bold">
                         Supplier Products
                     </a>
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'add_supplier_products' %}" class="sidebar-sublink font-bold">
                         Add Supplier Product
                     </a>
+                    {% endif %}
 
                     <a href="{% url 'buy_supplier_products' %}" class="sidebar-sublink font-bold">
                         Buy Supplier Products
@@ -145,17 +150,22 @@
                         Customer Deliveries
                     </a>
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'create_delivery' %}" class="sidebar-sublink font-bold">
                         Create Customer Delivery
                     </a>
+                    {% endif %}
 
                     <a href="{% url 'supplier_delivery_list' %}" class="sidebar-sublink font-bold">
                         Supplier Deliveries
                     </a>
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'create_supplier_delivery' %}" class="sidebar-sublink font-bold">
                         Create Supplier Delivery
                     </a>
+                    {% endif %}
+
                 </div>
             </div>
 
@@ -171,9 +181,12 @@
                         All Quotations
                     </a>
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'create_quotation' %}" class="sidebar-sublink font-bold">
                         Create Quotation
                     </a>
+                    {% endif %}
+
                 </div>
             </div>
 
@@ -210,7 +223,6 @@
             </a>
         </nav>
     </aside>
-    {% endif %}
 
     <div class="flex min-h-screen flex-1 flex-col">
 
@@ -218,11 +230,12 @@
             <div class="flex items-center justify-between px-4 py-4 lg:px-8">
 
                 <div class="flex items-center gap-4">
-                    {% if current_user.is_admin %}
-                    <button onclick="openSidebar()" class="rounded-xl border p-3 lg:hidden">
+                    <button
+                        onclick="openSidebar()"
+                        class="rounded-xl border border-orange-300 bg-orange-100 p-3 text-orange-600 transition hover:bg-orange-200"
+                    >
                         <i class="fa-solid fa-bars"></i>
                     </button>
-                    {% endif %}
 
                     <div class="hidden items-center gap-3 rounded-xl border border-slate-200 px-4 py-2 md:flex md:w-96">
                         <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
