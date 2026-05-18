@@ -1,0 +1,111 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Add Supplier Product{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">
+            Add Supplier Product
+        </h1>
+
+        <p class="mt-1 text-sm text-slate-500">
+            Register supplier inventory products
+        </p>
+    </div>
+
+    <a href="{% url 'supplier_products' %}" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left mr-2"></i>
+        Back
+    </a>
+
+</div>
+
+<div class="card p-8">
+
+    <div class="mb-6 flex items-center gap-3 border-b border-slate-200 pb-5">
+
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
+            <i class="fa-solid fa-boxes-stacked text-lg"></i>
+        </div>
+
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">
+                Supplier Product Information
+            </h2>
+
+            <p class="text-sm text-slate-500">
+                Add products that suppliers can provide
+            </p>
+        </div>
+
+    </div>
+
+    <form method="POST" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+
+        {% csrf_token %}
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Company Name
+            </label>
+
+            {{ form.supplier }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Product Name
+            </label>
+
+            {{ form.product_name }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Brand
+            </label>
+
+            {{ form.brand }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Model Name
+            </label>
+
+            {{ form.model_name }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Unit Price
+            </label>
+
+            {{ form.unit_price }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold text-slate-700">
+                Available Quantity
+            </label>
+
+            {{ form.available_quantity }}
+        </div>
+
+        <div class="md:col-span-2 flex justify-end pt-4">
+
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-floppy-disk mr-2"></i>
+                Save Supplier Product
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

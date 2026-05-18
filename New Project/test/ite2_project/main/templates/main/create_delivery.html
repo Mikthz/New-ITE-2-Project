@@ -1,0 +1,67 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Create Customer Delivery{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Create Customer Delivery</h1>
+        <p class="mt-1 text-sm text-slate-500">Add product shipment details for a customer</p>
+    </div>
+
+    <a href="{% url 'delivery_list' %}" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left mr-2"></i>
+        Back
+    </a>
+</div>
+
+<div class="card p-8">
+    <form method="POST" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {% csrf_token %}
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Product / Sale to Ship</label>
+            {{ form.sale }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Customer Name</label>
+            {{ form.customer_name }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Customer Contact Number</label>
+            {{ form.contact_number }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Customer Email Address</label>
+            <input type="email" class="input opacity-60" disabled placeholder="Will be added later">
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Shipping Address</label>
+            {{ form.delivery_address }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Expected Delivery Date</label>
+            {{ form.expected_delivery_date }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Status</label>
+            {{ form.status }}
+        </div>
+
+        <div class="md:col-span-2 flex justify-end">
+            <button class="btn-primary">
+                <i class="fa-solid fa-truck mr-2"></i>
+                Save Delivery
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

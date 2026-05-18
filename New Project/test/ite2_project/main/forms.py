@@ -6,12 +6,15 @@ from .models import (
     Category,
     Supplier,
     Product,
-    Sale
+    Sale,
+    SupplierProduct,
+    SupplierPurchase,
+    SupplierDelivery,
+    Delivery
 )
 
 
 class CategoryForm(forms.ModelForm):
-
     class Meta:
         model = Category
         fields = [
@@ -20,7 +23,6 @@ class CategoryForm(forms.ModelForm):
 
 
 class SupplierForm(forms.ModelForm):
-
     class Meta:
         model = Supplier
         fields = [
@@ -32,7 +34,6 @@ class SupplierForm(forms.ModelForm):
 
 
 class ProductForm(forms.ModelForm):
-
     class Meta:
         model = Product
         fields = [
@@ -48,8 +49,67 @@ class ProductForm(forms.ModelForm):
         ]
 
 
-class SaleForm(forms.ModelForm):
+class SupplierProductForm(forms.ModelForm):
+    class Meta:
+        model = SupplierProduct
+        fields = [
+            'supplier',
+            'product_name',
+            'brand',
+            'model_name',
+            'unit_price',
+            'available_quantity'
+        ]
 
+
+class SupplierPurchaseForm(forms.ModelForm):
+    class Meta:
+        model = SupplierPurchase
+        fields = [
+            'supplier_product',
+            'quantity'
+        ]
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        supplier_product = cleaned_data.get('supplier_product')
+        quantity = cleaned_data.get('quantity')
+
+        if supplier_product and quantity:
+            if quantity > supplier_product.available_quantity:
+                raise ValidationError(
+                    'Not enough supplier stock available.'
+                )
+
+        return cleaned_data
+
+
+class SupplierDeliveryForm(forms.ModelForm):
+    class Meta:
+        model = SupplierDelivery
+        fields = [
+            'supplier_purchase',
+            'expected_delivery_date',
+            'delivery_address',
+            'status'
+        ]
+
+
+class DeliveryForm(forms.ModelForm):
+    class Meta:
+        model = Delivery
+        fields = [
+            'sale',
+            'customer_name',
+            'contact_number',
+            'delivery_address',
+            'expected_delivery_date',
+            'status'
+        ]
+
+
+class SaleForm(forms.ModelForm):
     class Meta:
         model = Sale
         fields = [
@@ -74,7 +134,6 @@ class SaleForm(forms.ModelForm):
 
 
 class AdminForm(forms.ModelForm):
-
     confirm_password = forms.CharField(
         widget=forms.PasswordInput()
     )
@@ -85,7 +144,6 @@ class AdminForm(forms.ModelForm):
 
     class Meta:
         model = Admin
-
         fields = [
             'username',
             'first_name',

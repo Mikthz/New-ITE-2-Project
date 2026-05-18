@@ -1,0 +1,113 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Buy Supplier Products{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">Buy Supplier Products</h1>
+    <p class="mt-1 text-sm text-slate-500">Buy supplier stock and prepare supplier delivery records</p>
+</div>
+
+<div class="mb-8 card p-8">
+    <h2 class="mb-5 text-xl font-bold text-slate-900">
+        <i class="fa-solid fa-cart-shopping mr-2 text-orange-500"></i>
+        New Supplier Stock Purchase
+    </h2>
+
+    <form method="POST" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {% csrf_token %}
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Supplier Product</label>
+            {{ form.supplier_product }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Quantity</label>
+            {{ form.quantity }}
+        </div>
+
+        <div class="md:col-span-2 flex justify-end">
+            <button class="btn-primary">
+                <i class="fa-solid fa-bag-shopping mr-2"></i>
+                Buy Stock
+            </button>
+        </div>
+    </form>
+</div>
+
+<div class="card overflow-hidden">
+    <div class="border-b border-slate-200 p-5">
+        <h2 class="font-bold text-slate-900">Supplier Purchase History</h2>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-[900px] text-sm">
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Company Name</th>
+                    <th class="p-4">Company Address</th>
+                    <th class="p-4">Product</th>
+                    <th class="p-4">Quantity</th>
+                    <th class="p-4">Total Price</th>
+                    <th class="p-4">Purchase Date</th>
+                    <th class="p-4 text-right">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for purchase in purchases %}
+                <tr class="table-row">
+                    <td class="p-4 font-bold">{{ purchase.supplier_product.supplier.supplier_name }}</td>
+                    <td class="p-4">{{ purchase.supplier_product.supplier.address }}</td>
+                    <td class="p-4">{{ purchase.supplier_product.product_name }}</td>
+                    <td class="p-4">{{ purchase.quantity }}</td>
+                    <td class="p-4 font-bold">₱{{ purchase.total_price }}</td>
+                    <td class="p-4 text-slate-500">{{ purchase.purchase_date }}</td>
+
+                    <td class="p-4">
+                        <div class="flex justify-end gap-2">
+                            <button onclick="toggleEditPurchase('{{ purchase.pk }}')" class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+
+                            <form method="POST" action="{% url 'delete_supplier_purchase' purchase.pk %}" onsubmit="return confirm('Delete this purchase?');">
+                                {% csrf_token %}
+                                <button class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500 text-white">
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+
+                <tr id="edit-purchase-{{ purchase.pk }}" class="hidden bg-slate-50">
+                    <td colspan="7" class="p-5">
+                        <form method="POST" action="{% url 'edit_supplier_purchase' purchase.pk %}" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            {% csrf_token %}
+                            <select name="supplier_product" class="input">
+                                <option value="{{ purchase.supplier_product.pk }}" selected>{{ purchase.supplier_product.product_name }}</option>
+                            </select>
+                            <input type="number" name="quantity" value="{{ purchase.quantity }}" class="input">
+                            <button class="btn-primary md:col-span-2">Save Changes</button>
+                        </form>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="p-10 text-center text-slate-400">No purchases found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function toggleEditPurchase(id) {
+    document.getElementById(`edit-purchase-${id}`).classList.toggle("hidden");
+}
+</script>
+
+{% endblock %}

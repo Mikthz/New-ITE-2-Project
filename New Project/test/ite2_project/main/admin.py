@@ -5,7 +5,10 @@ from .models import (
     Category,
     Supplier,
     Product,
-    Sale
+    Sale,
+    SupplierProduct,
+    SupplierPurchase,
+    Delivery
 )
 
 
@@ -105,3 +108,7 @@ class SaleAdmin(admin.ModelAdmin):
     list_filter = (
         'sale_date',
     )
+    
+admin.site.register(SupplierProduct)
+admin.site.register(SupplierPurchase)
+admin.site.register(Delivery)

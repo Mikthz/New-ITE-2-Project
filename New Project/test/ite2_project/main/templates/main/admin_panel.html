@@ -12,14 +12,56 @@
 
 <body class="bg-[#f7f4ef] text-slate-800">
 
+<!-- Floating Alerts -->
+<div class="fixed left-1/2 top-6 z-[9999] flex w-full max-w-md -translate-x-1/2 flex-col gap-3 px-4">
+
+    {% if form.errors %}
+    <div id="errorAlert"
+         class="animate-slide-down rounded-2xl border border-red-200 bg-red-500 px-5 py-4 text-white shadow-2xl">
+
+        <div class="flex items-start justify-between gap-4">
+
+            <div class="flex gap-3">
+                <i class="fa-solid fa-circle-exclamation mt-1 text-lg"></i>
+
+                <div>
+                    <h3 class="font-bold">
+                        Form Error
+                    </h3>
+
+                    <div class="mt-1 text-sm text-red-100">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        {% endfor %}
+
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeAlert('errorAlert')"
+                    class="text-white/80 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
 {% if current_user %}
 
-<div class="min-h-screen lg:flex">
+<div class="min-h-screen lg:flex lg:items-start">
 
     {% if current_user.is_admin %}
     <aside
         id="sidebar"
-        class="fixed left-0 top-0 z-[60] h-screen w-72 -translate-x-full overflow-y-auto border-r border-orange-100 bg-white p-5 shadow-xl transition-transform duration-300 lg:static lg:translate-x-0 lg:shadow-none"
+        class="fixed left-0 top-0 z-[60] h-screen w-72 -translate-x-full overflow-y-auto border-r border-orange-200 bg-orange-100 p-5 shadow-xl transition-transform duration-300 lg:sticky lg:top-0 lg:self-start lg:translate-x-0 lg:shadow-none"
     >
         <div class="mb-8 flex items-center justify-between">
             <div class="flex items-center gap-3">
@@ -42,55 +84,94 @@
             </button>
         </div>
 
-        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-orange-400">
             Main Menu
         </p>
 
-        <nav class="space-y-6">
+        <nav class="space-y-4">
 
             <!-- Inventory -->
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-slate-800">
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
                     <i class="fa-solid fa-box"></i>
                     Inventory
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'product_list' %}" class="sidebar-sublink">
+                    <a href="{% url 'product_list' %}" class="sidebar-sublink font-bold">
                         All Products
                     </a>
 
-                    <a href="{% url 'add_product' %}" class="sidebar-sublink">
+                    <a href="{% url 'add_product' %}" class="sidebar-sublink font-bold">
                         Add Product
                     </a>
 
-                    <a href="{% url 'low_stock' %}" class="sidebar-sublink">
+                    <a href="{% url 'low_stock' %}" class="sidebar-sublink font-bold">
                         Low Stock
                     </a>
 
-                    <a href="{% url 'suppliers' %}" class="sidebar-sublink">
+                    <a href="{% url 'suppliers' %}" class="sidebar-sublink font-bold">
                         Suppliers
                     </a>
 
-                    <a href="{% url 'create_supplier' %}" class="sidebar-sublink">
+                    <a href="{% url 'create_supplier' %}" class="sidebar-sublink font-bold">
                         Create Supplier
+                    </a>
+
+                    <a href="{% url 'supplier_products' %}" class="sidebar-sublink font-bold">
+                        Supplier Products
+                    </a>
+
+                    <a href="{% url 'add_supplier_products' %}" class="sidebar-sublink font-bold">
+                        Add Supplier Product
+                    </a>
+
+                    <a href="{% url 'buy_supplier_products' %}" class="sidebar-sublink font-bold">
+                        Buy Supplier Products
+                    </a>
+
+                </div>
+            </div>
+
+            <!-- Deliveries -->
+            <div>
+            <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold uppercase text-orange-700">
+                <i class="fa-solid fa-truck"></i>
+                Deliveries
+            </p>
+
+                <div class="space-y-1">
+                    <a href="{% url 'delivery_list' %}" class="sidebar-sublink font-bold">
+                        Customer Deliveries
+                    </a>
+
+                    <a href="{% url 'create_delivery' %}" class="sidebar-sublink font-bold">
+                        Create Customer Delivery
+                    </a>
+
+                    <a href="{% url 'supplier_delivery_list' %}" class="sidebar-sublink font-bold">
+                        Supplier Deliveries
+                    </a>
+
+                    <a href="{% url 'create_supplier_delivery' %}" class="sidebar-sublink font-bold">
+                        Create Supplier Delivery
                     </a>
                 </div>
             </div>
 
             <!-- Quotations -->
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-slate-800">
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
                     <i class="fa-solid fa-file-lines"></i>
                     Quotations
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'quotations' %}" class="sidebar-sublink">
+                    <a href="{% url 'quotations' %}" class="sidebar-sublink font-bold">
                         All Quotations
                     </a>
 
-                    <a href="{% url 'create_quotation' %}" class="sidebar-sublink">
+                    <a href="{% url 'create_quotation' %}" class="sidebar-sublink font-bold">
                         Create Quotation
                     </a>
                 </div>
@@ -98,17 +179,17 @@
 
             <!-- Invoices -->
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-slate-800">
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
                     Invoices
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'invoices' %}" class="sidebar-sublink">
+                    <a href="{% url 'invoices' %}" class="sidebar-sublink font-bold">
                         All Invoices
                     </a>
 
-                    <a href="{% url 'create_invoice' %}" class="sidebar-sublink">
+                    <a href="{% url 'create_invoice' %}" class="sidebar-sublink font-bold">
                         Create Invoice
                     </a>
                 </div>
@@ -116,9 +197,9 @@
 
         </nav>
 
-        <div class="my-8 border-t border-slate-200"></div>
+        <div class="my-4 border-t border-orange-200"></div>
 
-        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-orange-700">
             Others
         </p>
 
@@ -191,6 +272,31 @@ function closeSidebar() {
     document.getElementById("sidebar").classList.add("-translate-x-full");
     document.getElementById("sidebarOverlay").classList.add("hidden");
 }
+</script>
+
+<script>
+
+function closeAlert(id) {
+    const alertBox = document.getElementById(id);
+
+    if (alertBox) {
+        alertBox.remove();
+    }
+}
+
+setTimeout(() => {
+    const errorAlert = document.getElementById('errorAlert');
+
+    if (errorAlert) {
+        errorAlert.style.opacity = '0';
+        errorAlert.style.transform = 'translate(-50%, -20px)';
+
+        setTimeout(() => {
+            errorAlert.remove();
+        }, 300);
+    }
+}, 5000);
+
 </script>
 
 {% else %}

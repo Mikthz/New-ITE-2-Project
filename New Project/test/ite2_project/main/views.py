@@ -3,8 +3,8 @@ from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django.core.paginator import Paginator
 
-from .models import Admin, Category, Product, Supplier
-from .forms import AdminForm, CategoryForm, ProductForm, SaleForm, SupplierForm
+from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery
+from .forms import AdminForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm
 
 
 def get_current_admin(request):
@@ -114,6 +114,7 @@ def add_product(request):
         'main/create_product.html',
         {
             'current_user': current_user,
+            'form': form,
             'product_form': form
         }
     )
@@ -221,9 +222,288 @@ def create_supplier(request):
         'main/create_supplier.html',
         {
             'current_user': current_user,
+            'form': form,
             'supplier_form': form
         }
     )
+    
+def supplier_products(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    supplier_products = SupplierProduct.objects.all().order_by('product_name')
+
+    return render(
+        request,
+        'main/supplier_products.html',
+        {
+            'current_user': current_user,
+            'supplier_products': supplier_products
+        }
+    )
+    
+def add_supplier_products(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = SupplierProductForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('supplier_products')
+
+    else:
+        form = SupplierProductForm()
+
+    return render(
+        request,
+        'main/add_supplier_products.html',
+        {
+            'current_user': current_user,
+            'form': form
+        }
+    )
+    
+def edit_supplier_product(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    supplier_product = get_object_or_404(SupplierProduct, pk=pk)
+
+    if request.method == 'POST':
+        form = SupplierProductForm(request.POST, instance=supplier_product)
+
+        if form.is_valid():
+            form.save()
+
+    return redirect('supplier_products')
+
+def delete_supplier_product(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    supplier_product = get_object_or_404(SupplierProduct, pk=pk)
+
+    if request.method == 'POST':
+        supplier_product.delete()
+
+    return redirect('supplier_products')
+
+def buy_supplier_products(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    purchases = SupplierPurchase.objects.all().order_by('-purchase_date')
+
+    if request.method == 'POST':
+        form = SupplierPurchaseForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('buy_supplier_products')
+
+    else:
+        form = SupplierPurchaseForm()
+
+    return render(
+        request,
+        'main/buy_supplier_products.html',
+        {
+            'current_user': current_user,
+            'form': form,
+            'purchases': purchases
+        }
+    )
+
+def edit_supplier_purchase(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    purchase = get_object_or_404(SupplierPurchase, pk=pk)
+
+    if request.method == 'POST':
+        form = SupplierPurchaseForm(request.POST, instance=purchase)
+
+        if form.is_valid():
+            edited_purchase = form.save(commit=False)
+            edited_purchase.total_price = (
+                edited_purchase.supplier_product.unit_price *
+                edited_purchase.quantity
+            )
+            edited_purchase.save()
+
+    return redirect('buy_supplier_products')
+
+def delete_supplier_purchase(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    purchase = get_object_or_404(SupplierPurchase, pk=pk)
+
+    if request.method == 'POST':
+        purchase.delete()
+
+    return redirect('buy_supplier_products')
+
+def delivery_list(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    deliveries = Delivery.objects.all().order_by('-created_at')
+
+    return render(
+        request,
+        'main/delivery_list.html',
+        {
+            'current_user': current_user,
+            'deliveries': deliveries
+        }
+    )
+    
+def create_delivery(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = DeliveryForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('delivery_list')
+
+    else:
+        form = DeliveryForm()
+
+    return render(
+        request,
+        'main/create_delivery.html',
+        {
+            'current_user': current_user,
+            'form': form
+        }
+    )
+
+
+def edit_delivery(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    delivery = get_object_or_404(Delivery, pk=pk)
+
+    if request.method == 'POST':
+        form = DeliveryForm(request.POST, instance=delivery)
+
+        if form.is_valid():
+            form.save()
+
+    return redirect('delivery_list')
+
+def delete_delivery(request, pk):
+
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    delivery = get_object_or_404(Delivery, pk=pk)
+
+    if request.method == 'POST':
+        delivery.delete()
+
+    return redirect('delivery_list')
+
+def supplier_delivery_list(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    deliveries = SupplierDelivery.objects.all().order_by('-created_at')
+
+    return render(
+        request,
+        'main/supplier_delivery_list.html',
+        {
+            'current_user': current_user,
+            'deliveries': deliveries
+        }
+    )
+    
+def create_supplier_delivery(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = SupplierDeliveryForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('supplier_delivery_list')
+
+    else:
+        form = SupplierDeliveryForm()
+
+    return render(
+        request,
+        'main/create_supplier_delivery.html',
+        {
+            'current_user': current_user,
+            'form': form
+        }
+    )
+
+def edit_supplier_delivery(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    delivery = get_object_or_404(SupplierDelivery, pk=pk)
+
+    if request.method == 'POST':
+        form = SupplierDeliveryForm(request.POST, instance=delivery)
+
+        if form.is_valid():
+            form.save()
+
+    return redirect('supplier_delivery_list')
+
+
+def delete_supplier_delivery(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    delivery = get_object_or_404(SupplierDelivery, pk=pk)
+
+    if request.method == 'POST':
+        delivery.delete()
+
+    return redirect('supplier_delivery_list')
 
 def quotations(request):
     current_user = get_current_admin(request)
@@ -288,14 +568,43 @@ def record_sale(request):
     if not current_user:
         return redirect('login')
 
+    search = request.GET.get('search', '')
+
+    products = Product.objects.filter(
+        Q(product_name__icontains=search) |
+        Q(brand__icontains=search) |
+        Q(model_name__icontains=search) |
+        Q(category__category_name__icontains=search)
+    ).order_by('product_name')
+
+    paginator = Paginator(products, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    product_form = ProductForm()
+
     if request.method == 'POST':
-        form = SaleForm(request.POST)
+        sale_form = SaleForm(request.POST)
 
-        if form.is_valid():
-            form.save()
+        if sale_form.is_valid():
+            sale_form.save()
+            return redirect('product_list')
 
-    return redirect('product_list')
+    else:
+        sale_form = SaleForm()
 
+    return render(
+        request,
+        'main/product_list.html',
+        {
+            'current_user': current_user,
+            'page_obj': page_obj,
+            'search': search,
+            'product_form': product_form,
+            'form': sale_form,
+            'sale_form': sale_form,
+        }
+    )
 
 def add_category(request):
 

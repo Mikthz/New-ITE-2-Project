@@ -15,12 +15,6 @@
         <form method="POST" class="space-y-5">
             {% csrf_token %}
 
-            {% if form.errors %}
-            <div class="rounded-xl bg-red-100 p-4 text-red-700">
-                {{ form.errors }}
-            </div>
-            {% endif %}
-
             <div>
                 <label class="mb-2 block font-semibold">
                     Category Name

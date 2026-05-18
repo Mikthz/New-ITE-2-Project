@@ -62,7 +62,97 @@ urlpatterns = [
         views.create_supplier,
         name='create_supplier'
         ),
-     
+    
+    path(
+        'supplier-products/',
+        views.supplier_products,
+        name='supplier_products'
+    ),
+    
+    path(
+        'supplier-products/add/',
+        views.add_supplier_products,
+        name='add_supplier_products'
+    ),
+    
+    path(
+        'supplier-products/edit/<int:pk>/',
+        views.edit_supplier_product,
+        name='edit_supplier_product'
+    ),
+    
+    path(
+        'supplier-products/delete/<int:pk>/',
+        views.delete_supplier_product,
+        name='delete_supplier_product'
+    ),
+    
+    path(
+        'supplier-products/buy/',
+        views.buy_supplier_products,
+        name='buy_supplier_products'
+    ),
+
+    path(
+        'supplier-purchases/edit/<int:pk>/',
+        views.edit_supplier_purchase,
+        name='edit_supplier_purchase'
+    ),
+    
+    path(
+        'supplier-purchases/delete/<int:pk>/',
+        views.delete_supplier_purchase,
+        name='delete_supplier_purchase'
+    ),
+
+    path(
+        'deliveries/',
+        views.delivery_list,
+        name='delivery_list'
+    ),
+    
+    path(
+        'deliveries/create/',
+        views.create_delivery,
+        name='create_delivery'
+    ),
+    
+    path(
+        'deliveries/edit/<int:pk>/',
+        views.edit_delivery,
+        name='edit_delivery'
+    ),
+    
+    path(
+        'deliveries/delete/<int:pk>/',
+        views.delete_delivery,
+        name='delete_delivery'
+    ),
+    
+    path(
+        'supplier-deliveries/',
+        views.supplier_delivery_list,
+        name='supplier_delivery_list'
+    ),
+
+    path(
+        'supplier-deliveries/create/',
+        views.create_supplier_delivery,
+        name='create_supplier_delivery'
+    ),
+    
+        path(
+        'supplier-deliveries/edit/<int:pk>/',
+        views.edit_supplier_delivery,
+        name='edit_supplier_delivery'
+    ),
+
+    path(
+        'supplier-deliveries/delete/<int:pk>/',
+        views.delete_supplier_delivery,
+        name='delete_supplier_delivery'
+    ),
+    
     path(
         'quotations/',
         views.quotations,
