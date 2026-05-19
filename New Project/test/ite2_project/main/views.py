@@ -233,7 +233,7 @@ def supplier_products(request):
     if not current_user:
         return redirect('login')
 
-    supplier_products = SupplierProduct.objects.all().order_by('product_name')
+    supplier_products = SupplierProduct.objects.all().order_by('product__product_name')
 
     return render(
         request,

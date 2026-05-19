@@ -235,7 +235,7 @@
                 <div class="flex items-center gap-4">
                     <button
                         onclick="openSidebar()"
-                        class="rounded-xl border border-orange-300 bg-orange-100 p-3 text-orange-600 transition hover:bg-orange-200"
+                        class="rounded-xl border border-orange-300 bg-orange-100 p-3 text-orange-600 transition hover:bg-orange-200 lg:hidden"
                     >
                         <i class="fa-solid fa-bars"></i>
                     </button>
@@ -315,19 +315,7 @@ setTimeout(() => {
 
 </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".search-select").forEach(function (select) {
-        new TomSelect(select, {
-            create: false,
-            sortField: {
-                field: "text",
-                direction: "asc"
-            }
-        });
-    });
-});
-</script>
+
 
 {% else %}
 
