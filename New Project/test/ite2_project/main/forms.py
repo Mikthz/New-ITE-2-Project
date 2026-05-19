@@ -20,6 +20,13 @@ class CategoryForm(forms.ModelForm):
         fields = [
             'category_name'
         ]
+        
+        widgets = {
+            'category_name': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Enter category name'
+            }),
+        }
 
 
 class SupplierForm(forms.ModelForm):
@@ -31,6 +38,29 @@ class SupplierForm(forms.ModelForm):
             'email',
             'address'
         ]
+        
+        widgets = {
+            'supplier_name': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Company name'
+            }),
+
+            'contact_number': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Company contact number'
+            }),
+
+            'email': forms.EmailInput(attrs={
+                'class': 'input',
+                'placeholder': 'Company email address'
+            }),
+
+            'address': forms.Textarea(attrs={
+                'class': 'input',
+                'rows': 4,
+                'placeholder': 'Company address'
+            }),
+        }
 
 
 class ProductForm(forms.ModelForm):
@@ -47,19 +77,38 @@ class ProductForm(forms.ModelForm):
             'stock_quantity',
             'product_image'
         ]
+        
+        widgets = {
+            'category': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter category name'}),
+            'supplier': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter supplier name'}),
+            'product_name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter product name'}),
+            'brand': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter brand name'}),
+            'model_name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter model name'}),
+            'description': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Enter a description'}),
+            'price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
+            'stock_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
+            'product_image': forms.FileInput(attrs={'class': 'input', 'placeholder': 'Insert Image'}),
+        }
 
 
 class SupplierProductForm(forms.ModelForm):
+
     class Meta:
         model = SupplierProduct
+
         fields = [
             'supplier',
-            'product_name',
-            'brand',
-            'model_name',
+            'product',
             'unit_price',
             'available_quantity'
         ]
+
+        widgets = {
+            'supplier': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter a supplier name'}),
+            'product': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter a product name'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
+            'available_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
+        }
 
 
 class SupplierPurchaseForm(forms.ModelForm):
@@ -69,6 +118,11 @@ class SupplierPurchaseForm(forms.ModelForm):
             'supplier_product',
             'quantity'
         ]
+        
+        widgets = {
+            'supplier_product': forms.Select(attrs={'class': 'search-select input'}),
+            'quantity': forms.NumberInput(attrs={'class': 'input'}),
+        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -94,6 +148,13 @@ class SupplierDeliveryForm(forms.ModelForm):
             'delivery_address',
             'status'
         ]
+        
+        widgets = {
+            'supplier_purchase': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter supplier name'}),
+            'expected_delivery_date': forms.DateInput(attrs={'class': 'input', 'type': 'date', 'placeholder': 'Enter date'}),
+            'delivery_address': forms.Textarea(attrs={'class': 'input', 'placeholder': 'Enter delivery address'}),
+            'status': forms.Select(attrs={'class': 'input', 'placeholder': 'Current status'}),
+        }
 
 
 class DeliveryForm(forms.ModelForm):
@@ -107,6 +168,15 @@ class DeliveryForm(forms.ModelForm):
             'expected_delivery_date',
             'status'
         ]
+        
+        widgets = {
+            'sale': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter product name'}),
+            'customer_name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter customer name'}),
+            'contact_number': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter contact number'}),
+            'delivery_address': forms.Textarea(attrs={'class': 'input', 'placeholder': 'Enter delivery address'}),
+            'expected_delivery_date': forms.DateInput(attrs={'class': 'input', 'type': 'date', 'placeholder': 'Enter expected delivery date'}),
+            'status': forms.Select(attrs={'class': 'input', 'placeholder': 'Current Status'}),
+        }
 
 
 class SaleForm(forms.ModelForm):
@@ -117,6 +187,23 @@ class SaleForm(forms.ModelForm):
             'customer_name',
             'quantity_sold'
         ]
+        
+        widgets = {
+
+            'product': forms.Select(attrs={
+                'class': 'search-select input'
+            }),
+
+            'customer_name': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Customer name'
+            }),
+
+            'quantity_sold': forms.NumberInput(attrs={
+                'class': 'input',
+                'placeholder': 'Quantity'
+            }),
+        }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -135,12 +222,18 @@ class SaleForm(forms.ModelForm):
 
 class AdminForm(forms.ModelForm):
     confirm_password = forms.CharField(
-        widget=forms.PasswordInput()
-    )
+        widget=forms.PasswordInput(attrs={
+            'class': 'input',
+            'placeholder': 'Confirm password'
+            })
+        )
 
     password = forms.CharField(
-        widget=forms.PasswordInput()
-    )
+            widget=forms.PasswordInput(attrs={
+                'class': 'input',
+                'placeholder': 'Password'
+            })
+        )
 
     class Meta:
         model = Admin
@@ -156,6 +249,48 @@ class AdminForm(forms.ModelForm):
             'confirm_password',
             'profile_picture'
         ]
+        
+        widgets = {
+
+            'username': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Username'
+            }),
+
+            'first_name': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'First name'
+            }),
+
+            'last_name': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Last name'
+            }),
+
+            'email': forms.EmailInput(attrs={
+                'class': 'input',
+                'placeholder': 'Email address'
+            }),
+
+            'contact_number': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Contact number'
+            }),
+
+            'address': forms.Textarea(attrs={
+                'class': 'input',
+                'rows': 4,
+                'placeholder': 'Address'
+            }),
+
+            'role': forms.Select(attrs={
+                'class': 'search-select input'
+            }),
+
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'input'
+            }),
+        }
 
     def clean_username(self):
         username = self.cleaned_data.get('username')

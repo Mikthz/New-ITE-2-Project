@@ -14,9 +14,9 @@
             Dashboard / Inventory
         </p>
     </div>
-
+</div>
 {% if current_user.is_admin %}
-<div class="flex gap-3">
+<div class="flex gap-3 mb-3">
 
     <a
         href="{% url 'add_product' %}"
@@ -157,16 +157,16 @@
                         <form method="POST" action="{% url 'edit_product' product.pk %}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {% csrf_token %}
 
-                            <input name="product_name" value="{{ product.product_name }}" class="rounded-xl border p-3">
-                            <input name="brand" value="{{ product.brand }}" class="rounded-xl border p-3">
-                            <input name="model_name" value="{{ product.model_name }}" class="rounded-xl border p-3">
-                            <input name="price" type="number" step="0.01" value="{{ product.price }}" class="rounded-xl border p-3">
-                            <input name="stock_quantity" type="number" value="{{ product.stock_quantity }}" class="rounded-xl border p-3">
-                            <input name="product_image" type="file" class="rounded-xl border p-3">
+                            <input name="product_name" value="{{ product.product_name }}" class="input">
+                            <input name="brand" value="{{ product.brand }}" class="input">
+                            <input name="model_name" value="{{ product.model_name }}" class="input">
+                            <input name="price" type="number" step="0.01" value="{{ product.price }}" class="input">
+                            <input name="stock_quantity" type="number" value="{{ product.stock_quantity }}" class="input">
+                            <input name="product_image" type="file" class="input">
 
-                            <textarea name="description" class="rounded-xl border p-3 md:col-span-2">{{ product.description }}</textarea>
+                            <textarea name="description" class="input md:col-span-2">{{ product.description }}</textarea>
 
-                            <button class="rounded-xl bg-orange-500 py-3 font-bold text-white md:col-span-2">
+                            <button class="btn-primary md:col-span-2">
                                 Save Changes
                             </button>
                         </form>

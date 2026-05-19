@@ -57,6 +57,27 @@
     .status-neutral {
         @apply rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500;
     }
+
+    .ts-wrapper.single .ts-control,
+    .ts-wrapper.multi .ts-control {
+        @apply rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-none;
+    }
+
+    .ts-wrapper.focus .ts-control {
+        @apply border-orange-400 ring-0;
+    }
+
+    .ts-dropdown {
+        @apply rounded-xl border border-orange-100 bg-white shadow-lg;
+    }
+
+    .ts-dropdown .active {
+        @apply bg-orange-50 text-orange-600;
+    }
+
+    .ts-control input {
+        @apply text-slate-800;
+    }
 }
 
 @layer utilities {

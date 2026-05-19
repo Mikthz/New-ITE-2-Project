@@ -35,9 +35,9 @@
                 {% for item in supplier_products %}
                 <tr class="table-row">
                     <td class="p-4 font-bold text-slate-900">{{ item.supplier.supplier_name }}</td>
-                    <td class="p-4">{{ item.product_name }}</td>
-                    <td class="p-4">{{ item.brand|default:"N/A" }}</td>
-                    <td class="p-4">{{ item.model_name|default:"N/A" }}</td>
+                    <td class="p-4">{{ item.product.product_name }}</td>
+                    <td class="p-4">{{ item.product.brand|default:"N/A" }}</td>
+                    <td class="p-4">{{ item.product.model_name|default:"N/A" }}</td>
                     <td class="p-4 font-bold">₱{{ item.unit_price }}</td>
                     <td class="p-4">{{ item.available_quantity }}</td>
 
@@ -62,9 +62,9 @@
                         <form method="POST" action="{% url 'edit_supplier_product' item.pk %}" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {% csrf_token %}
 
-                            <input name="product_name" value="{{ item.product_name }}" class="input">
-                            <input name="brand" value="{{ item.brand }}" class="input">
-                            <input name="model_name" value="{{ item.model_name }}" class="input">
+                            <input name="product_name" value="{{ item.product.product_name }}" class="input">
+                            <input name="brand" value="{{ item.product.brand }}" class="input">
+                            <input name="model_name" value="{{ item.product.model_name }}" class="input">
                             <input name="unit_price" type="number" step="0.01" value="{{ item.unit_price }}" class="input">
                             <input name="available_quantity" type="number" value="{{ item.available_quantity }}" class="input">
 

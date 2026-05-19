@@ -201,20 +201,12 @@ class SupplierProduct(models.Model):
         on_delete=models.PROTECT
     )
 
-    product_name = models.CharField(
-        max_length=150
-    )
-
-    brand = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True
-    )
-
-    model_name = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name='supplier_products',
+        null=True,
+        blank=True
     )
 
     unit_price = models.DecimalField(
@@ -235,8 +227,7 @@ class SupplierProduct(models.Model):
     )
 
     def __str__(self):
-        return f"{self.supplier} - {self.product_name}"
-
+        return f"{self.supplier} - {self.product.product_name}"
 
 class SupplierPurchase(models.Model):
     supplier_product = models.ForeignKey(
@@ -269,7 +260,7 @@ class SupplierPurchase(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.supplier_product.product_name} - {self.quantity}"
+        return f"{self.supplier_product.product.product_name} - {self.quantity}"
 
 
 class SupplierDelivery(models.Model):

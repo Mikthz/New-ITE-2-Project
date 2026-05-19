@@ -305,16 +305,59 @@ def buy_supplier_products(request):
         return redirect('login')
 
     purchases = SupplierPurchase.objects.all().order_by('-purchase_date')
+    supplier_products = SupplierProduct.objects.all().order_by(
+        'product__product_name'
+    )
+
+    form = SupplierPurchaseForm()
 
     if request.method == 'POST':
-        form = SupplierPurchaseForm(request.POST)
+        product_ids = request.POST.getlist('supplier_product_ids[]')
+        quantities = request.POST.getlist('quantities[]')
 
-        if form.is_valid():
-            form.save()
-            return redirect('buy_supplier_products')
+        if not product_ids:
+            form.add_error(
+                None,
+                'Please add at least one supplier product.'
+            )
 
-    else:
-        form = SupplierPurchaseForm()
+        else:
+            has_error = False
+
+            for product_id, quantity in zip(product_ids, quantities):
+                supplier_product = get_object_or_404(
+                    SupplierProduct,
+                    pk=product_id
+                )
+
+                quantity = int(quantity)
+
+                if quantity > supplier_product.available_quantity:
+                    form.add_error(
+                        None,
+                        f'Not enough stock for {supplier_product.product.product_name}.'
+                    )
+                    has_error = True
+
+            if not has_error:
+                for product_id, quantity in zip(product_ids, quantities):
+                    supplier_product = get_object_or_404(
+                        SupplierProduct,
+                        pk=product_id
+                    )
+
+                    purchase = SupplierPurchase.objects.create(
+                        supplier_product=supplier_product,
+                        quantity=int(quantity)
+                    )
+
+                    SupplierDelivery.objects.create(
+                        supplier_purchase=purchase,
+                        delivery_address=supplier_product.supplier.address,
+                        status='Pending'
+                    )
+
+                return redirect('buy_supplier_products')
 
     return render(
         request,
@@ -322,7 +365,8 @@ def buy_supplier_products(request):
         {
             'current_user': current_user,
             'form': form,
-            'purchases': purchases
+            'purchases': purchases,
+            'supplier_products': supplier_products
         }
     )
 
