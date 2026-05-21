@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
 from django.db.models import Q
+from django.db import transaction
 from django.core.paginator import Paginator
 
 from django.db.models import Sum, Avg
@@ -372,6 +373,9 @@ def buy_supplier_products(request):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
     purchases = SupplierPurchase.objects.all().order_by('-purchase_date')
     supplier_products = SupplierProduct.objects.all().order_by(
         'product__product_name'
@@ -466,30 +470,37 @@ def edit_supplier_purchase(request, pk):
         form = SupplierPurchaseForm(request.POST, instance=purchase)
 
         if form.is_valid():
-            edited_purchase = form.save(commit=False)
-            new_supplier_product = edited_purchase.supplier_product
-            new_quantity = edited_purchase.quantity
+            with transaction.atomic():
+                edited_purchase = form.save(commit=False)
+                new_supplier_product = edited_purchase.supplier_product
+                new_quantity = edited_purchase.quantity
 
-            if old_supplier_product.pk == new_supplier_product.pk:
-                quantity_difference = new_quantity - old_quantity
-                new_supplier_product.available_quantity -= quantity_difference
-                new_supplier_product.save()
-            else:
-                old_supplier_product.available_quantity += old_quantity
-                old_supplier_product.save()
+                if old_supplier_product.pk == new_supplier_product.pk:
+                    quantity_difference = new_quantity - old_quantity
+                    new_supplier_product.available_quantity -= quantity_difference
+                    new_supplier_product.save()
+                else:
+                    old_supplier_product.available_quantity += old_quantity
+                    old_supplier_product.save()
 
-                new_supplier_product.available_quantity -= new_quantity
-                new_supplier_product.save()
+                    new_supplier_product.available_quantity -= new_quantity
+                    new_supplier_product.save()
 
-            edited_purchase.total_price = (
-                edited_purchase.supplier_product.unit_price *
-                edited_purchase.quantity
-            )
-            edited_purchase.save(update_fields=[
-                'supplier_product',
-                'quantity',
-                'total_price'
-            ])
+                edited_purchase.total_price = (
+                    edited_purchase.supplier_product.unit_price *
+                    edited_purchase.quantity
+                )
+                edited_purchase.save(update_fields=[
+                    'supplier_product',
+                    'quantity',
+                    'total_price'
+                ])
+
+                SupplierDelivery.objects.filter(
+                    supplier_purchase=edited_purchase
+                ).update(
+                    delivery_address=new_supplier_product.supplier.address
+                )
 
     return redirect('buy_supplier_products')
 
@@ -505,10 +516,14 @@ def delete_supplier_purchase(request, pk):
     purchase = get_object_or_404(SupplierPurchase, pk=pk)
 
     if request.method == 'POST':
-        supplier_product = purchase.supplier_product
-        supplier_product.available_quantity += purchase.quantity
-        supplier_product.save()
-        purchase.delete()
+        with transaction.atomic():
+            supplier_product = purchase.supplier_product
+            supplier_product.available_quantity += purchase.quantity
+            supplier_product.save()
+            SupplierDelivery.objects.filter(
+                supplier_purchase=purchase
+            ).delete()
+            purchase.delete()
 
     return redirect('buy_supplier_products')
 

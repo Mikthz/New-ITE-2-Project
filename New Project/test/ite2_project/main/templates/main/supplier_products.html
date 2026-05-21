@@ -39,7 +39,7 @@
                 {% for item in supplier_products %}
                 <tr class="table-row">
                     <td class="p-4 font-bold text-slate-900">{{ item.supplier.supplier_name }}</td>
-                    <td class="p-4">{{ item.product.product_name }}</td>
+                    <td class="p-4">{{ item.product.product_name|default:"N/A" }}</td>
                     <td class="p-4">{{ item.product.brand|default:"N/A" }}</td>
                     <td class="p-4">{{ item.product.model_name|default:"N/A" }}</td>
                     <td class="p-4 font-bold">₱{{ item.unit_price }}</td>
@@ -76,7 +76,7 @@
 
                             <select name="product" class="search-select input">
                                 {% for product in products %}
-                                <option value="{{ product.pk }}" {% if product.pk == item.product.pk %}selected{% endif %}>
+                                <option value="{{ product.pk }}" {% if item.product and product.pk == item.product.pk %}selected{% endif %}>
                                     {{ product.product_name }}
                                 </option>
                                 {% endfor %}

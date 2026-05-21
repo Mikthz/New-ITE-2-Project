@@ -145,7 +145,7 @@
                             <select name="supplier_product" class="input">
                                 <option value="{{ purchase.supplier_product.pk }}" selected>{% if purchase.supplier_product.product %}{{ purchase.supplier_product.product.product_name }}{% else %}No product selected{% endif %}</option>
                             </select>
-                            <input type="number" name="quantity" value="{{ purchase.quantity }}" class="input">
+                            <input type="number" name="quantity" min="1" value="{{ purchase.quantity }}" class="input">
                             <button class="btn-primary md:col-span-2">Save Changes</button>
                         </form>
                     </td>

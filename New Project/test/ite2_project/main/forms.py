@@ -130,7 +130,12 @@ class SupplierPurchaseForm(forms.ModelForm):
         supplier_product = cleaned_data.get('supplier_product')
         quantity = cleaned_data.get('quantity')
 
-        if supplier_product and quantity:
+        if quantity is not None and quantity <= 0:
+            raise ValidationError(
+                'Quantity must be greater than zero.'
+            )
+
+        if supplier_product and quantity is not None:
             available_quantity = supplier_product.available_quantity
 
             if self.instance and self.instance.pk:
@@ -217,7 +222,12 @@ class SaleForm(forms.ModelForm):
         product = cleaned_data.get('product')
         quantity_sold = cleaned_data.get('quantity_sold')
 
-        if product and quantity_sold:
+        if quantity_sold is not None and quantity_sold <= 0:
+            raise ValidationError(
+                'Quantity sold must be greater than zero.'
+            )
+
+        if product and quantity_sold is not None:
             if quantity_sold > product.stock_quantity:
                 raise ValidationError(
                     'Not enough stock available.'
