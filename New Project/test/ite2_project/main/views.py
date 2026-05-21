@@ -7,8 +7,7 @@ from django.db.models.deletion import ProtectedError
 
 from django.db.models import Sum, Avg
 from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale
-from .forms import AdminForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm
-
+from .forms import AdminForm, AdminUpdateForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm
 
 def get_current_admin(request):
     admin_pk = request.session.get('admin_id')
@@ -21,7 +20,6 @@ def get_current_admin(request):
     except Admin.DoesNotExist:
         request.session.flush()
         return None
-
 
 def login_view(request):
 
@@ -50,11 +48,9 @@ def login_view(request):
 
     return render(request, 'main/login.html')
 
-
 def logout_view(request):
     request.session.flush()
     return redirect('login')
-
 
 def product_list(request):
 
@@ -91,7 +87,6 @@ def product_list(request):
         }
     )
 
-
 def add_product(request):
 
     current_user = get_current_admin(request)
@@ -121,7 +116,6 @@ def add_product(request):
             'product_form': form
         }
     )
-
 
 def edit_product(request, pk):
 
@@ -243,7 +237,6 @@ def create_supplier(request):
         }
     )
 
-
 def edit_supplier(request, pk):
     current_user = get_current_admin(request)
 
@@ -262,7 +255,6 @@ def edit_supplier(request, pk):
             form.save()
 
     return redirect('suppliers')
-
 
 def delete_supplier(request, pk):
     current_user = get_current_admin(request)
@@ -527,19 +519,50 @@ def edit_supplier_purchase(request, pk):
                 new_supplier_product = edited_purchase.supplier_product
                 new_quantity = edited_purchase.quantity
 
+                locked_products = SupplierProduct.objects.select_for_update().filter(
+                    pk__in=[
+                        old_supplier_product.pk,
+                        new_supplier_product.pk
+                    ]
+                ).select_related('supplier', 'product')
+
+                locked_product_map = {
+                    item.pk: item
+                    for item in locked_products
+                }
+
+                old_supplier_product = locked_product_map[old_supplier_product.pk]
+                new_supplier_product = locked_product_map[new_supplier_product.pk]
+
                 if old_supplier_product.pk == new_supplier_product.pk:
                     quantity_difference = new_quantity - old_quantity
+
+                    if quantity_difference > old_supplier_product.available_quantity:
+                        form.add_error(
+                            None,
+                            'Not enough supplier stock available.'
+                        )
+                        return redirect('buy_supplier_products')
+
                     new_supplier_product.available_quantity -= quantity_difference
                     new_supplier_product.save()
                 else:
+                    if new_quantity > new_supplier_product.available_quantity:
+                        form.add_error(
+                            None,
+                            'Not enough supplier stock available.'
+                        )
+                        return redirect('buy_supplier_products')
+
                     old_supplier_product.available_quantity += old_quantity
                     old_supplier_product.save()
 
                     new_supplier_product.available_quantity -= new_quantity
                     new_supplier_product.save()
 
+                edited_purchase.supplier_product = new_supplier_product
                 edited_purchase.total_price = (
-                    edited_purchase.supplier_product.unit_price *
+                    new_supplier_product.unit_price *
                     edited_purchase.quantity
                 )
                 edited_purchase.save(update_fields=[
@@ -569,9 +592,12 @@ def delete_supplier_purchase(request, pk):
 
     if request.method == 'POST':
         with transaction.atomic():
-            supplier_product = purchase.supplier_product
+            supplier_product = SupplierProduct.objects.select_for_update().get(
+                pk=purchase.supplier_product.pk
+            )
             supplier_product.available_quantity += purchase.quantity
             supplier_product.save()
+
             SupplierDelivery.objects.filter(
                 supplier_purchase=purchase
             ).delete()
@@ -602,6 +628,9 @@ def create_delivery(request):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
     if request.method == 'POST':
         form = DeliveryForm(request.POST)
 
@@ -621,12 +650,14 @@ def create_delivery(request):
         }
     )
 
-
 def edit_delivery(request, pk):
     current_user = get_current_admin(request)
 
     if not current_user:
         return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
 
     delivery = get_object_or_404(Delivery, pk=pk)
 
@@ -644,6 +675,9 @@ def delete_delivery(request, pk):
 
     if not current_user:
         return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
 
     delivery = get_object_or_404(Delivery, pk=pk)
 
@@ -715,7 +749,6 @@ def edit_supplier_delivery(request, pk):
             form.save()
 
     return redirect('supplier_delivery_list')
-
 
 def delete_supplier_delivery(request, pk):
     current_user = get_current_admin(request)
@@ -879,7 +912,6 @@ def sales_report(request):
         }
     )
 
-
 def income_report(request):
     current_user = get_current_admin(request)
 
@@ -933,7 +965,6 @@ def add_category(request):
         }
     )
 
-
 def category_list(request):
 
     current_user = get_current_admin(request)
@@ -955,7 +986,6 @@ def category_list(request):
         }
     )
 
-
 def edit_category(request, pk):
 
     current_user = get_current_admin(request)
@@ -975,7 +1005,6 @@ def edit_category(request, pk):
             form.save()
 
     return redirect('category_list')
-
 
 def delete_category(request, pk):
 
@@ -1011,15 +1040,21 @@ def settings_page(request):
 def account_creation(request):
 
     current_user = get_current_admin(request)
+    show_role_field = bool(current_user and current_user.is_admin)
 
     if request.method == 'POST':
         form = AdminForm(request.POST, request.FILES)
 
         if form.is_valid():
-            form.save()
+            new_admin = form.save(commit=False)
 
-            if current_user and current_user.is_admin:
-                return redirect('product_list')
+            if not show_role_field:
+                new_admin.role = 'Staff'
+
+            new_admin.save()
+
+            if show_role_field:
+                return redirect('user_management')
 
             return redirect('login')
 
@@ -1031,6 +1066,90 @@ def account_creation(request):
         'main/account_creation.html',
         {
             'form': form,
-            'current_user': current_user
+            'current_user': current_user,
+            'show_role_field': show_role_field
         }
     )
+
+def user_management(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    search = request.GET.get('search', '')
+
+    users = Admin.objects.filter(
+        Q(username__icontains=search) |
+        Q(first_name__icontains=search) |
+        Q(last_name__icontains=search) |
+        Q(email__icontains=search) |
+        Q(role__icontains=search)
+    ).order_by('role', 'username')
+
+    return render(
+        request,
+        'main/user_management.html',
+        {
+            'current_user': current_user,
+            'users': users,
+            'search': search,
+        }
+    )
+
+def edit_user(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    user = get_object_or_404(Admin, pk=pk)
+
+    if request.method == 'POST':
+        form = AdminUpdateForm(
+            request.POST,
+            request.FILES,
+            instance=user
+        )
+
+        if form.is_valid():
+            edited_user = form.save(commit=False)
+
+            if user.is_admin and user.pk != current_user.pk:
+                edited_user.role = 'Admin'
+
+            edited_user.save()
+
+    return redirect('user_management')
+
+def delete_user(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    user = get_object_or_404(Admin, pk=pk)
+
+    if user.is_admin and user.pk != current_user.pk:
+        return HttpResponseForbidden(
+            'You cannot delete another admin account.'
+        )
+
+    if request.method == 'POST':
+        deleting_self = user.pk == current_user.pk
+        user.delete()
+
+        if deleting_self:
+            request.session.flush()
+            return redirect('login')
+
+    return redirect('user_management')

@@ -256,6 +256,9 @@ class SupplierPurchase(models.Model):
         )
 
         if not self.pk:
+            if self.quantity > self.supplier_product.available_quantity:
+                raise ValueError('Not enough supplier stock available.')
+
             self.supplier_product.available_quantity -= self.quantity
             self.supplier_product.save()
 

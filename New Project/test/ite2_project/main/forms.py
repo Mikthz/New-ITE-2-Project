@@ -13,7 +13,6 @@ from .models import (
     Delivery
 )
 
-
 class CategoryForm(forms.ModelForm):
     class Meta:
         model = Category
@@ -27,7 +26,6 @@ class CategoryForm(forms.ModelForm):
                 'placeholder': 'Enter category name'
             }),
         }
-
 
 class SupplierForm(forms.ModelForm):
     class Meta:
@@ -62,7 +60,6 @@ class SupplierForm(forms.ModelForm):
             }),
         }
 
-
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
@@ -85,8 +82,8 @@ class ProductForm(forms.ModelForm):
             'brand': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter brand name'}),
             'model_name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter model name'}),
             'description': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Enter a description'}),
-            'price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag', 'min': '0.01', 'step': '0.01'}),
-            'stock_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity', 'min': '0'}),
+            'price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
+            'stock_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
             'product_image': forms.FileInput(attrs={'class': 'input', 'placeholder': 'Insert Image'}),
         }
 
@@ -111,7 +108,6 @@ class ProductForm(forms.ModelForm):
 
         return stock_quantity
 
-
 class SupplierProductForm(forms.ModelForm):
 
     class Meta:
@@ -127,8 +123,8 @@ class SupplierProductForm(forms.ModelForm):
         widgets = {
             'supplier': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter a supplier name'}),
             'product': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter a product name'}),
-            'unit_price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag', 'min': '0.01', 'step': '0.01'}),
-            'available_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity', 'min': '0'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
+            'available_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
         }
 
 
@@ -152,7 +148,6 @@ class SupplierProductForm(forms.ModelForm):
 
         return available_quantity
 
-
 class SupplierPurchaseForm(forms.ModelForm):
     class Meta:
         model = SupplierPurchase
@@ -163,7 +158,7 @@ class SupplierPurchaseForm(forms.ModelForm):
         
         widgets = {
             'supplier_product': forms.Select(attrs={'class': 'search-select input'}),
-            'quantity': forms.NumberInput(attrs={'class': 'input', 'min': '1'}),
+            'quantity': forms.NumberInput(attrs={'class': 'input'}),
         }
 
     def clean(self):
@@ -191,7 +186,6 @@ class SupplierPurchaseForm(forms.ModelForm):
 
         return cleaned_data
 
-
 class SupplierDeliveryForm(forms.ModelForm):
     class Meta:
         model = SupplierDelivery
@@ -208,7 +202,6 @@ class SupplierDeliveryForm(forms.ModelForm):
             'delivery_address': forms.Textarea(attrs={'class': 'input', 'placeholder': 'Enter delivery address'}),
             'status': forms.Select(attrs={'class': 'input', 'placeholder': 'Current status'}),
         }
-
 
 class DeliveryForm(forms.ModelForm):
     class Meta:
@@ -230,7 +223,6 @@ class DeliveryForm(forms.ModelForm):
             'expected_delivery_date': forms.DateInput(attrs={'class': 'input', 'type': 'date', 'placeholder': 'Enter expected delivery date'}),
             'status': forms.Select(attrs={'class': 'input', 'placeholder': 'Current Status'}),
         }
-
 
 class SaleForm(forms.ModelForm):
     class Meta:
@@ -254,8 +246,7 @@ class SaleForm(forms.ModelForm):
 
             'quantity_sold': forms.NumberInput(attrs={
                 'class': 'input',
-                'placeholder': 'Quantity',
-                'min': '1'
+                'placeholder': 'Quantity'
             }),
         }
 
@@ -277,7 +268,6 @@ class SaleForm(forms.ModelForm):
                 )
 
         return cleaned_data
-
 
 class AdminForm(forms.ModelForm):
     confirm_password = forms.CharField(
@@ -406,3 +396,86 @@ class AdminForm(forms.ModelForm):
             )
 
         return cleaned_data
+
+class AdminUpdateForm(forms.ModelForm):
+    class Meta:
+        model = Admin
+        fields = [
+            'username',
+            'first_name',
+            'last_name',
+            'email',
+            'contact_number',
+            'address',
+            'role',
+            'profile_picture'
+        ]
+
+        widgets = {
+            'username': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Username'
+            }),
+            'first_name': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'First name'
+            }),
+            'last_name': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Last name'
+            }),
+            'email': forms.EmailInput(attrs={
+                'class': 'input',
+                'placeholder': 'Email address'
+            }),
+            'contact_number': forms.TextInput(attrs={
+                'class': 'input',
+                'placeholder': 'Contact number'
+            }),
+            'address': forms.Textarea(attrs={
+                'class': 'input',
+                'rows': 3,
+                'placeholder': 'Address'
+            }),
+            'role': forms.Select(attrs={
+                'class': 'search-select input'
+            }),
+            'profile_picture': forms.FileInput(attrs={
+                'class': 'input'
+            }),
+        }
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+
+        qs = Admin.objects.filter(
+            username=username
+        )
+
+        if self.instance.pk:
+            qs = qs.exclude(
+                pk=self.instance.pk
+            )
+
+        if qs.exists():
+            raise ValidationError(
+                'Username already exists.'
+            )
+
+        return username
+
+    def clean_profile_picture(self):
+        picture = self.cleaned_data.get(
+            'profile_picture'
+        )
+
+        if picture:
+            if isinstance(picture, str):
+                return picture
+
+            if picture.size > 2 * 1024 * 1024:
+                raise ValidationError(
+                    'Image size must be below 2MB.'
+                )
+
+        return picture

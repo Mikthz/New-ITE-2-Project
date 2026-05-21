@@ -28,6 +28,24 @@ urlpatterns = [
     ),
 
     path(
+        'users/',
+        views.user_management,
+        name='user_management'
+    ),
+
+    path(
+        'users/edit/<int:pk>/',
+        views.edit_user,
+        name='edit_user'
+    ),
+
+    path(
+        'users/delete/<int:pk>/',
+        views.delete_user,
+        name='delete_user'
+    ),
+
+    path(
         'products/add/',
         views.add_product,
         name='add_product'

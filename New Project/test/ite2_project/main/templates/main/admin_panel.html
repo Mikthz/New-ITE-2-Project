@@ -144,10 +144,11 @@
                     </a>
                     {% endif %}
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'buy_supplier_products' %}" class="sidebar-sublink font-bold">
                         Buy Supplier Products
                     </a>
-
+                    {% endif %}
                 </div>
             </div>
 
@@ -247,6 +248,13 @@
         </p>
 
         <nav class="space-y-1">
+            {% if current_user.is_admin %}
+            <a href="{% url 'user_management' %}" class="sidebar-link">
+                <i class="fa-solid fa-users-gear"></i>
+                User Management
+            </a>
+            {% endif %}
+
             <a href="{% url 'settings' %}" class="sidebar-link">
                 <i class="fa-solid fa-gear"></i>
                 Settings
