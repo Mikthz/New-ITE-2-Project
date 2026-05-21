@@ -10,10 +10,12 @@
         <p class="mt-1 text-sm text-slate-500">Track incoming supplier deliveries</p>
     </div>
 
+    {% if current_user.is_admin %}
     <a href="{% url 'create_supplier_delivery' %}" class="btn-primary">
         <i class="fa-solid fa-plus mr-2"></i>
         Create Supplier Delivery
     </a>
+    {% endif %}
 </div>
 
 <div class="card overflow-hidden">
@@ -27,7 +29,9 @@
                     <th class="p-4">Purchase</th>
                     <th class="p-4">Expected Date</th>
                     <th class="p-4">Status</th>
+                    {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
 
@@ -50,6 +54,7 @@
                         {% endif %}
                     </td>
 
+                    {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="flex justify-end gap-2">
                             <button onclick="toggleEditSupplierDelivery('{{ delivery.pk }}')" class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
@@ -64,6 +69,7 @@
                             </form>
                         </div>
                     </td>
+                    {% endif %}
                 </tr>
 
                 <tr id="edit-supplier-delivery-{{ delivery.pk }}" class="hidden bg-slate-50">

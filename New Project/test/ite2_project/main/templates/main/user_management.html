@@ -51,6 +51,7 @@
                             src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}/media/profiles/default-avatar.jpg{% endif %}"
                             class="h-10 w-10 rounded-full object-cover"
                             alt="Profile Picture"
+                            onerror="this.onerror=null; this.src='/media/profiles/default-avatar.jpg';"
                         >
 
                         <div>
@@ -97,77 +98,6 @@
                     {% endif %}
                 </td>
             </tr>
-
-            <div id="editUser{{ user.pk }}" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
-                <div class="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-xl">
-                    <div class="mb-5 flex items-center justify-between">
-                        <h2 class="text-xl font-bold text-slate-900">Edit {{ user.username }}</h2>
-                        <button type="button" onclick="closeEditModal('editUser{{ user.pk }}')" class="text-slate-400 hover:text-slate-700">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-
-                    <form method="POST" action="{% url 'edit_user' user.pk %}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        {% csrf_token %}
-
-                        <div>
-                            <label class="mb-2 block text-sm font-semibold">Username</label>
-                            <input type="text" name="username" value="{{ user.username }}" class="input" required>
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block text-sm font-semibold">Email</label>
-                            <input type="email" name="email" value="{{ user.email|default:'' }}" class="input">
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block text-sm font-semibold">First Name</label>
-                            <input type="text" name="first_name" value="{{ user.first_name }}" class="input" required>
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block text-sm font-semibold">Last Name</label>
-                            <input type="text" name="last_name" value="{{ user.last_name }}" class="input" required>
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block text-sm font-semibold">Contact Number</label>
-                            <input type="text" name="contact_number" value="{{ user.contact_number|default:'' }}" class="input">
-                        </div>
-
-                        <div>
-                            <label class="mb-2 block text-sm font-semibold">Role</label>
-                            <select name="role" class="input" {% if user.is_admin and user.pk != current_user.pk %}disabled{% endif %}>
-                                <option value="Staff" {% if user.role == 'Staff' %}selected{% endif %}>Staff</option>
-                                <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
-                            </select>
-                            {% if user.is_admin and user.pk != current_user.pk %}
-                            <input type="hidden" name="role" value="Admin">
-                            <p class="mt-1 text-xs text-slate-400">Other admin roles are protected.</p>
-                            {% endif %}
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="mb-2 block text-sm font-semibold">Address</label>
-                            <textarea name="address" rows="3" class="input">{{ user.address|default:'' }}</textarea>
-                        </div>
-
-                        <div class="md:col-span-2">
-                            <label class="mb-2 block text-sm font-semibold">Profile Picture</label>
-                            <input type="file" name="profile_picture" class="input">
-                        </div>
-
-                        <div class="md:col-span-2 flex justify-end gap-3 pt-3">
-                            <button type="button" onclick="closeEditModal('editUser{{ user.pk }}')" class="rounded-2xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200">
-                                Cancel
-                            </button>
-                            <button type="submit" class="rounded-2xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">
-                                Save Changes
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
             {% empty %}
             <tr>
                 <td colspan="4" class="px-5 py-8 text-center text-slate-500">
@@ -178,6 +108,79 @@
         </tbody>
     </table>
 </div>
+
+{% for user in users %}
+<div id="editUser{{ user.pk }}" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
+    <div class="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-xl">
+        <div class="mb-5 flex items-center justify-between">
+            <h2 class="text-xl font-bold text-slate-900">Edit {{ user.username }}</h2>
+            <button type="button" onclick="closeEditModal('editUser{{ user.pk }}')" class="text-slate-400 hover:text-slate-700">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{% url 'edit_user' user.pk %}" enctype="multipart/form-data" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {% csrf_token %}
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Username</label>
+                <input type="text" name="username" value="{{ user.username }}" class="input" required>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Email</label>
+                <input type="email" name="email" value="{{ user.email|default:'' }}" class="input">
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">First Name</label>
+                <input type="text" name="first_name" value="{{ user.first_name }}" class="input" required>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Last Name</label>
+                <input type="text" name="last_name" value="{{ user.last_name }}" class="input" required>
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Contact Number</label>
+                <input type="text" name="contact_number" value="{{ user.contact_number|default:'' }}" class="input">
+            </div>
+
+            <div>
+                <label class="mb-2 block text-sm font-semibold">Role</label>
+                <select name="role" class="input" {% if user.is_admin and user.pk != current_user.pk %}disabled{% endif %}>
+                    <option value="Staff" {% if user.role == 'Staff' %}selected{% endif %}>Staff</option>
+                    <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
+                </select>
+                {% if user.is_admin and user.pk != current_user.pk %}
+                <input type="hidden" name="role" value="Admin">
+                <p class="mt-1 text-xs text-slate-400">Other admin roles are protected.</p>
+                {% endif %}
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="mb-2 block text-sm font-semibold">Address</label>
+                <textarea name="address" rows="3" class="input">{{ user.address|default:'' }}</textarea>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="mb-2 block text-sm font-semibold">Profile Picture</label>
+                <input type="file" name="profile_picture" class="input">
+            </div>
+
+            <div class="md:col-span-2 flex justify-end gap-3 pt-3">
+                <button type="button" onclick="closeEditModal('editUser{{ user.pk }}')" class="rounded-2xl bg-slate-100 px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-200">
+                    Cancel
+                </button>
+                <button type="submit" class="rounded-2xl bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endfor %}
 
 <script>
 function openEditModal(id) {

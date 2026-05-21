@@ -6,6 +6,8 @@ from .models import (
     Supplier,
     Product,
     Sale,
+    Quotation,
+    Invoice,
     SupplierProduct,
     SupplierPurchase,
     SupplierDelivery,
@@ -113,3 +115,8 @@ admin.site.register(SupplierProduct)
 admin.site.register(SupplierPurchase)
 admin.site.register(Delivery)
 admin.site.register(SupplierDelivery)
+try:
+    admin.site.register(Quotation)
+    admin.site.register(Invoice)
+except admin.sites.AlreadyRegistered:
+    pass

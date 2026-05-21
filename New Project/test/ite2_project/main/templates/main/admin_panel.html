@@ -216,9 +216,12 @@
                         All Invoices
                     </a>
 
+                    {% if current_user.is_admin %}
                     <a href="{% url 'create_invoice' %}" class="sidebar-sublink font-bold">
                         Create Invoice
                     </a>
+                    {% endif %}
+                    
                 </div>
             </div>
 

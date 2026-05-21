@@ -44,7 +44,9 @@
                 <tr>
                     <th class="p-4">Category Name</th>
                     <th class="p-4">Created At</th>
+                    {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
 
@@ -61,6 +63,7 @@
                         {{ category.created_at }}
                     </td>
 
+                    {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="flex justify-end gap-2">
 
@@ -88,6 +91,7 @@
 
                         </div>
                     </td>
+                    {% endif %}
 
                 </tr>
 

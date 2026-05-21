@@ -10,7 +10,9 @@ from .models import (
     SupplierProduct,
     SupplierPurchase,
     SupplierDelivery,
-    Delivery
+    Delivery,
+    Quotation,
+    Invoice
 )
 
 class CategoryForm(forms.ModelForm):
@@ -479,3 +481,79 @@ class AdminUpdateForm(forms.ModelForm):
                 )
 
         return picture
+
+
+class QuotationForm(forms.ModelForm):
+    class Meta:
+        model = Quotation
+        fields = [
+            'supplier_product',
+            'quantity',
+            'quotation_date',
+            'valid_until',
+            'status',
+            'remarks'
+        ]
+
+        widgets = {
+            'supplier_product': forms.Select(attrs={'class': 'search-select input'}),
+            'quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Quantity', 'min': '1'}),
+            'quotation_date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
+            'valid_until': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'input'}),
+            'remarks': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Quotation remarks'}),
+        }
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get('quantity')
+
+        if quantity is not None and quantity <= 0:
+            raise ValidationError('Quantity must be greater than zero.')
+
+        return quantity
+
+    def clean(self):
+        cleaned_data = super().clean()
+        supplier_product = cleaned_data.get('supplier_product')
+        quantity = cleaned_data.get('quantity')
+
+        if supplier_product and quantity and quantity > supplier_product.available_quantity:
+            raise ValidationError(
+                'Quotation quantity cannot be greater than the supplier product available quantity.'
+            )
+
+        return cleaned_data
+
+
+class InvoiceForm(forms.ModelForm):
+    class Meta:
+        model = Invoice
+        fields = [
+            'sale',
+            'invoice_date',
+            'due_date',
+            'status',
+            'notes'
+        ]
+
+        widgets = {
+            'sale': forms.Select(attrs={'class': 'search-select input'}),
+            'invoice_date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
+            'due_date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
+            'status': forms.Select(attrs={'class': 'input'}),
+            'notes': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Invoice notes'}),
+        }
+
+    def clean_sale(self):
+        sale = self.cleaned_data.get('sale')
+
+        if sale:
+            existing_invoice = Invoice.objects.filter(sale=sale)
+
+            if self.instance and self.instance.pk:
+                existing_invoice = existing_invoice.exclude(pk=self.instance.pk)
+
+            if existing_invoice.exists():
+                raise ValidationError('This sale already has an invoice.')
+
+        return sale

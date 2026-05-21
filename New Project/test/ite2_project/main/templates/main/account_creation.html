@@ -1,11 +1,18 @@
-{% extends "main/admin_panel.html" %}
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Inventory System{% endblock %}</title>
 
-{% block title %}Create Account{% endblock %}
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
 
-{% block content %}
-{% include "main/account_creation_form.html" %}
-{% endblock %}
+<body class="min-h-screen bg-slate-100">
 
-{% block unauthenticated_content %}
-{% include "main/account_creation_form.html" %}
-{% endblock %}
+    {% include "main/account_creation_form.html" %}
+
+</body>
+</html>

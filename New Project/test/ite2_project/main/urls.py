@@ -194,6 +194,18 @@ urlpatterns = [
         views.create_quotation,
         name='create_quotation'
         ),
+
+    path(
+        'quotations/edit/<int:pk>/',
+        views.edit_quotation,
+        name='edit_quotation'
+    ),
+
+    path(
+        'quotations/delete/<int:pk>/',
+        views.delete_quotation,
+        name='delete_quotation'
+    ),
     
     path(
         'invoices/',
@@ -206,6 +218,18 @@ urlpatterns = [
         views.create_invoice,
         name='create_invoice'
         ),
+
+    path(
+        'invoices/edit/<int:pk>/',
+        views.edit_invoice,
+        name='edit_invoice'
+    ),
+
+    path(
+        'invoices/delete/<int:pk>/',
+        views.delete_invoice,
+        name='delete_invoice'
+    ),
 
 
     path(

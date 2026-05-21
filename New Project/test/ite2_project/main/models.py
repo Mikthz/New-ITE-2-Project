@@ -1,4 +1,6 @@
 from django.db import models
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Category(models.Model):
@@ -50,6 +52,10 @@ class Supplier(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
+
+    @property
+    def company_name(self):
+        return self.supplier_name
 
     def __str__(self):
         return self.supplier_name
@@ -406,3 +412,150 @@ class Delivery(models.Model):
 
     def __str__(self):
         return f"{self.customer_name} - {self.status}"
+
+class Quotation(models.Model):
+    STATUS_CHOICES = [
+        ('Draft', 'Draft'),
+        ('Sent', 'Sent'),
+        ('Accepted', 'Accepted'),
+        ('Rejected', 'Rejected'),
+    ]
+
+    supplier_product = models.ForeignKey(
+        SupplierProduct,
+        on_delete=models.PROTECT,
+        related_name='quotations'
+    )
+
+    supplier_purchase = models.OneToOneField(
+        SupplierPurchase,
+        on_delete=models.SET_NULL,
+        related_name='quotation',
+        blank=True,
+        null=True
+    )
+
+    quantity = models.PositiveIntegerField()
+
+    total_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+
+    quotation_date = models.DateField(
+        default=timezone.now
+    )
+
+    valid_until = models.DateField(
+        blank=True,
+        null=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Draft'
+    )
+
+    remarks = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    @property
+    def company_name(self):
+        return self.supplier_product.supplier.company_name
+
+    @property
+    def product(self):
+        return self.supplier_product.product
+
+    @property
+    def unit_price(self):
+        return self.supplier_product.unit_price
+
+    def save(self, *args, **kwargs):
+        self.total_price = self.supplier_product.unit_price * self.quantity
+
+        if not self.valid_until:
+            self.valid_until = self.quotation_date + timedelta(days=7)
+
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Quotation #{self.pk} - {self.company_name}"
+
+
+class Invoice(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Paid', 'Paid'),
+        ('Overdue', 'Overdue'),
+        ('Cancelled', 'Cancelled'),
+    ]
+
+    sale = models.OneToOneField(
+        Sale,
+        on_delete=models.PROTECT,
+        related_name='invoice'
+    )
+
+    invoice_date = models.DateField(
+        default=timezone.now
+    )
+
+    due_date = models.DateField(
+        blank=True,
+        null=True
+    )
+
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        blank=True,
+        null=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Pending'
+    )
+
+    notes = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True
+    )
+
+    def save(self, *args, **kwargs):
+        self.amount = self.sale.total_price
+
+        if not self.due_date:
+            self.due_date = self.invoice_date + timedelta(days=7)
+
+        super().save(*args, **kwargs)
+
+    @property
+    def customer_name(self):
+        return self.sale.customer_name
+
+    def __str__(self):
+        return f"Invoice #{self.pk} - {self.customer_name}"

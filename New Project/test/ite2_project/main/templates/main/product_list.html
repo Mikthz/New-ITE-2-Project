@@ -70,7 +70,9 @@
                     <th class="p-4">Available</th>
                     <th class="p-4">Price</th>
                     <th class="p-4">Status</th>
+                    {% if current_user.is_admin %}
                     <th class="p-4">Action</th>
+                    {% endif %}
                 </tr>
             </thead>
 
@@ -132,6 +134,7 @@
                         {% endif %}
                     </td>
 
+                    {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="flex gap-2">
                             <button class="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500 text-white">
@@ -150,6 +153,7 @@
                             </form>
                         </div>
                     </td>
+                    {% endif %}
                 </tr>
 
                 <tr id="edit-product-{{ product.pk }}" class="hidden bg-slate-50">

@@ -7,7 +7,7 @@
 <div class="mb-8 flex items-center justify-between">
     <div>
         <h1 class="text-3xl font-bold text-slate-900">Create Customer Delivery</h1>
-        <p class="mt-1 text-sm text-slate-500">Add product shipment details for a customer</p>
+        <p class="mt-1 text-sm text-slate-500">Create a customer sale, delivery record, and paid invoice</p>
     </div>
 
     <a href="{% url 'delivery_list' %}" class="btn-secondary">
@@ -20,19 +20,45 @@
     <form method="POST" class="grid grid-cols-1 gap-5 md:grid-cols-2">
         {% csrf_token %}
 
+        {% if sale_form.errors or delivery_form.errors %}
+        <div class="md:col-span-2 rounded-2xl border border-red-200 bg-red-500 px-5 py-4 text-sm text-white shadow-lg">
+            {% for field in sale_form %}
+                {% for error in field.errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in sale_form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+            {% for field in delivery_form %}
+                {% for error in field.errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in delivery_form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
         <div>
-            <label class="mb-2 block text-sm font-semibold">Product / Sale to Ship</label>
-            {{ form.sale }}
+            <label class="mb-2 block text-sm font-semibold">Product to Sell and Deliver</label>
+            {{ sale_form.product }}
         </div>
 
         <div>
             <label class="mb-2 block text-sm font-semibold">Customer Name</label>
-            {{ form.customer_name }}
+            {{ sale_form.customer_name }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Quantity Sold</label>
+            {{ sale_form.quantity_sold }}
         </div>
 
         <div>
             <label class="mb-2 block text-sm font-semibold">Customer Contact Number</label>
-            {{ form.contact_number }}
+            {{ delivery_form.contact_number }}
         </div>
 
         <div>
@@ -42,23 +68,23 @@
 
         <div class="md:col-span-2">
             <label class="mb-2 block text-sm font-semibold">Shipping Address</label>
-            {{ form.delivery_address }}
+            {{ delivery_form.delivery_address }}
         </div>
 
         <div>
             <label class="mb-2 block text-sm font-semibold">Expected Delivery Date</label>
-            {{ form.expected_delivery_date }}
+            {{ delivery_form.expected_delivery_date }}
         </div>
 
         <div>
             <label class="mb-2 block text-sm font-semibold">Status</label>
-            {{ form.status }}
+            {{ delivery_form.status }}
         </div>
 
         <div class="md:col-span-2 flex justify-end">
             <button class="btn-primary">
                 <i class="fa-solid fa-truck mr-2"></i>
-                Save Delivery
+                Create Sale and Delivery
             </button>
         </div>
     </form>

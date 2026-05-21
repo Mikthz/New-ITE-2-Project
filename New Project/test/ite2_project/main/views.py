@@ -6,8 +6,8 @@ from django.core.paginator import Paginator
 from django.db.models.deletion import ProtectedError
 
 from django.db.models import Sum, Avg
-from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale
-from .forms import AdminForm, AdminUpdateForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm
+from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Quotation, Invoice
+from .forms import AdminForm, AdminUpdateForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, QuotationForm, InvoiceForm
 
 def get_current_admin(request):
     admin_pk = request.session.get('admin_id')
@@ -482,6 +482,16 @@ def buy_supplier_products(request):
                                 status='Pending'
                             )
 
+                            Quotation.objects.update_or_create(
+                                supplier_purchase=purchase,
+                                defaults={
+                                    'supplier_product': supplier_product,
+                                    'quantity': quantity,
+                                    'status': 'Sent',
+                                    'remarks': 'Auto-generated from supplier purchase.'
+                                }
+                            )
+
                 if not has_error:
                     return redirect('buy_supplier_products')
 
@@ -577,6 +587,16 @@ def edit_supplier_purchase(request, pk):
                     delivery_address=new_supplier_product.supplier.address
                 )
 
+                Quotation.objects.update_or_create(
+                    supplier_purchase=edited_purchase,
+                    defaults={
+                        'supplier_product': new_supplier_product,
+                        'quantity': new_quantity,
+                        'status': 'Sent',
+                        'remarks': 'Auto-updated from supplier purchase edit.'
+                    }
+                )
+
     return redirect('buy_supplier_products')
 
 def delete_supplier_purchase(request, pk):
@@ -601,6 +621,11 @@ def delete_supplier_purchase(request, pk):
             SupplierDelivery.objects.filter(
                 supplier_purchase=purchase
             ).delete()
+
+            Quotation.objects.filter(
+                supplier_purchase=purchase
+            ).delete()
+
             purchase.delete()
 
     return redirect('buy_supplier_products')
@@ -632,21 +657,56 @@ def create_delivery(request):
         return HttpResponseForbidden('Access Forbidden')
 
     if request.method == 'POST':
-        form = DeliveryForm(request.POST)
+        sale_form = SaleForm(request.POST)
+        delivery_form = DeliveryForm(request.POST)
 
-        if form.is_valid():
-            form.save()
-            return redirect('delivery_list')
+        if sale_form.is_valid() and delivery_form.is_valid():
+            try:
+                with transaction.atomic():
+                    sale = sale_form.save(commit=False)
+
+                    product = Product.objects.select_for_update().get(
+                        pk=sale.product.pk
+                    )
+
+                    if sale.quantity_sold > product.stock_quantity:
+                        sale_form.add_error(
+                            None,
+                            'Not enough stock available.'
+                        )
+                    else:
+                        sale.product = product
+                        sale.save()
+
+                        delivery = delivery_form.save(commit=False)
+                        delivery.sale = sale
+                        delivery.customer_name = sale.customer_name
+                        delivery.save()
+
+                        Invoice.objects.get_or_create(
+                            sale=sale,
+                            defaults={
+                                'status': 'Paid'
+                            }
+                        )
+
+                        return redirect('delivery_list')
+
+            except ValueError as error:
+                sale_form.add_error(None, str(error))
 
     else:
-        form = DeliveryForm()
+        sale_form = SaleForm()
+        delivery_form = DeliveryForm()
 
     return render(
         request,
         'main/create_delivery.html',
         {
             'current_user': current_user,
-            'form': form
+            'sale_form': sale_form,
+            'delivery_form': delivery_form,
+            'form': sale_form
         }
     )
 
@@ -713,14 +773,14 @@ def create_supplier_delivery(request):
         return HttpResponseForbidden('Access Forbidden')
 
     if request.method == 'POST':
-        form = SupplierDeliveryForm(request.POST)
+        form = SupplierDeliveryForm, QuotationForm, InvoiceForm(request.POST)
 
         if form.is_valid():
             form.save()
             return redirect('supplier_delivery_list')
 
     else:
-        form = SupplierDeliveryForm()
+        form = SupplierDeliveryForm, QuotationForm, InvoiceForm()
 
     return render(
         request,
@@ -743,7 +803,7 @@ def edit_supplier_delivery(request, pk):
     delivery = get_object_or_404(SupplierDelivery, pk=pk)
 
     if request.method == 'POST':
-        form = SupplierDeliveryForm(request.POST, instance=delivery)
+        form = SupplierDeliveryForm, QuotationForm, InvoiceForm(request.POST, instance=delivery)
 
         if form.is_valid():
             form.save()
@@ -772,11 +832,27 @@ def quotations(request):
     if not current_user:
         return redirect('login')
 
+    search = request.GET.get('search', '')
+
+    quotation_list = Quotation.objects.select_related(
+        'supplier_product',
+        'supplier_product__supplier',
+        'supplier_product__product',
+        'supplier_purchase'
+    ).filter(
+        Q(supplier_product__supplier__supplier_name__icontains=search) |
+        Q(supplier_product__product__product_name__icontains=search) |
+        Q(status__icontains=search)
+    ).order_by('-quotation_date', '-created_at')
+
     return render(
         request,
         'main/quotations.html',
         {
-            'current_user': current_user
+            'current_user': current_user,
+            'quotations': quotation_list,
+            'search': search,
+            'quotation_form': QuotationForm()
         }
     )
     
@@ -786,13 +862,65 @@ def create_quotation(request):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    if request.method == 'POST':
+        form = QuotationForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('quotations')
+
+    else:
+        form = QuotationForm()
+
     return render(
         request,
         'main/create_quotation.html',
         {
-            'current_user': current_user
+            'current_user': current_user,
+            'form': form
         }
     )
+
+
+def edit_quotation(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    quotation = get_object_or_404(Quotation, pk=pk)
+
+    if request.method == 'POST':
+        form = QuotationForm(request.POST, instance=quotation)
+
+        if form.is_valid():
+            form.save()
+
+    return redirect('quotations')
+
+
+def delete_quotation(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    quotation = get_object_or_404(Quotation, pk=pk)
+
+    if request.method == 'POST':
+        quotation.delete()
+
+    return redirect('quotations')
+
 
 def invoices(request):
     current_user = get_current_admin(request)
@@ -800,13 +928,28 @@ def invoices(request):
     if not current_user:
         return redirect('login')
 
+    search = request.GET.get('search', '')
+
+    invoice_list = Invoice.objects.select_related(
+        'sale',
+        'sale__product'
+    ).filter(
+        Q(sale__customer_name__icontains=search) |
+        Q(sale__product__product_name__icontains=search) |
+        Q(status__icontains=search)
+    ).order_by('-invoice_date', '-created_at')
+
     return render(
         request,
         'main/invoices.html',
         {
-            'current_user': current_user
+            'current_user': current_user,
+            'invoices': invoice_list,
+            'search': search,
+            'invoice_form': InvoiceForm()
         }
     )
+
 
 def create_invoice(request):
     current_user = get_current_admin(request)
@@ -814,13 +957,64 @@ def create_invoice(request):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    if request.method == 'POST':
+        form = InvoiceForm(request.POST)
+
+        if form.is_valid():
+            form.save()
+            return redirect('invoices')
+
+    else:
+        form = InvoiceForm()
+
     return render(
         request,
         'main/create_invoice.html',
         {
-            'current_user': current_user
+            'current_user': current_user,
+            'form': form
         }
     )
+
+
+def edit_invoice(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if request.method == 'POST':
+        form = InvoiceForm(request.POST, instance=invoice)
+
+        if form.is_valid():
+            form.save()
+
+    return redirect('invoices')
+
+
+def delete_invoice(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    invoice = get_object_or_404(Invoice, pk=pk)
+
+    if request.method == 'POST':
+        invoice.delete()
+
+    return redirect('invoices')
 
 def record_sale(request):
 
@@ -918,18 +1112,23 @@ def income_report(request):
     if not current_user:
         return redirect('login')
 
-    sales = Sale.objects.select_related('product').order_by('-sale_date')
+    paid_invoices = Invoice.objects.select_related(
+        'sale',
+        'sale__product'
+    ).filter(
+        status='Paid'
+    ).order_by('-invoice_date', '-created_at')
 
-    total_sales = sales.aggregate(total=Sum('total_price'))['total'] or 0
-    total_orders = sales.count()
-    average_sale = sales.aggregate(avg=Avg('total_price'))['avg'] or 0
+    total_sales = paid_invoices.aggregate(total=Sum('amount'))['total'] or 0
+    total_orders = paid_invoices.count()
+    average_sale = paid_invoices.aggregate(avg=Avg('amount'))['avg'] or 0
 
     return render(
         request,
         'main/income_report.html',
         {
             'current_user': current_user,
-            'sales': sales,
+            'paid_invoices': paid_invoices,
             'total_sales': total_sales,
             'total_orders': total_orders,
             'average_sale': average_sale,

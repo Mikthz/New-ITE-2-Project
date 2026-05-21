@@ -10,10 +10,12 @@
         <p class="mt-1 text-sm text-slate-500">Manage suppliers and distributors</p>
     </div>
 
+    {% if current_user.is_admin %}
     <a href="{% url 'create_supplier' %}" class="btn-primary">
         <i class="fa-solid fa-plus mr-2"></i>
         Create Supplier
     </a>
+    {% endif %}
 </div>
 
 <div class="card overflow-hidden">
@@ -35,7 +37,9 @@
                     <th class="p-4">Email</th>
                     <th class="p-4">Phone</th>
                     <th class="p-4">Address</th>
+                    {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
+                    {% endif %}
                 </tr>
             </thead>
 
@@ -46,6 +50,7 @@
                     <td class="p-4">{{ supplier.email|default:"N/A" }}</td>
                     <td class="p-4">{{ supplier.contact_number|default:"N/A" }}</td>
                     <td class="p-4">{{ supplier.address|default:"N/A" }}</td>
+                    {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="flex justify-end gap-2">
                             <button onclick="toggleEditSupplier('{{ supplier.pk }}')" class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500 text-white" type="button">
@@ -60,6 +65,7 @@
                             </form>
                         </div>
                     </td>
+                    {% endif %}
                 </tr>
 
                 <tr id="edit-supplier-{{ supplier.pk }}" class="hidden bg-slate-50">
