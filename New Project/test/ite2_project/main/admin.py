@@ -8,9 +8,9 @@ from .models import (
     Sale,
     SupplierProduct,
     SupplierPurchase,
+    SupplierDelivery,
     Delivery
 )
-
 
 @admin.register(Admin)
 class AdminAdmin(admin.ModelAdmin):
@@ -112,3 +112,4 @@ class SaleAdmin(admin.ModelAdmin):
 admin.site.register(SupplierProduct)
 admin.site.register(SupplierPurchase)
 admin.site.register(Delivery)
+admin.site.register(SupplierDelivery)

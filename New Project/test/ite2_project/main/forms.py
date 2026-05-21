@@ -131,7 +131,13 @@ class SupplierPurchaseForm(forms.ModelForm):
         quantity = cleaned_data.get('quantity')
 
         if supplier_product and quantity:
-            if quantity > supplier_product.available_quantity:
+            available_quantity = supplier_product.available_quantity
+
+            if self.instance and self.instance.pk:
+                if self.instance.supplier_product_id == supplier_product.pk:
+                    available_quantity += self.instance.quantity
+
+            if quantity > available_quantity:
                 raise ValidationError(
                     'Not enough supplier stock available.'
                 )

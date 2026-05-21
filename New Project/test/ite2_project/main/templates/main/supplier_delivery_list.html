@@ -18,7 +18,7 @@
 
 <div class="card overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full min-w-[1050px] text-sm">
+        <table class="w-full min-w-262.5 text-sm">
             <thead class="table-head">
                 <tr>
                     <th class="p-4">Company Name</th>
@@ -70,6 +70,7 @@
                     <td colspan="7" class="p-5">
                         <form method="POST" action="{% url 'edit_supplier_delivery' delivery.pk %}" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {% csrf_token %}
+                            <input type="hidden" name="supplier_purchase" value="{{ delivery.supplier_purchase.pk }}">
                             <input name="delivery_address" value="{{ delivery.delivery_address }}" class="input">
                             <input type="date" name="expected_delivery_date" value="{{ delivery.expected_delivery_date|date:'Y-m-d' }}" class="input">
 

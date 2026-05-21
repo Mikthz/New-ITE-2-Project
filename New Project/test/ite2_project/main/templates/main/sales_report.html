@@ -1,0 +1,74 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Sales Report{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">Sales Report</h1>
+    <p class="mt-1 text-sm text-slate-500">View product sales and income summary</p>
+</div>
+
+<div class="mb-8 grid grid-cols-1 gap-5 md:grid-cols-3">
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Total Income</p>
+        <h2 class="mt-2 text-3xl font-bold text-orange-600">₱{{ total_income }}</h2>
+    </div>
+
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Total Orders</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">{{ total_orders }}</h2>
+    </div>
+
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Items Sold</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">{{ total_items_sold }}</h2>
+    </div>
+</div>
+
+<div class="card overflow-hidden">
+    <div class="border-b border-slate-200 p-5">
+        <h2 class="font-bold text-slate-900">
+            <i class="fa-solid fa-chart-line mr-2 text-orange-500"></i>
+            Sales Details
+        </h2>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-237.5 text-sm">
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Product</th>
+                    <th class="p-4">Category</th>
+                    <th class="p-4">Customer</th>
+                    <th class="p-4">Qty Sold</th>
+                    <th class="p-4">Unit Price</th>
+                    <th class="p-4">Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for sale in sales %}
+                <tr class="table-row">
+                    <td class="p-4">{{ sale.sale_date }}</td>
+                    <td class="p-4 font-bold">{{ sale.product.product_name }}</td>
+                    <td class="p-4">{{ sale.product.category|default:"N/A" }}</td>
+                    <td class="p-4">{{ sale.customer_name }}</td>
+                    <td class="p-4">{{ sale.quantity_sold }}</td>
+                    <td class="p-4">₱{{ sale.product.price }}</td>
+                    <td class="p-4 font-bold text-orange-600">₱{{ sale.total_price }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="p-10 text-center text-slate-400">
+                        No sales records found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

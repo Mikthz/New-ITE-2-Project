@@ -3,7 +3,8 @@ from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django.core.paginator import Paginator
 
-from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery
+from django.db.models import Sum, Avg
+from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale
 from .forms import AdminForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm
 
 
@@ -187,14 +188,22 @@ def suppliers(request):
     if not current_user:
         return redirect('login')
 
-    suppliers = Supplier.objects.all().order_by('supplier_name')
+    search = request.GET.get('search', '')
+
+    suppliers = Supplier.objects.filter(
+        Q(supplier_name__icontains=search) |
+        Q(email__icontains=search) |
+        Q(contact_number__icontains=search) |
+        Q(address__icontains=search)
+    ).order_by('supplier_name')
 
     return render(
         request,
         'main/suppliers.html',
         {
             'current_user': current_user,
-            'suppliers': suppliers
+            'suppliers': suppliers,
+            'search': search,
         }
     )
 
@@ -226,6 +235,43 @@ def create_supplier(request):
             'supplier_form': form
         }
     )
+
+
+def edit_supplier(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    supplier = get_object_or_404(Supplier, pk=pk)
+
+    if request.method == 'POST':
+        form = SupplierForm(request.POST, instance=supplier)
+
+        if form.is_valid():
+            form.save()
+
+    return redirect('suppliers')
+
+
+def delete_supplier(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
+    supplier = get_object_or_404(Supplier, pk=pk)
+
+    if request.method == 'POST':
+        supplier.delete()
+
+    return redirect('suppliers')
     
 def supplier_products(request):
     current_user = get_current_admin(request)
@@ -233,14 +279,27 @@ def supplier_products(request):
     if not current_user:
         return redirect('login')
 
-    supplier_products = SupplierProduct.objects.all().order_by('product__product_name')
+    search = request.GET.get('search', '')
+
+    supplier_products = SupplierProduct.objects.filter(
+        Q(supplier__supplier_name__icontains=search) |
+        Q(product__product_name__icontains=search) |
+        Q(product__brand__icontains=search) |
+        Q(product__model_name__icontains=search)
+    ).select_related('supplier', 'product').order_by('product__product_name')
+
+    products = Product.objects.all().order_by('product_name')
+    suppliers_list = Supplier.objects.all().order_by('supplier_name')
 
     return render(
         request,
         'main/supplier_products.html',
         {
             'current_user': current_user,
-            'supplier_products': supplier_products
+            'supplier_products': supplier_products,
+            'products': products,
+            'suppliers_list': suppliers_list,
+            'search': search,
         }
     )
     
@@ -249,6 +308,9 @@ def add_supplier_products(request):
 
     if not current_user:
         return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
 
     if request.method == 'POST':
         form = SupplierProductForm(request.POST)
@@ -275,6 +337,9 @@ def edit_supplier_product(request, pk):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
     supplier_product = get_object_or_404(SupplierProduct, pk=pk)
 
     if request.method == 'POST':
@@ -290,6 +355,9 @@ def delete_supplier_product(request, pk):
 
     if not current_user:
         return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
 
     supplier_product = get_object_or_404(SupplierProduct, pk=pk)
 
@@ -330,12 +398,22 @@ def buy_supplier_products(request):
                     pk=product_id
                 )
 
-                quantity = int(quantity)
+                try:
+                    quantity = int(quantity)
+                except (TypeError, ValueError):
+                    form.add_error(None, 'Quantity must be a valid number.')
+                    has_error = True
+                    continue
+
+                if quantity <= 0:
+                    form.add_error(None, 'Quantity must be greater than zero.')
+                    has_error = True
+                    continue
 
                 if quantity > supplier_product.available_quantity:
                     form.add_error(
                         None,
-                        f'Not enough stock for {supplier_product.product.product_name}.'
+                        f'Not enough stock for {supplier_product.product.product_name if supplier_product.product else supplier_product}.'
                     )
                     has_error = True
 
@@ -376,18 +454,42 @@ def edit_supplier_purchase(request, pk):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
     purchase = get_object_or_404(SupplierPurchase, pk=pk)
 
     if request.method == 'POST':
+        old_supplier_product = purchase.supplier_product
+        old_quantity = purchase.quantity
+
         form = SupplierPurchaseForm(request.POST, instance=purchase)
 
         if form.is_valid():
             edited_purchase = form.save(commit=False)
+            new_supplier_product = edited_purchase.supplier_product
+            new_quantity = edited_purchase.quantity
+
+            if old_supplier_product.pk == new_supplier_product.pk:
+                quantity_difference = new_quantity - old_quantity
+                new_supplier_product.available_quantity -= quantity_difference
+                new_supplier_product.save()
+            else:
+                old_supplier_product.available_quantity += old_quantity
+                old_supplier_product.save()
+
+                new_supplier_product.available_quantity -= new_quantity
+                new_supplier_product.save()
+
             edited_purchase.total_price = (
                 edited_purchase.supplier_product.unit_price *
                 edited_purchase.quantity
             )
-            edited_purchase.save()
+            edited_purchase.save(update_fields=[
+                'supplier_product',
+                'quantity',
+                'total_price'
+            ])
 
     return redirect('buy_supplier_products')
 
@@ -397,9 +499,15 @@ def delete_supplier_purchase(request, pk):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
     purchase = get_object_or_404(SupplierPurchase, pk=pk)
 
     if request.method == 'POST':
+        supplier_product = purchase.supplier_product
+        supplier_product.available_quantity += purchase.quantity
+        supplier_product.save()
         purchase.delete()
 
     return redirect('buy_supplier_products')
@@ -500,6 +608,9 @@ def create_supplier_delivery(request):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
     if request.method == 'POST':
         form = SupplierDeliveryForm(request.POST)
 
@@ -525,6 +636,9 @@ def edit_supplier_delivery(request, pk):
     if not current_user:
         return redirect('login')
 
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
+
     delivery = get_object_or_404(SupplierDelivery, pk=pk)
 
     if request.method == 'POST':
@@ -541,6 +655,9 @@ def delete_supplier_delivery(request, pk):
 
     if not current_user:
         return redirect('login')
+
+    if not current_user.is_admin:
+        return HttpResponseForbidden('Access Forbidden')
 
     delivery = get_object_or_404(SupplierDelivery, pk=pk)
 
@@ -647,6 +764,65 @@ def record_sale(request):
             'product_form': product_form,
             'form': sale_form,
             'sale_form': sale_form,
+        }
+    )
+    
+def sales_report(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    sales = Sale.objects.select_related(
+        'product',
+        'product__category',
+        'product__supplier'
+    ).order_by('-sale_date')
+
+    total_income = sales.aggregate(
+        total=Sum('total_price')
+    )['total'] or 0
+
+    total_orders = sales.count()
+
+    total_items_sold = sales.aggregate(
+        total=Sum('quantity_sold')
+    )['total'] or 0
+
+    return render(
+        request,
+        'main/sales_report.html',
+        {
+            'current_user': current_user,
+            'sales': sales,
+            'total_income': total_income,
+            'total_orders': total_orders,
+            'total_items_sold': total_items_sold,
+        }
+    )
+
+
+def income_report(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    sales = Sale.objects.select_related('product').order_by('-sale_date')
+
+    total_sales = sales.aggregate(total=Sum('total_price'))['total'] or 0
+    total_orders = sales.count()
+    average_sale = sales.aggregate(avg=Avg('total_price'))['avg'] or 0
+
+    return render(
+        request,
+        'main/income_report.html',
+        {
+            'current_user': current_user,
+            'sales': sales,
+            'total_sales': total_sales,
+            'total_orders': total_orders,
+            'average_sale': average_sale,
         }
     )
 

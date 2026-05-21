@@ -64,6 +64,18 @@ urlpatterns = [
         ),
     
     path(
+        'suppliers/edit/<int:pk>/',
+        views.edit_supplier,
+        name='edit_supplier'
+    ),
+
+    path(
+        'suppliers/delete/<int:pk>/',
+        views.delete_supplier,
+        name='delete_supplier'
+    ),
+    
+    path(
         'supplier-products/',
         views.supplier_products,
         name='supplier_products'
@@ -189,6 +201,18 @@ urlpatterns = [
         views.record_sale,
         name='record_sale'
     ),
+
+    path(
+        'sales-report/',
+        views.sales_report,
+        name='sales_report'
+    ),
+    
+    path(
+        'income-report/',
+        views.income_report,
+        name='income_report'
+        ),
 
     path(
         'categories/',

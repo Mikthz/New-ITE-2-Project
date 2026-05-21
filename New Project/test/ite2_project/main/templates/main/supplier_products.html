@@ -17,8 +17,12 @@
 </div>
 
 <div class="card overflow-hidden">
+    <form method="GET" class="border-b border-slate-200 p-5">
+        <input type="text" name="search" value="{{ search }}" placeholder="Search supplier products..." class="input">
+    </form>
+
     <div class="overflow-x-auto">
-        <table class="w-full min-w-[950px] text-sm">
+        <table class="w-full min-w-237.5 text-sm">
             <thead class="table-head">
                 <tr>
                     <th class="p-4">Company Name</th>
@@ -62,11 +66,24 @@
                         <form method="POST" action="{% url 'edit_supplier_product' item.pk %}" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {% csrf_token %}
 
-                            <input name="product_name" value="{{ item.product.product_name }}" class="input">
-                            <input name="brand" value="{{ item.product.brand }}" class="input">
-                            <input name="model_name" value="{{ item.product.model_name }}" class="input">
-                            <input name="unit_price" type="number" step="0.01" value="{{ item.unit_price }}" class="input">
-                            <input name="available_quantity" type="number" value="{{ item.available_quantity }}" class="input">
+                            <select name="supplier" class="search-select input">
+                                {% for supplier in suppliers_list %}
+                                <option value="{{ supplier.pk }}" {% if supplier.pk == item.supplier.pk %}selected{% endif %}>
+                                    {{ supplier.supplier_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+
+                            <select name="product" class="search-select input">
+                                {% for product in products %}
+                                <option value="{{ product.pk }}" {% if product.pk == item.product.pk %}selected{% endif %}>
+                                    {{ product.product_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+
+                            <input name="unit_price" type="number" step="0.01" min="0" value="{{ item.unit_price }}" class="input">
+                            <input name="available_quantity" type="number" min="0" value="{{ item.available_quantity }}" class="input">
 
                             <button class="btn-primary md:col-span-2">Save Changes</button>
                         </form>

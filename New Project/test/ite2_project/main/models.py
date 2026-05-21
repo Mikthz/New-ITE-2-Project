@@ -99,10 +99,10 @@ class Admin(models.Model):
     )
 
     profile_picture = models.ImageField(
-        upload_to='admins/',
-        default='admins/default-avatar.jpg',
+        upload_to='profiles/',
         blank=True,
-        null=True
+        null=True,
+        default='profiles/default-avatar.jpg'
     )
 
     role = models.CharField(
@@ -227,7 +227,9 @@ class SupplierProduct(models.Model):
     )
 
     def __str__(self):
-        return f"{self.supplier} - {self.product.product_name}"
+        if self.product:
+            return f"{self.supplier} - {self.product.product_name}"
+        return f"{self.supplier} - No product selected"
 
 class SupplierPurchase(models.Model):
     supplier_product = models.ForeignKey(
@@ -260,7 +262,9 @@ class SupplierPurchase(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.supplier_product.product.product_name} - {self.quantity}"
+        if self.supplier_product.product:
+            return f"{self.supplier_product.product.product_name} - {self.quantity}"
+        return f"No product selected - {self.quantity}"
 
 
 class SupplierDelivery(models.Model):
