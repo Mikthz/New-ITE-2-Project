@@ -85,10 +85,31 @@ class ProductForm(forms.ModelForm):
             'brand': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter brand name'}),
             'model_name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter model name'}),
             'description': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Enter a description'}),
-            'price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
-            'stock_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
+            'price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag', 'min': '0.01', 'step': '0.01'}),
+            'stock_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity', 'min': '0'}),
             'product_image': forms.FileInput(attrs={'class': 'input', 'placeholder': 'Insert Image'}),
         }
+
+
+    def clean_price(self):
+        price = self.cleaned_data.get('price')
+
+        if price is not None and price <= 0:
+            raise ValidationError(
+                'Price must be greater than zero.'
+            )
+
+        return price
+
+    def clean_stock_quantity(self):
+        stock_quantity = self.cleaned_data.get('stock_quantity')
+
+        if stock_quantity is not None and stock_quantity < 0:
+            raise ValidationError(
+                'Stock quantity cannot be negative.'
+            )
+
+        return stock_quantity
 
 
 class SupplierProductForm(forms.ModelForm):
@@ -106,9 +127,30 @@ class SupplierProductForm(forms.ModelForm):
         widgets = {
             'supplier': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter a supplier name'}),
             'product': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter a product name'}),
-            'unit_price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
-            'available_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
+            'unit_price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag', 'min': '0.01', 'step': '0.01'}),
+            'available_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity', 'min': '0'}),
         }
+
+
+    def clean_unit_price(self):
+        unit_price = self.cleaned_data.get('unit_price')
+
+        if unit_price is not None and unit_price <= 0:
+            raise ValidationError(
+                'Unit price must be greater than zero.'
+            )
+
+        return unit_price
+
+    def clean_available_quantity(self):
+        available_quantity = self.cleaned_data.get('available_quantity')
+
+        if available_quantity is not None and available_quantity < 0:
+            raise ValidationError(
+                'Available quantity cannot be negative.'
+            )
+
+        return available_quantity
 
 
 class SupplierPurchaseForm(forms.ModelForm):
@@ -121,7 +163,7 @@ class SupplierPurchaseForm(forms.ModelForm):
         
         widgets = {
             'supplier_product': forms.Select(attrs={'class': 'search-select input'}),
-            'quantity': forms.NumberInput(attrs={'class': 'input'}),
+            'quantity': forms.NumberInput(attrs={'class': 'input', 'min': '1'}),
         }
 
     def clean(self):
@@ -212,7 +254,8 @@ class SaleForm(forms.ModelForm):
 
             'quantity_sold': forms.NumberInput(attrs={
                 'class': 'input',
-                'placeholder': 'Quantity'
+                'placeholder': 'Quantity',
+                'min': '1'
             }),
         }
 

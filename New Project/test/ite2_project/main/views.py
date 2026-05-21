@@ -3,6 +3,7 @@ from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django.db import transaction
 from django.core.paginator import Paginator
+from django.db.models.deletion import ProtectedError
 
 from django.db.models import Sum, Avg
 from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale
@@ -179,7 +180,12 @@ def delete_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
 
     if request.method == 'POST':
-        product.delete()
+        try:
+            product.delete()
+        except ProtectedError:
+            return HttpResponseForbidden(
+                'Cannot delete this product because it is already used in sales or supplier records.'
+            )
 
     return redirect('product_list')
 
@@ -270,7 +276,12 @@ def delete_supplier(request, pk):
     supplier = get_object_or_404(Supplier, pk=pk)
 
     if request.method == 'POST':
-        supplier.delete()
+        try:
+            supplier.delete()
+        except ProtectedError:
+            return HttpResponseForbidden(
+                'Cannot delete this supplier because it still has linked supplier products.'
+            )
 
     return redirect('suppliers')
     
@@ -363,7 +374,12 @@ def delete_supplier_product(request, pk):
     supplier_product = get_object_or_404(SupplierProduct, pk=pk)
 
     if request.method == 'POST':
-        supplier_product.delete()
+        try:
+            supplier_product.delete()
+        except ProtectedError:
+            return HttpResponseForbidden(
+                'Cannot delete this supplier product because it already has purchase records.'
+            )
 
     return redirect('supplier_products')
 
@@ -395,17 +411,14 @@ def buy_supplier_products(request):
 
         else:
             has_error = False
+            purchase_quantities = {}
 
             for product_id, quantity in zip(product_ids, quantities):
-                supplier_product = get_object_or_404(
-                    SupplierProduct,
-                    pk=product_id
-                )
-
                 try:
+                    product_id = int(product_id)
                     quantity = int(quantity)
                 except (TypeError, ValueError):
-                    form.add_error(None, 'Quantity must be a valid number.')
+                    form.add_error(None, 'Supplier product and quantity must be valid numbers.')
                     has_error = True
                     continue
 
@@ -414,32 +427,71 @@ def buy_supplier_products(request):
                     has_error = True
                     continue
 
+                purchase_quantities[product_id] = (
+                    purchase_quantities.get(product_id, 0) + quantity
+                )
+
+            supplier_product_map = SupplierProduct.objects.filter(
+                pk__in=purchase_quantities.keys()
+            ).select_related('supplier', 'product').in_bulk()
+
+            for product_id, quantity in purchase_quantities.items():
+                supplier_product = supplier_product_map.get(product_id)
+
+                if not supplier_product:
+                    form.add_error(None, 'Selected supplier product does not exist.')
+                    has_error = True
+                    continue
+
                 if quantity > supplier_product.available_quantity:
+                    product_name = (
+                        supplier_product.product.product_name
+                        if supplier_product.product
+                        else str(supplier_product)
+                    )
                     form.add_error(
                         None,
-                        f'Not enough stock for {supplier_product.product.product_name if supplier_product.product else supplier_product}.'
+                        f'Not enough stock for {product_name}.'
                     )
                     has_error = True
 
             if not has_error:
-                for product_id, quantity in zip(product_ids, quantities):
-                    supplier_product = get_object_or_404(
-                        SupplierProduct,
-                        pk=product_id
-                    )
+                with transaction.atomic():
+                    locked_supplier_products = {
+                        item.pk: item
+                        for item in SupplierProduct.objects.select_for_update().filter(
+                            pk__in=purchase_quantities.keys()
+                        ).select_related('supplier', 'product')
+                    }
 
-                    purchase = SupplierPurchase.objects.create(
-                        supplier_product=supplier_product,
-                        quantity=int(quantity)
-                    )
+                    for product_id, quantity in purchase_quantities.items():
+                        supplier_product = locked_supplier_products.get(product_id)
 
-                    SupplierDelivery.objects.create(
-                        supplier_purchase=purchase,
-                        delivery_address=supplier_product.supplier.address,
-                        status='Pending'
-                    )
+                        if not supplier_product or quantity > supplier_product.available_quantity:
+                            form.add_error(
+                                None,
+                                'Not enough supplier stock available.'
+                            )
+                            has_error = True
+                            break
 
-                return redirect('buy_supplier_products')
+                    if not has_error:
+                        for product_id, quantity in purchase_quantities.items():
+                            supplier_product = locked_supplier_products[product_id]
+
+                            purchase = SupplierPurchase.objects.create(
+                                supplier_product=supplier_product,
+                                quantity=quantity
+                            )
+
+                            SupplierDelivery.objects.create(
+                                supplier_purchase=purchase,
+                                delivery_address=supplier_product.supplier.address,
+                                status='Pending'
+                            )
+
+                if not has_error:
+                    return redirect('buy_supplier_products')
 
     return render(
         request,
@@ -763,8 +815,19 @@ def record_sale(request):
         sale_form = SaleForm(request.POST)
 
         if sale_form.is_valid():
-            sale_form.save()
-            return redirect('product_list')
+            with transaction.atomic():
+                sale = sale_form.save(commit=False)
+
+                product = Product.objects.select_for_update().get(
+                    pk=sale.product.pk
+                )
+
+                if sale.quantity_sold > product.stock_quantity:
+                    sale_form.add_error(None, 'Not enough stock available.')
+                else:
+                    sale.product = product
+                    sale.save()
+                    return redirect('product_list')
 
     else:
         sale_form = SaleForm()

@@ -339,6 +339,9 @@ class Sale(models.Model):
         self.total_price = self.product.price * self.quantity_sold
     
         if not self.pk:
+            if self.quantity_sold > self.product.stock_quantity:
+                raise ValueError('Not enough stock available.')
+
             self.product.stock_quantity -= self.quantity_sold
             self.product.save()
 

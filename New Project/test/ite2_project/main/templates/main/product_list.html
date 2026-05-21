@@ -160,8 +160,8 @@
                             <input name="product_name" value="{{ product.product_name }}" class="input">
                             <input name="brand" value="{{ product.brand }}" class="input">
                             <input name="model_name" value="{{ product.model_name }}" class="input">
-                            <input name="price" type="number" step="0.01" value="{{ product.price }}" class="input">
-                            <input name="stock_quantity" type="number" value="{{ product.stock_quantity }}" class="input">
+                            <input name="price" type="number" step="0.01" min="0.01" value="{{ product.price }}" class="input">
+                            <input name="stock_quantity" type="number" min="0" value="{{ product.stock_quantity }}" class="input">
                             <input name="product_image" type="file" class="input">
                             <input type="hidden" name="category" value="{{ product.category.pk|default:'' }}">
                             <input type="hidden" name="supplier" value="{{ product.supplier.pk|default:'' }}">
