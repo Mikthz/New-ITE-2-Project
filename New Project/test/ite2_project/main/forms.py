@@ -209,17 +209,13 @@ class DeliveryForm(forms.ModelForm):
     class Meta:
         model = Delivery
         fields = [
-            'sale',
-            'customer_name',
             'contact_number',
             'delivery_address',
             'expected_delivery_date',
             'status'
         ]
-        
+
         widgets = {
-            'sale': forms.Select(attrs={'class': 'search-select input', 'placeholder': 'Enter product name'}),
-            'customer_name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter customer name'}),
             'contact_number': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Enter contact number'}),
             'delivery_address': forms.Textarea(attrs={'class': 'input', 'placeholder': 'Enter delivery address'}),
             'expected_delivery_date': forms.DateInput(attrs={'class': 'input', 'type': 'date', 'placeholder': 'Enter expected delivery date'}),

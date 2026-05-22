@@ -73,10 +73,10 @@
 
                 <div>
                     <h1 class="text-sm font-bold text-orange-600">
-                        LW Inventory
+                        Elektronika
                     </h1>
                     <p class="text-xs text-slate-400">
-                        Management System
+                        Inventory Management System
                     </p>
                 </div>
             </div>
@@ -277,11 +277,6 @@
                     >
                         <i class="fa-solid fa-bars"></i>
                     </button>
-
-                    <div class="hidden items-center gap-3 rounded-xl border border-slate-200 px-4 py-2 md:flex md:w-96">
-                        <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
-                        <input type="text" placeholder="Search anything here" class="w-full outline-none text-sm">
-                    </div>
                 </div>
 
                 <div class="flex items-center gap-4">
@@ -347,6 +342,37 @@ setTimeout(() => {
     }
 }, 5000);
 
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const SEARCH_DELAY = 600;
+
+    document.querySelectorAll("form[data-auto-search='true']").forEach(function (form) {
+        const input = form.querySelector("input[name='search']");
+
+        if (!input) {
+            return;
+        }
+
+        let timer = null;
+
+        input.addEventListener("input", function () {
+            clearTimeout(timer);
+
+            timer = setTimeout(function () {
+                const searchValue = input.value.trim();
+
+                if (searchValue === "") {
+                    window.location.href = window.location.pathname;
+                    return;
+                }
+
+                form.submit();
+            }, SEARCH_DELAY);
+        });
+    });
+});
 </script>
 
 <script>

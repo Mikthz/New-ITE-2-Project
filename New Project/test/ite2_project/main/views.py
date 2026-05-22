@@ -59,7 +59,7 @@ def product_list(request):
     if not current_user:
         return redirect('login')
 
-    search = request.GET.get('search', '')
+    search = request.GET.get('search', '').strip()
 
     products = Product.objects.filter(
         Q(product_name__icontains=search) |
@@ -189,7 +189,7 @@ def suppliers(request):
     if not current_user:
         return redirect('login')
 
-    search = request.GET.get('search', '')
+    search = request.GET.get('search', '').strip()
 
     suppliers = Supplier.objects.filter(
         Q(supplier_name__icontains=search) |
@@ -283,7 +283,7 @@ def supplier_products(request):
     if not current_user:
         return redirect('login')
 
-    search = request.GET.get('search', '')
+    search = request.GET.get('search', '').strip()
 
     supplier_products = SupplierProduct.objects.filter(
         Q(supplier__supplier_name__icontains=search) |
@@ -725,7 +725,18 @@ def edit_delivery(request, pk):
         form = DeliveryForm(request.POST, instance=delivery)
 
         if form.is_valid():
-            form.save()
+            with transaction.atomic():
+                edited_delivery = form.save(commit=False)
+
+                if delivery.sale:
+                    sale = Sale.objects.select_for_update().get(
+                        pk=delivery.sale.pk
+                    )
+                    sale.customer_name = request.POST.get('customer_name', edited_delivery.customer_name)
+                    sale.save(update_fields=['customer_name'])
+
+                edited_delivery.customer_name = request.POST.get('customer_name', edited_delivery.customer_name)
+                edited_delivery.save()
 
     return redirect('delivery_list')
 
@@ -742,7 +753,28 @@ def delete_delivery(request, pk):
     delivery = get_object_or_404(Delivery, pk=pk)
 
     if request.method == 'POST':
-        delivery.delete()
+        try:
+            with transaction.atomic():
+                sale = delivery.sale
+
+                if sale:
+                    product = Product.objects.select_for_update().get(
+                        pk=sale.product.pk
+                    )
+
+                    product.stock_quantity += sale.quantity_sold
+                    product.save(update_fields=['stock_quantity'])
+
+                    Invoice.objects.filter(sale=sale).delete()
+                    delivery.delete()
+                    sale.delete()
+                else:
+                    delivery.delete()
+
+        except ProtectedError:
+            return HttpResponseForbidden(
+                'Cannot delete this delivery because it is linked to protected records.'
+            )
 
     return redirect('delivery_list')
 
@@ -773,14 +805,14 @@ def create_supplier_delivery(request):
         return HttpResponseForbidden('Access Forbidden')
 
     if request.method == 'POST':
-        form = SupplierDeliveryForm, QuotationForm, InvoiceForm(request.POST)
+        form = SupplierDeliveryForm(request.POST)
 
         if form.is_valid():
             form.save()
             return redirect('supplier_delivery_list')
 
     else:
-        form = SupplierDeliveryForm, QuotationForm, InvoiceForm()
+        form = SupplierDeliveryForm()
 
     return render(
         request,
@@ -803,7 +835,7 @@ def edit_supplier_delivery(request, pk):
     delivery = get_object_or_404(SupplierDelivery, pk=pk)
 
     if request.method == 'POST':
-        form = SupplierDeliveryForm, QuotationForm, InvoiceForm(request.POST, instance=delivery)
+        form = SupplierDeliveryForm(request.POST, instance=delivery)
 
         if form.is_valid():
             form.save()
@@ -832,7 +864,7 @@ def quotations(request):
     if not current_user:
         return redirect('login')
 
-    search = request.GET.get('search', '')
+    search = request.GET.get('search', '').strip()
 
     quotation_list = Quotation.objects.select_related(
         'supplier_product',
@@ -928,7 +960,7 @@ def invoices(request):
     if not current_user:
         return redirect('login')
 
-    search = request.GET.get('search', '')
+    search = request.GET.get('search', '').strip()
 
     invoice_list = Invoice.objects.select_related(
         'sale',
@@ -1023,7 +1055,7 @@ def record_sale(request):
     if not current_user:
         return redirect('login')
 
-    search = request.GET.get('search', '')
+    search = request.GET.get('search', '').strip()
 
     products = Product.objects.filter(
         Q(product_name__icontains=search) |
@@ -1279,7 +1311,7 @@ def user_management(request):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    search = request.GET.get('search', '')
+    search = request.GET.get('search', '').strip()
 
     users = Admin.objects.filter(
         Q(username__icontains=search) |
