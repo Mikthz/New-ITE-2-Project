@@ -185,8 +185,8 @@
 
             <!-- Expenses -->
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
-                    <i class="fa-solid fa-file-lines hidden"></i>
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                    <i class="fa-solid fa-file-lines"></i>
                     Expenses
                 </p>
 
@@ -206,8 +206,8 @@
 
             <!-- Invoices -->
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
-                    <i class="fa-solid fa-file-invoice-dollar hidden"></i>
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
                     Invoices
                 </p>
 
@@ -226,8 +226,8 @@
             </div>
 
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
-                    <i class="fa-solid fa-chart-line hidden"></i>
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                    <i class="fa-solid fa-chart-line"></i>
                     Reports
                 </p>
 
@@ -257,11 +257,6 @@
                 User Management
             </a>
             {% endif %}
-
-            <a href="{% url 'account_overview' %}" class="sidebar-link">
-                <i class="fa-solid fa-user-pen"></i>
-                Account Overview
-            </a>
 
             <a href="{% url 'contact_support' %}" class="sidebar-link">
                 <i class="fa-solid fa-headset"></i>

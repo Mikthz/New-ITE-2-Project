@@ -705,3 +705,30 @@ class ContactSupportForm(forms.ModelForm):
             'priority': forms.Select(attrs={'class': 'input'}),
             'message': forms.Textarea(attrs={'class': 'input', 'rows': 5, 'placeholder': 'Describe your issue'}),
         }
+
+class ChangePINForm(forms.Form):
+    current_pin = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={
+            'class': 'input',
+            'placeholder': 'Current PIN'
+        })
+    )
+
+    pin_code = forms.CharField(
+        required=True,
+        max_length=6,
+        widget=forms.PasswordInput(attrs={
+            'class': 'input',
+            'placeholder': 'New PIN'
+        })
+    )
+
+    confirm_pin_code = forms.CharField(
+        required=True,
+        max_length=6,
+        widget=forms.PasswordInput(attrs={
+            'class': 'input',
+            'placeholder': 'Confirm New PIN'
+        })
+    )

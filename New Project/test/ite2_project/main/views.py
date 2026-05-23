@@ -4,12 +4,12 @@ from django.db.models import Q
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.db.models.deletion import ProtectedError
+from django.core.files.storage import default_storage
 
 from django.db.models import Sum, Avg
 from django.utils import timezone
-from datetime import timedelta
 from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
-from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm
+from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm, ChangePINForm
 
 def get_current_admin(request):
     admin_pk = request.session.get('admin_id')
@@ -23,6 +23,10 @@ def get_current_admin(request):
         request.session.flush()
         return None
 
+def clean_missing_profile_picture(user):
+    if user.profile_picture and not default_storage.exists(user.profile_picture.name):
+        user.profile_picture = None
+        user.save(update_fields=['profile_picture'])
 
 def sync_expense_income(expense):
     if expense.status not in ['Accepted', 'Converted']:
@@ -1421,7 +1425,13 @@ def settings_page(request):
     if not current_user:
         return redirect('login')
 
-    return redirect('account_overview')
+    return render(
+        request,
+        'main/settings.html',
+        {
+            'current_user': current_user
+        }
+    )
 
 def account_overview(request):
     current_user = get_current_admin(request)
@@ -1429,15 +1439,115 @@ def account_overview(request):
     if not current_user:
         return redirect('login')
 
+    clean_missing_profile_picture(current_user)
+
     if request.method == 'POST':
-        form = AccountOverviewForm(request.POST, request.FILES, instance=current_user)
+        form = AccountOverviewForm(
+            request.POST,
+            request.FILES or None,
+            instance=current_user
+        )
+
         if form.is_valid():
             form.save()
             return redirect('account_overview')
+
     else:
         form = AccountOverviewForm(instance=current_user)
 
-    return render(request, 'main/account_overview.html', {'current_user': current_user, 'form': form})
+    return render(request, 'main/account_overview.html', {
+        'current_user': current_user,
+        'form': form
+    })
+
+def change_password(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if request.method == 'POST':
+        current_password = request.POST.get('current_password')
+        new_password = request.POST.get('new_password')
+        confirm_password = request.POST.get('confirm_password')
+
+        if current_password != current_user.password:
+            return render(request, 'main/change_password.html', {
+                'current_user': current_user,
+                'error': 'Current password is incorrect.'
+            })
+
+        if new_password != confirm_password:
+            return render(request, 'main/change_password.html', {
+                'current_user': current_user,
+                'error': 'New passwords do not match.'
+            })
+
+        current_user.password = new_password
+        current_user.save(update_fields=['password'])
+
+        return redirect('settings')
+
+    return render(request, 'main/change_password.html', {
+        'current_user': current_user
+    })
+
+
+def change_pin(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = ChangePINForm(request.POST)
+
+        if form.is_valid():
+            current_pin = form.cleaned_data.get('current_pin')
+            pin_code = form.cleaned_data.get('pin_code')
+            confirm_pin_code = form.cleaned_data.get('confirm_pin_code')
+
+            if current_user.pin_code and current_pin != current_user.pin_code:
+                form.add_error('current_pin', 'Current PIN is incorrect.')
+
+            elif pin_code != confirm_pin_code:
+                form.add_error('confirm_pin_code', 'PIN codes do not match.')
+
+            else:
+                current_user.pin_code = pin_code
+                current_user.save(update_fields=['pin_code'])
+                return redirect('settings')
+
+    else:
+        form = ChangePINForm()
+
+    return render(request, 'main/change_pin.html', {
+        'current_user': current_user,
+        'form': form
+    })
+
+def disable_pin(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    form = ChangePINForm(request.POST or None)
+
+    if request.method == 'POST':
+        current_pin = request.POST.get('current_pin', '').strip()
+
+        if current_user.pin_code and current_pin != current_user.pin_code:
+            form.add_error('current_pin', 'Current PIN is incorrect.')
+            return render(request, 'main/change_pin.html', {
+                'current_user': current_user,
+                'form': form
+            })
+
+        current_user.pin_code = None
+        current_user.save(update_fields=['pin_code'])
+
+    return redirect('settings')
 
 def contact_support(request):
     current_user = get_current_admin(request)
@@ -1553,19 +1663,20 @@ def edit_user(request, pk):
         return HttpResponseForbidden('Access Forbidden')
 
     user = get_object_or_404(Admin, pk=pk)
+    clean_missing_profile_picture(user)
 
     if request.method == 'POST':
         form = AdminUpdateForm(
             request.POST,
-            request.FILES,
+            request.FILES or None,
             instance=user
         )
 
         if form.is_valid():
             edited_user = form.save(commit=False)
 
-            if user.is_admin and user.pk != current_user.pk:
-                edited_user.role = 'Admin'
+            if user.pk == current_user.pk:
+                edited_user.role = user.role
 
             edited_user.save()
 

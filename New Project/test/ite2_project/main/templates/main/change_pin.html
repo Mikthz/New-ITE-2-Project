@@ -1,0 +1,81 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}{% if current_user.pin_code %}Change PIN{% else %}Create PIN{% endif %}{% endblock %}
+
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">
+        {% if current_user.pin_code %}Change PIN{% else %}Create PIN{% endif %}
+    </h1>
+    <p class="mt-1 text-sm text-slate-500">
+        Set or update your login PIN.
+    </p>
+</div>
+
+<form method="POST" class="space-y-6">
+    {% csrf_token %}
+
+    {% if error %}
+        <p class="rounded-xl bg-red-100 p-4 text-red-700">{{ error }}</p>
+    {% endif %}
+
+    <section class="card p-6 space-y-5">
+
+        {% if current_user.pin_code %}
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Current PIN</label>
+            {{ form.current_pin }}
+            <p class="mt-1 text-xs text-slate-500">
+                Enter your current PIN before changing or disabling it.
+            </p>
+        </div>
+        {% endif %}
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">New PIN</label>
+            {{ form.pin_code }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Confirm New PIN</label>
+            {{ form.confirm_pin_code }}
+        </div>
+
+    <div class="flex items-center justify-between">
+
+        {% if current_user.pin_code %}
+        <form method="POST" action="{% url 'disable_pin' %}">
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="rounded-xl bg-red-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-red-600"
+            >
+                <i class="fa-solid fa-lock-open mr-2"></i>
+                Disable PIN
+            </button>
+        </form>
+        {% else %}
+        <a href="{% url 'settings' %}" class="btn-secondary">
+            <i class="fa-solid fa-arrow-left mr-2"></i>
+            Back
+        </a>
+        {% endif %}
+
+        <div class="flex gap-3">
+            {% if current_user.pin_code %}
+            <a href="{% url 'settings' %}" class="btn-secondary">
+                <i class="fa-solid fa-arrow-left mr-2"></i>
+                Back
+            </a>
+            {% endif %}
+
+            <button class="btn-primary">
+                <i class="fa-solid fa-floppy-disk mr-2"></i>
+                Save PIN
+            </button>
+        </div>
+
+    </div>
+</form>
+{% endblock %}

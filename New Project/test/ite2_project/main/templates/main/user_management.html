@@ -149,13 +149,13 @@
 
             <div>
                 <label class="mb-2 block text-sm font-semibold">Role</label>
-                <select name="role" class="input" {% if user.is_admin and user.pk != current_user.pk %}disabled{% endif %}>
+                <select name="role" class="input" {% if user.pk == current_user.pk %}disabled{% endif %}>
                     <option value="Staff" {% if user.role == 'Staff' %}selected{% endif %}>Staff</option>
                     <option value="Admin" {% if user.role == 'Admin' %}selected{% endif %}>Admin</option>
                 </select>
-                {% if user.is_admin and user.pk != current_user.pk %}
-                <input type="hidden" name="role" value="Admin">
-                <p class="mt-1 text-xs text-slate-400">Other admin roles are protected.</p>
+                {% if user.pk == current_user.pk %}
+                <input type="hidden" name="role" value="{{ user.role }}">
+                <p class="mt-1 text-xs text-slate-400">Your own role is protected.</p>
                 {% endif %}
             </div>
 

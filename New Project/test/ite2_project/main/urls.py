@@ -243,6 +243,24 @@ urlpatterns = [
         views.account_overview,
         name='account_overview'
     ),
+    
+    path(
+        'change-password/',
+        views.change_password,
+        name='change_password'
+        ),
+    
+    path(
+        'change-pin/',
+        views.change_pin,
+        name='change_pin'
+        ),
+
+    path(
+    'disable-pin/',
+    views.disable_pin,
+    name='disable_pin'
+    ),
 
     path(
         'contact-support/',
