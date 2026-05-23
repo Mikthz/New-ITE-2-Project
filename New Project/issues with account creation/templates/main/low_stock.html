@@ -1,0 +1,75 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Low Stock{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-800">
+        Low Stock Products
+    </h1>
+
+    <p class="mt-1 text-sm text-slate-500">
+        Products that require restocking
+    </p>
+</div>
+
+<div class="card overflow-hidden">
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-225">
+
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Product</th>
+                    <th class="p-4">Category</th>
+                    <th class="p-4">Supplier</th>
+                    <th class="p-4">Stock</th>
+                    <th class="p-4">Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for product in low_stock_products %}
+                <tr class="table-row">
+
+                    <td class="p-4 font-semibold">
+                        {{ product.product_name }}
+                    </td>
+
+                    <td class="p-4">
+                        {{ product.category }}
+                    </td>
+
+                    <td class="p-4">
+                        {{ product.supplier }}
+                    </td>
+
+                    <td class="p-4 font-bold text-red-500">
+                        {{ product.stock_quantity }}
+                    </td>
+
+                    <td class="p-4">
+                        <span class="status-warning">
+                            Low Stock
+                        </span>
+                    </td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="p-10 text-center text-slate-400">
+                        No low stock products.
+                    </td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

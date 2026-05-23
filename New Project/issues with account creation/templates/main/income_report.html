@@ -1,0 +1,72 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Income Report{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">Income Report</h1>
+    <p class="mt-1 text-sm text-slate-500">Paid invoice income summary</p>
+</div>
+
+<div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Paid Income</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">₱{{ total_sales }}</h2>
+    </div>
+
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Paid Invoices</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">{{ total_orders }}</h2>
+    </div>
+
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Average Paid Invoice</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">₱{{ average_sale|floatformat:2 }}</h2>
+    </div>
+</div>
+
+<div class="mt-8 card overflow-hidden">
+    <div class="border-b border-slate-200 p-5">
+        <h2 class="font-bold text-slate-900">
+            <i class="fa-solid fa-chart-line mr-2 text-orange-500"></i>
+            Paid Invoice Details
+        </h2>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-225 text-sm">
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Invoice Date</th>
+                    <th class="p-4">Invoice ID</th>
+                    <th class="p-4">Product</th>
+                    <th class="p-4">Customer</th>
+                    <th class="p-4">Quantity</th>
+                    <th class="p-4">Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for invoice in paid_invoices %}
+                <tr class="border-b last:border-0 hover:bg-orange-50/40">
+                    <td class="p-4">{{ invoice.invoice_date }}</td>
+                    <td class="p-4 font-bold">#{{ invoice.pk }}</td>
+                    <td class="p-4 font-bold">{{ invoice.sale.product.product_name }}</td>
+                    <td class="p-4">{{ invoice.sale.customer_name }}</td>
+                    <td class="p-4">{{ invoice.sale.quantity_sold }}</td>
+                    <td class="p-4 font-bold text-orange-600">₱{{ invoice.amount }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-10 text-center text-slate-400">
+                        No paid invoice income records found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

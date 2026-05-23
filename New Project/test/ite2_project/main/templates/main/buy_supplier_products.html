@@ -8,18 +8,34 @@
 <div class="mb-8 card p-8">
     <div class="mb-6 flex items-center gap-3">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
-            <i class="fa-solid fa-cart-shopping text-lg"></i>
+            <i class="fa-solid fa-file-invoice text-lg"></i>
         </div>
 
         <div>
             <h2 class="text-xl font-bold text-slate-900">
-                New Supplier Stock Purchase
+                New Supplier Expense
             </h2>
             <p class="text-sm text-slate-500">
-                Select multiple supplier products and set the quantity for each item
+                Select supplier products and quantities. This creates expense records first; purchases and deliveries are created only after acceptance/conversion.
             </p>
         </div>
     </div>
+
+    {% if form.errors %}
+    <div class="mb-6 rounded-2xl border border-red-200 bg-red-500 px-5 py-4 text-white shadow-lg">
+        <h3 class="font-bold">Form Error</h3>
+        <div class="mt-1 text-sm text-red-100">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
 
     <form method="POST" id="multiPurchaseForm" class="space-y-6">
         {% csrf_token %}
@@ -37,11 +53,11 @@
                     <option
                         value="{{ item.pk }}"
                         data-name="{% if item.product %}{{ item.product.product_name }}{% else %}No product selected{% endif %}"
-                        data-company="{{ item.supplier.supplier_name }}"
+                        data-company="{{ item.supplier.company_name }}"
                         data-price="{{ item.unit_price }}"
                         data-image="{% if item.product.product_image %}{{ item.product.product_image.url }}{% else %}{% static 'images/default-product.png' %}{% endif %}"
                     >
-                        {{ item.supplier.supplier_name }} - {% if item.product %}{{ item.product.product_name }}{% else %}No product selected{% endif %} - ₱{{ item.unit_price }}
+                        {{ item.supplier.company_name }} - {% if item.product %}{{ item.product.product_name }}{% else %}No product selected{% endif %} - ₱{{ item.unit_price }}
                     </option>
                     {% endfor %}
                 </select>
@@ -86,8 +102,8 @@
 
         <div class="flex justify-end border-t border-slate-100 pt-5">
             <button class="btn-primary">
-                <i class="fa-solid fa-bag-shopping mr-2"></i>
-                Buy Selected Stock
+                <i class="fa-solid fa-file-invoice mr-2"></i>
+                Create Supplier Expense
             </button>
         </div>
     </form>
@@ -95,7 +111,8 @@
 
 <div class="card overflow-hidden">
     <div class="border-b border-slate-200 p-5">
-        <h2 class="font-bold text-slate-900">Supplier Purchase History</h2>
+        <h2 class="font-bold text-slate-900">Supplier Expense History</h2>
+        <p class="mt-1 text-sm text-slate-500">Accept/convert a supplier expense to create the supplier purchase and delivery.</p>
     </div>
 
     <div class="overflow-x-auto">
@@ -107,28 +124,41 @@
                     <th class="p-4">Product</th>
                     <th class="p-4">Quantity</th>
                     <th class="p-4">Total Price</th>
-                    <th class="p-4">Purchase Date</th>
+                    <th class="p-4">Expense Date</th>
+                    <th class="p-4">Status</th>
                     <th class="p-4 text-right">Actions</th>
                 </tr>
             </thead>
 
             <tbody>
-                {% for purchase in purchases %}
+                {% for expense in supplier_expenses %}
                 <tr class="table-row">
-                    <td class="p-4 font-bold">{{ purchase.supplier_product.supplier.supplier_name }}</td>
-                    <td class="p-4">{{ purchase.supplier_product.supplier.address }}</td>
-                    <td class="p-4">{% if purchase.supplier_product.product %}{{ purchase.supplier_product.product.product_name }}{% else %}No product selected{% endif %}</td>
-                    <td class="p-4">{{ purchase.quantity }}</td>
-                    <td class="p-4 font-bold">₱{{ purchase.total_price }}</td>
-                    <td class="p-4 text-slate-500">{{ purchase.purchase_date }}</td>
+                    <td class="p-4 font-bold">{{ expense.supplier_product.supplier.company_name }}</td>
+                    <td class="p-4">{{ expense.supplier_product.supplier.address }}</td>
+                    <td class="p-4">{% if expense.supplier_product.product %}{{ expense.supplier_product.product.product_name }}{% else %}No product selected{% endif %}</td>
+                    <td class="p-4">{{ expense.quantity }}</td>
+                    <td class="p-4 font-bold">₱{{ expense.total_price }}</td>
+                    <td class="p-4 text-slate-500">{{ expense.expense_date }}</td>
+                    <td class="p-4">{{ expense.status }}</td>
 
                     <td class="p-4">
                         <div class="flex justify-end gap-2">
-                            <button onclick="toggleEditPurchase('{{ purchase.pk }}')" class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </button>
+                            {% if expense.status != 'Accepted' and expense.status != 'Converted' %}
+                            <form method="POST" action="{% url 'edit_expense' expense.pk %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="supplier_product" value="{{ expense.supplier_product.pk }}">
+                                <input type="hidden" name="quantity" value="{{ expense.quantity }}">
+                                <input type="hidden" name="expense_date" value="{{ expense.expense_date|date:'Y-m-d' }}">
+                                <input type="hidden" name="valid_until" value="{{ expense.valid_until|date:'Y-m-d' }}">
+                                <input type="hidden" name="status" value="Accepted">
+                                <input type="hidden" name="remarks" value="{{ expense.remarks }}">
+                                <button class="rounded-lg bg-green-500 px-3 py-2 text-xs font-bold text-white">
+                                    Accept
+                                </button>
+                            </form>
+                            {% endif %}
 
-                            <form method="POST" action="{% url 'delete_supplier_purchase' purchase.pk %}" onsubmit="return confirm('Delete this purchase?');">
+                            <form method="POST" action="{% url 'delete_expense' expense.pk %}" onsubmit="return confirm('Delete this supplier expense?');">
                                 {% csrf_token %}
                                 <button class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500 text-white">
                                     <i class="fa-solid fa-trash text-xs"></i>
@@ -137,22 +167,9 @@
                         </div>
                     </td>
                 </tr>
-
-                <tr id="edit-purchase-{{ purchase.pk }}" class="hidden bg-slate-50">
-                    <td colspan="7" class="p-5">
-                        <form method="POST" action="{% url 'edit_supplier_purchase' purchase.pk %}" class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {% csrf_token %}
-                            <select name="supplier_product" class="input">
-                                <option value="{{ purchase.supplier_product.pk }}" selected>{% if purchase.supplier_product.product %}{{ purchase.supplier_product.product.product_name }}{% else %}No product selected{% endif %}</option>
-                            </select>
-                            <input type="number" name="quantity" min="1" value="{{ purchase.quantity }}" class="input">
-                            <button class="btn-primary md:col-span-2">Save Changes</button>
-                        </form>
-                    </td>
-                </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="7" class="p-10 text-center text-slate-400">No purchases found.</td>
+                    <td colspan="8" class="p-10 text-center text-slate-400">No supplier expenses found.</td>
                 </tr>
                 {% endfor %}
             </tbody>

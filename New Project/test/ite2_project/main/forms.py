@@ -11,8 +11,9 @@ from .models import (
     SupplierPurchase,
     SupplierDelivery,
     Delivery,
-    Quotation,
-    Invoice
+    Expense,
+    Invoice,
+    ContactSupport
 )
 
 class CategoryForm(forms.ModelForm):
@@ -281,6 +282,7 @@ class AdminForm(forms.ModelForm):
                 'placeholder': 'Password'
             })
         )
+    
 
     class Meta:
         model = Admin
@@ -331,13 +333,18 @@ class AdminForm(forms.ModelForm):
             }),
 
             'role': forms.Select(attrs={
-                'class': 'search-select input'
+                'class': 'input'
             }),
 
             'profile_picture': forms.FileInput(attrs={
                 'class': 'input'
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.fields['role'].required = False
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
@@ -384,12 +391,14 @@ class AdminForm(forms.ModelForm):
             return cleaned_data
 
         if password != confirm_password:
-            raise ValidationError(
+            self.add_error(
+                'confirm_password',
                 'Passwords do not match.'
             )
 
         if password and len(password) < 8:
-            raise ValidationError(
+            self.add_error(
+                'password',
                 'Password must be at least 8 characters.'
             )
 
@@ -436,7 +445,7 @@ class AdminUpdateForm(forms.ModelForm):
                 'placeholder': 'Address'
             }),
             'role': forms.Select(attrs={
-                'class': 'search-select input'
+                'class': 'input'
             }),
             'profile_picture': forms.FileInput(attrs={
                 'class': 'input'
@@ -479,26 +488,36 @@ class AdminUpdateForm(forms.ModelForm):
         return picture
 
 
-class QuotationForm(forms.ModelForm):
+class ExpenseForm(forms.ModelForm):
     class Meta:
-        model = Quotation
+        model = Expense
         fields = [
+            'customer_name',
+            'product',
             'supplier_product',
             'quantity',
-            'quotation_date',
+            'expense_date',
             'valid_until',
             'status',
             'remarks'
         ]
 
         widgets = {
+            'customer_name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Customer / company name'}),
+            'product': forms.Select(attrs={'class': 'search-select input'}),
             'supplier_product': forms.Select(attrs={'class': 'search-select input'}),
             'quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Quantity', 'min': '1'}),
-            'quotation_date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
+            'expense_date': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
             'valid_until': forms.DateInput(attrs={'class': 'input', 'type': 'date'}),
             'status': forms.Select(attrs={'class': 'input'}),
-            'remarks': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Quotation remarks'}),
+            'remarks': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Expense remarks'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['customer_name'].required = False
+        self.fields['product'].required = False
+        self.fields['supplier_product'].required = False
 
     def clean_quantity(self):
         quantity = self.cleaned_data.get('quantity')
@@ -510,13 +529,57 @@ class QuotationForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
+        product = cleaned_data.get('product')
         supplier_product = cleaned_data.get('supplier_product')
         quantity = cleaned_data.get('quantity')
+        customer_name = cleaned_data.get('customer_name')
+        status = cleaned_data.get('status')
 
-        if supplier_product and quantity and quantity > supplier_product.available_quantity:
+        if product and supplier_product:
             raise ValidationError(
-                'Quotation quantity cannot be greater than the supplier product available quantity.'
+                'Select either a direct product expense or a supplier product expense, not both.'
             )
+
+        if not product and not supplier_product:
+            raise ValidationError(
+                'Please select a customer product or a supplier product for the expense.'
+            )
+
+        if product and not customer_name:
+            raise ValidationError(
+                'Please enter the company/supplier name for this expense.'
+            )
+
+        if supplier_product:
+            cleaned_data['customer_name'] = None
+
+        if product and quantity and status in ['Accepted', 'Converted']:
+            existing_sale = getattr(self.instance, 'sale', None)
+            existing_sale_quantity = (
+                existing_sale.quantity_sold
+                if existing_sale and existing_sale.product_id == product.pk
+                else 0
+            )
+            available_stock = product.stock_quantity + existing_sale_quantity
+
+            if quantity > available_stock:
+                raise ValidationError(
+                    'Accepted or converted expense quantity cannot be greater than available stock.'
+                )
+
+        if supplier_product and quantity and status in ['Accepted', 'Converted']:
+            existing_purchase = getattr(self.instance, 'supplier_purchase', None)
+            existing_purchase_quantity = (
+                existing_purchase.quantity
+                if existing_purchase and existing_purchase.supplier_product_id == supplier_product.pk
+                else 0
+            )
+            available_supplier_stock = supplier_product.available_quantity + existing_purchase_quantity
+
+            if quantity > available_supplier_stock:
+                raise ValidationError(
+                    'Accepted or converted supplier expense quantity cannot be greater than supplier stock.'
+                )
 
         return cleaned_data
 
@@ -553,3 +616,92 @@ class InvoiceForm(forms.ModelForm):
                 raise ValidationError('This sale already has an invoice.')
 
         return sale
+
+
+class AccountOverviewForm(forms.ModelForm):
+    current_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'Current password'})
+    )
+    new_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'New password'})
+    )
+    confirm_new_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'Confirm new password'})
+    )
+    pin_code = forms.CharField(
+        required=False,
+        max_length=6,
+        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'Optional 4-6 digit PIN', 'inputmode': 'numeric'})
+    )
+
+    class Meta:
+        model = Admin
+        fields = [
+            'username', 'first_name', 'last_name', 'email',
+            'contact_number', 'address', 'profile_picture', 'pin_code'
+        ]
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'input'}),
+            'first_name': forms.TextInput(attrs={'class': 'input'}),
+            'last_name': forms.TextInput(attrs={'class': 'input'}),
+            'email': forms.EmailInput(attrs={'class': 'input'}),
+            'contact_number': forms.TextInput(attrs={'class': 'input'}),
+            'address': forms.Textarea(attrs={'class': 'input', 'rows': 3}),
+            'profile_picture': forms.FileInput(attrs={'class': 'input'}),
+        }
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        qs = Admin.objects.filter(username=username)
+        if self.instance.pk:
+            qs = qs.exclude(pk=self.instance.pk)
+        if qs.exists():
+            raise ValidationError('Username already exists.')
+        return username
+
+    def clean_pin_code(self):
+        pin = self.cleaned_data.get('pin_code')
+        if pin and (not pin.isdigit() or len(pin) < 4 or len(pin) > 6):
+            raise ValidationError('PIN must be 4 to 6 digits only.')
+        return pin
+
+    def clean(self):
+        cleaned_data = super().clean()
+        current_password = cleaned_data.get('current_password')
+        new_password = cleaned_data.get('new_password')
+        confirm_new_password = cleaned_data.get('confirm_new_password')
+
+        if new_password or confirm_new_password:
+            if current_password != self.instance.password:
+                self.add_error('current_password', 'Current password is incorrect.')
+            if new_password != confirm_new_password:
+                self.add_error('confirm_new_password', 'New passwords do not match.')
+            if new_password and len(new_password) < 8:
+                self.add_error('new_password', 'Password must be at least 8 characters.')
+
+        return cleaned_data
+
+    def save(self, commit=True):
+        admin = super().save(commit=False)
+        new_password = self.cleaned_data.get('new_password')
+        if new_password:
+            admin.password = new_password
+        if commit:
+            admin.save()
+        return admin
+
+
+class ContactSupportForm(forms.ModelForm):
+    class Meta:
+        model = ContactSupport
+        fields = ['name', 'email', 'subject', 'priority', 'message']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Your name'}),
+            'email': forms.EmailInput(attrs={'class': 'input', 'placeholder': 'Your email'}),
+            'subject': forms.TextInput(attrs={'class': 'input', 'placeholder': 'Support subject'}),
+            'priority': forms.Select(attrs={'class': 'input'}),
+            'message': forms.Textarea(attrs={'class': 'input', 'rows': 5, 'placeholder': 'Describe your issue'}),
+        }

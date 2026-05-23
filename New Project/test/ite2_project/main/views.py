@@ -6,8 +6,10 @@ from django.core.paginator import Paginator
 from django.db.models.deletion import ProtectedError
 
 from django.db.models import Sum, Avg
-from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Quotation, Invoice
-from .forms import AdminForm, AdminUpdateForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, QuotationForm, InvoiceForm
+from django.utils import timezone
+from datetime import timedelta
+from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
+from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm
 
 def get_current_admin(request):
     admin_pk = request.session.get('admin_id')
@@ -21,6 +23,84 @@ def get_current_admin(request):
         request.session.flush()
         return None
 
+
+def sync_expense_income(expense):
+    if expense.status not in ['Accepted', 'Converted']:
+        return
+
+    if expense.is_supplier_expense:
+        expense.convert_to_supplier_purchase_and_delivery()
+
+
+def remove_expense_income(expense):
+    sale = expense.sale
+
+    if sale:
+        product = Product.objects.select_for_update().get(pk=sale.product.pk)
+        product.stock_quantity += sale.quantity_sold
+        product.save(update_fields=['stock_quantity'])
+
+        Invoice.objects.filter(sale=sale).delete()
+        expense.sale = None
+        expense.save(update_fields=['sale', 'updated_at'])
+        sale.delete()
+
+    supplier_purchase = expense.supplier_purchase
+
+    if supplier_purchase:
+        supplier_product = SupplierProduct.objects.select_for_update().get(
+            pk=supplier_purchase.supplier_product.pk
+        )
+        supplier_product.available_quantity += supplier_purchase.quantity
+        supplier_product.save(update_fields=['available_quantity'])
+
+        SupplierDelivery.objects.filter(
+            supplier_purchase=supplier_purchase
+        ).delete()
+        expense.supplier_purchase = None
+        expense.save(update_fields=['supplier_purchase', 'updated_at'])
+        supplier_purchase.delete()
+
+
+def get_period_bounds(request):
+    period = request.GET.get('period', 'all')
+    today = timezone.localdate()
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    if period == 'daily':
+        start = end = today
+    elif period == 'monthly':
+        start = today.replace(day=1)
+        end = today
+    elif period == 'quarterly':
+        start_month = ((today.month - 1) // 3) * 3 + 1
+        start = today.replace(month=start_month, day=1)
+        end = today
+    elif period == 'bi_yearly':
+        start = today.replace(month=1 if today.month <= 6 else 7, day=1)
+        end = today
+    elif period == 'yearly':
+        start = today.replace(month=1, day=1)
+        end = today
+    elif period == 'custom' and start_date and end_date:
+        start = start_date
+        end = end_date
+    else:
+        start = end = None
+
+    return period, start, end
+
+def filter_queryset_by_period(queryset, field_name, start, end):
+    if start and end:
+        return queryset.filter(**{f'{field_name}__date__gte': start, f'{field_name}__date__lte': end})
+    return queryset
+
+def filter_queryset_by_date_period(queryset, field_name, start, end):
+    if start and end:
+        return queryset.filter(**{f'{field_name}__gte': start, f'{field_name}__lte': end})
+    return queryset
+
 def login_view(request):
 
     if request.method == 'POST':
@@ -32,6 +112,18 @@ def login_view(request):
                 username=username,
                 password=password
             )
+
+            if admin_user.pin_code and request.POST.get('pin_code') != admin_user.pin_code:
+                return render(
+                    request,
+                    'main/login.html',
+                    {
+                        'pin_required': True,
+                        'username': username,
+                        'password': password,
+                        'error': 'Enter your PIN to continue.'
+                    }
+                )
 
             request.session['admin_id'] = admin_user.pk
 
@@ -384,7 +476,15 @@ def buy_supplier_products(request):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    purchases = SupplierPurchase.objects.all().order_by('-purchase_date')
+    supplier_expenses = Expense.objects.select_related(
+        'supplier_product',
+        'supplier_product__supplier',
+        'supplier_product__product',
+        'supplier_purchase'
+    ).filter(
+        supplier_product__isnull=False
+    ).order_by('-expense_date', '-created_at')
+
     supplier_products = SupplierProduct.objects.all().order_by(
         'product__product_name'
     )
@@ -443,7 +543,7 @@ def buy_supplier_products(request):
                     )
                     form.add_error(
                         None,
-                        f'Not enough stock for {product_name}.'
+                        f'Not enough supplier stock for {product_name}.'
                     )
                     has_error = True
 
@@ -471,25 +571,11 @@ def buy_supplier_products(request):
                         for product_id, quantity in purchase_quantities.items():
                             supplier_product = locked_supplier_products[product_id]
 
-                            purchase = SupplierPurchase.objects.create(
+                            Expense.objects.create(
                                 supplier_product=supplier_product,
-                                quantity=quantity
-                            )
-
-                            SupplierDelivery.objects.create(
-                                supplier_purchase=purchase,
-                                delivery_address=supplier_product.supplier.address,
-                                status='Pending'
-                            )
-
-                            Quotation.objects.update_or_create(
-                                supplier_purchase=purchase,
-                                defaults={
-                                    'supplier_product': supplier_product,
-                                    'quantity': quantity,
-                                    'status': 'Sent',
-                                    'remarks': 'Auto-generated from supplier purchase.'
-                                }
+                                quantity=quantity,
+                                status='Sent',
+                                remarks='Auto-generated from Buy Supplier Products. Accept or convert this expense to create the supplier purchase and delivery.'
                             )
 
                 if not has_error:
@@ -501,7 +587,8 @@ def buy_supplier_products(request):
         {
             'current_user': current_user,
             'form': form,
-            'purchases': purchases,
+            'supplier_expenses': supplier_expenses,
+            'purchases': supplier_expenses,
             'supplier_products': supplier_products
         }
     )
@@ -587,7 +674,7 @@ def edit_supplier_purchase(request, pk):
                     delivery_address=new_supplier_product.supplier.address
                 )
 
-                Quotation.objects.update_or_create(
+                Expense.objects.update_or_create(
                     supplier_purchase=edited_purchase,
                     defaults={
                         'supplier_product': new_supplier_product,
@@ -622,7 +709,7 @@ def delete_supplier_purchase(request, pk):
                 supplier_purchase=purchase
             ).delete()
 
-            Quotation.objects.filter(
+            Expense.objects.filter(
                 supplier_purchase=purchase
             ).delete()
 
@@ -858,7 +945,7 @@ def delete_supplier_delivery(request, pk):
 
     return redirect('supplier_delivery_list')
 
-def quotations(request):
+def expenses(request):
     current_user = get_current_admin(request)
 
     if not current_user:
@@ -866,29 +953,41 @@ def quotations(request):
 
     search = request.GET.get('search', '').strip()
 
-    quotation_list = Quotation.objects.select_related(
+    period, start, end = get_period_bounds(request)
+
+    expense_list = Expense.objects.select_related(
+        'product',
+        'sale',
         'supplier_product',
         'supplier_product__supplier',
         'supplier_product__product',
         'supplier_purchase'
     ).filter(
+        Q(expense_code__icontains=search) |
+        Q(customer_name__icontains=search) |
+        Q(product__product_name__icontains=search) |
         Q(supplier_product__supplier__supplier_name__icontains=search) |
         Q(supplier_product__product__product_name__icontains=search) |
         Q(status__icontains=search)
-    ).order_by('-quotation_date', '-created_at')
+    ).order_by('-expense_date', '-created_at')
+
+    expense_list = filter_queryset_by_date_period(expense_list, 'expense_date', start, end)
 
     return render(
         request,
-        'main/quotations.html',
+        'main/expenses.html',
         {
             'current_user': current_user,
-            'quotations': quotation_list,
+            'expenses': expense_list,
             'search': search,
-            'quotation_form': QuotationForm()
+            'period': period,
+            'start_date': start,
+            'end_date': end,
+            'expense_form': ExpenseForm()
         }
     )
     
-def create_quotation(request):
+def create_expense(request):
     current_user = get_current_admin(request)
 
     if not current_user:
@@ -898,18 +997,20 @@ def create_quotation(request):
         return HttpResponseForbidden('Access Forbidden')
 
     if request.method == 'POST':
-        form = QuotationForm(request.POST)
+        form = ExpenseForm(request.POST)
 
         if form.is_valid():
-            form.save()
-            return redirect('quotations')
+            with transaction.atomic():
+                expense = form.save()
+                sync_expense_income(expense)
+            return redirect('expenses')
 
     else:
-        form = QuotationForm()
+        form = ExpenseForm()
 
     return render(
         request,
-        'main/create_quotation.html',
+        'main/create_expense.html',
         {
             'current_user': current_user,
             'form': form
@@ -917,7 +1018,7 @@ def create_quotation(request):
     )
 
 
-def edit_quotation(request, pk):
+def edit_expense(request, pk):
     current_user = get_current_admin(request)
 
     if not current_user:
@@ -926,18 +1027,20 @@ def edit_quotation(request, pk):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    quotation = get_object_or_404(Quotation, pk=pk)
+    expense = get_object_or_404(Expense, pk=pk)
 
     if request.method == 'POST':
-        form = QuotationForm(request.POST, instance=quotation)
+        form = ExpenseForm(request.POST, instance=expense)
 
         if form.is_valid():
-            form.save()
+            with transaction.atomic():
+                expense = form.save()
+                sync_expense_income(expense)
 
-    return redirect('quotations')
+    return redirect('expenses')
 
 
-def delete_quotation(request, pk):
+def delete_expense(request, pk):
     current_user = get_current_admin(request)
 
     if not current_user:
@@ -946,12 +1049,14 @@ def delete_quotation(request, pk):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    quotation = get_object_or_404(Quotation, pk=pk)
+    expense = get_object_or_404(Expense, pk=pk)
 
     if request.method == 'POST':
-        quotation.delete()
+        with transaction.atomic():
+            remove_expense_income(expense)
+            expense.delete()
 
-    return redirect('quotations')
+    return redirect('expenses')
 
 
 def invoices(request):
@@ -962,14 +1067,19 @@ def invoices(request):
 
     search = request.GET.get('search', '').strip()
 
+    period, start, end = get_period_bounds(request)
+
     invoice_list = Invoice.objects.select_related(
         'sale',
         'sale__product'
     ).filter(
+        Q(invoice_code__icontains=search) |
         Q(sale__customer_name__icontains=search) |
         Q(sale__product__product_name__icontains=search) |
         Q(status__icontains=search)
     ).order_by('-invoice_date', '-created_at')
+
+    invoice_list = filter_queryset_by_date_period(invoice_list, 'invoice_date', start, end)
 
     return render(
         request,
@@ -978,6 +1088,9 @@ def invoices(request):
             'current_user': current_user,
             'invoices': invoice_list,
             'search': search,
+            'period': period,
+            'start_date': start,
+            'end_date': end,
             'invoice_form': InvoiceForm()
         }
     )
@@ -1110,21 +1223,19 @@ def sales_report(request):
     if not current_user:
         return redirect('login')
 
+    period, start, end = get_period_bounds(request)
+
     sales = Sale.objects.select_related(
         'product',
         'product__category',
         'product__supplier'
     ).order_by('-sale_date')
 
-    total_income = sales.aggregate(
-        total=Sum('total_price')
-    )['total'] or 0
+    sales = filter_queryset_by_period(sales, 'sale_date', start, end)
 
+    total_income = sales.aggregate(total=Sum('total_price'))['total'] or 0
     total_orders = sales.count()
-
-    total_items_sold = sales.aggregate(
-        total=Sum('quantity_sold')
-    )['total'] or 0
+    total_items_sold = sales.aggregate(total=Sum('quantity_sold'))['total'] or 0
 
     return render(
         request,
@@ -1135,6 +1246,9 @@ def sales_report(request):
             'total_income': total_income,
             'total_orders': total_orders,
             'total_items_sold': total_items_sold,
+            'period': period,
+            'start_date': start,
+            'end_date': end,
         }
     )
 
@@ -1144,15 +1258,50 @@ def income_report(request):
     if not current_user:
         return redirect('login')
 
+    period, start, end = get_period_bounds(request)
+
     paid_invoices = Invoice.objects.select_related(
         'sale',
-        'sale__product'
-    ).filter(
-        status='Paid'
-    ).order_by('-invoice_date', '-created_at')
+        'sale__product',
+        'sale__expense'
+    ).filter(status='Paid').order_by('-invoice_date', '-created_at')
+
+    paid_invoices = filter_queryset_by_date_period(paid_invoices, 'invoice_date', start, end)
+
+    accepted_expenses = Expense.objects.filter(
+        status__in=['Accepted', 'Converted']
+    ).select_related(
+        'product',
+        'supplier_product',
+        'supplier_product__supplier',
+        'supplier_product__product',
+        'supplier_purchase'
+    ).order_by('-expense_date', '-created_at')
+    accepted_expenses = filter_queryset_by_date_period(
+        accepted_expenses,
+        'expense_date',
+        start,
+        end
+    )
+
+    direct_purchase_expenses = SupplierPurchase.objects.filter(
+        expense__isnull=True
+    ).order_by('-purchase_date')
+    direct_purchase_expenses = filter_queryset_by_period(
+        direct_purchase_expenses,
+        'purchase_date',
+        start,
+        end
+    )
 
     total_sales = paid_invoices.aggregate(total=Sum('amount'))['total'] or 0
     total_orders = paid_invoices.count()
+    expense_total = accepted_expenses.aggregate(total=Sum('total_price'))['total'] or 0
+    direct_purchase_expense_total = direct_purchase_expenses.aggregate(total=Sum('total_price'))['total'] or 0
+    total_expense_amount = expense_total + direct_purchase_expense_total
+    net_income = total_sales - total_expense_amount
+    total_expenses_count = accepted_expenses.count()
+    total_expense_records = total_expenses_count + direct_purchase_expenses.count()
     average_sale = paid_invoices.aggregate(avg=Avg('amount'))['avg'] or 0
 
     return render(
@@ -1161,9 +1310,21 @@ def income_report(request):
         {
             'current_user': current_user,
             'paid_invoices': paid_invoices,
+            'accepted_expenses': accepted_expenses,
+            'direct_purchase_expenses': direct_purchase_expenses,
             'total_sales': total_sales,
             'total_orders': total_orders,
+            'expense_total': expense_total,
+            'direct_purchase_expense_total': direct_purchase_expense_total,
+            'total_expense_amount': total_expense_amount,
+            'net_income': net_income,
+            'total_expenses_count': total_expenses_count,
+            'total_expense_records': total_expense_records,
+            'expense_income': expense_total,
             'average_sale': average_sale,
+            'period': period,
+            'start_date': start,
+            'end_date': end,
         }
     )
 
@@ -1260,23 +1421,66 @@ def settings_page(request):
     if not current_user:
         return redirect('login')
 
-    return render(
-        request,
-        'main/settings.html',
-        {
-            'current_user': current_user
-        }
-    )
+    return redirect('account_overview')
+
+def account_overview(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = AccountOverviewForm(request.POST, request.FILES, instance=current_user)
+        if form.is_valid():
+            form.save()
+            return redirect('account_overview')
+    else:
+        form = AccountOverviewForm(instance=current_user)
+
+    return render(request, 'main/account_overview.html', {'current_user': current_user, 'form': form})
+
+def contact_support(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if request.method == 'POST':
+        form = ContactSupportForm(request.POST)
+        if form.is_valid():
+            ticket = form.save(commit=False)
+            ticket.admin = current_user
+            ticket.save()
+            return redirect('contact_support')
+    else:
+        form = ContactSupportForm(initial={
+            'name': f'{current_user.first_name} {current_user.last_name}'.strip() or current_user.username,
+            'email': current_user.email,
+        })
+
+    tickets = ContactSupport.objects.filter(admin=current_user).order_by('-created_at')
+    if current_user.is_admin:
+        tickets = ContactSupport.objects.all().order_by('-created_at')
+
+    return render(request, 'main/contact_support.html', {'current_user': current_user, 'form': form, 'tickets': tickets})
 
 def account_creation(request):
 
     current_user = get_current_admin(request)
-    show_role_field = bool(current_user and current_user.is_admin)
+    is_admin_panel = bool(
+        current_user and current_user.is_admin
+    )
+    show_role_field = is_admin_panel
 
     if request.method == 'POST':
-        form = AdminForm(request.POST, request.FILES)
+
+        form = AdminForm(
+            request.POST,
+            request.FILES
+        )
 
         if form.is_valid():
+
             new_admin = form.save(commit=False)
 
             if not show_role_field:
@@ -1284,21 +1488,29 @@ def account_creation(request):
 
             new_admin.save()
 
-            if show_role_field:
+            if is_admin_panel:
                 return redirect('user_management')
 
             return redirect('login')
 
     else:
+
         form = AdminForm()
+
+    template_name = (
+        'main/admin_account_creation.html'
+        if is_admin_panel
+        else 'main/account_creation.html'
+    )
 
     return render(
         request,
-        'main/account_creation.html',
+        template_name,
         {
             'form': form,
             'current_user': current_user,
-            'show_role_field': show_role_field
+            'show_role_field': show_role_field,
+            'is_admin_panel': is_admin_panel,
         }
     )
 

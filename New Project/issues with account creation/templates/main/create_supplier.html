@@ -1,0 +1,58 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Create Supplier{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Create Supplier</h1>
+        <p class="mt-1 text-sm text-slate-500">Add supplier company information</p>
+    </div>
+
+    <a href="{% url 'suppliers' %}" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left mr-2"></i>
+        Back
+    </a>
+</div>
+
+<div class="card p-8">
+    <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {% csrf_token %}
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Company Name</label>
+            {{ form.supplier_name }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Company Email Address</label>
+            {{ form.email }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Company Number</label>
+            {{ form.contact_number }}
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Company Address</label>
+            {{ form.address }}
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Company Logo</label>
+            <input type="file" disabled class="input opacity-60">
+            <p class="mt-2 text-xs text-slate-400">Logo upload will be added later in development.</p>
+        </div>
+
+        <div class="md:col-span-2 flex justify-end">
+            <button class="btn-primary">
+                <i class="fa-solid fa-building mr-2"></i>
+                Save Supplier
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

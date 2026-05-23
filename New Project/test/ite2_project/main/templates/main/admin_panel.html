@@ -183,21 +183,21 @@
                 </div>
             </div>
 
-            <!-- Quotations -->
+            <!-- Expenses -->
             <div>
                 <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
-                    <i class="fa-solid fa-file-lines"></i>
-                    Quotations
+                    <i class="fa-solid fa-file-lines hidden"></i>
+                    Expenses
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'quotations' %}" class="sidebar-sublink font-bold">
-                        All Quotations
+                    <a href="{% url 'expenses' %}" class="sidebar-sublink font-bold hidden">
+                        All Expenses
                     </a>
 
                     {% if current_user.is_admin %}
-                    <a href="{% url 'create_quotation' %}" class="sidebar-sublink font-bold">
-                        Create Quotation
+                    <a href="{% url 'create_expense' %}" class="sidebar-sublink font-bold hidden">
+                        Create Expense
                     </a>
                     {% endif %}
 
@@ -207,17 +207,17 @@
             <!-- Invoices -->
             <div>
                 <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
-                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <i class="fa-solid fa-file-invoice-dollar hidden"></i>
                     Invoices
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'invoices' %}" class="sidebar-sublink font-bold">
+                    <a href="{% url 'invoices' %}" class="sidebar-sublink font-bold hidden">
                         All Invoices
                     </a>
 
                     {% if current_user.is_admin %}
-                    <a href="{% url 'create_invoice' %}" class="sidebar-sublink font-bold">
+                    <a href="{% url 'create_invoice' %}" class="sidebar-sublink font-bold hidden">
                         Create Invoice
                     </a>
                     {% endif %}
@@ -227,16 +227,16 @@
 
             <div>
                 <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
-                    <i class="fa-solid fa-chart-line"></i>
+                    <i class="fa-solid fa-chart-line hidden"></i>
                     Reports
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'sales_report' %}" class="sidebar-sublink font-bold">
+                    <a href="{% url 'sales_report' %}" class="sidebar-sublink font-bold hidden">
                         Sales Report
                     </a>
 
-                    <a href="{% url 'income_report' %}" class="sidebar-sublink font-bold">
+                    <a href="{% url 'income_report' %}" class="sidebar-sublink font-bold hidden">
                         Income Report
                     </a>
                 </div>
@@ -257,6 +257,16 @@
                 User Management
             </a>
             {% endif %}
+
+            <a href="{% url 'account_overview' %}" class="sidebar-link">
+                <i class="fa-solid fa-user-pen"></i>
+                Account Overview
+            </a>
+
+            <a href="{% url 'contact_support' %}" class="sidebar-link">
+                <i class="fa-solid fa-headset"></i>
+                Contact Support
+            </a>
 
             <a href="{% url 'settings' %}" class="sidebar-link">
                 <i class="fa-solid fa-gear"></i>

@@ -23,6 +23,7 @@
         <table class="w-full min-w-262.5 text-sm">
             <thead class="table-head">
                 <tr>
+                    <th class="p-4">Delivery ID</th>
                     <th class="p-4">Company Name</th>
                     <th class="p-4">Address</th>
                     <th class="p-4">Contact Number</th>
@@ -38,6 +39,7 @@
             <tbody>
                 {% for delivery in deliveries %}
                 <tr class="table-row">
+                    <td class="p-4 font-bold">{{ delivery.display_id }}</td>
                     <td class="p-4 font-bold">{{ delivery.supplier_purchase.supplier_product.supplier.supplier_name }}</td>
                     <td class="p-4">{{ delivery.supplier_purchase.supplier_product.supplier.address }}</td>
                     <td class="p-4">{{ delivery.supplier_purchase.supplier_product.supplier.contact_number }}</td>
@@ -74,7 +76,7 @@
 
                 {% if current_user.is_admin %}
                 <tr id="edit-supplier-delivery-{{ delivery.pk }}" class="hidden bg-slate-50">
-                    <td colspan="7" class="p-5">
+                    <td colspan="8" class="p-5">
                         <form method="POST" action="{% url 'edit_supplier_delivery' delivery.pk %}" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                             {% csrf_token %}
                             <input type="hidden" name="supplier_purchase" value="{{ delivery.supplier_purchase.pk }}">
@@ -94,7 +96,7 @@
                 {% endif %}
                 {% empty %}
                 <tr>
-                    <td colspan="{% if current_user.is_admin %}7{% else %}6{% endif %}" class="p-10 text-center text-slate-400">No supplier deliveries found.</td>
+                    <td colspan="{% if current_user.is_admin %}8{% else %}7{% endif %}" class="p-10 text-center text-slate-400">No supplier deliveries found.</td>
                 </tr>
                 {% endfor %}
             </tbody>

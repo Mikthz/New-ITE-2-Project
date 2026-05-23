@@ -6,7 +6,7 @@ from .models import (
     Supplier,
     Product,
     Sale,
-    Quotation,
+    Expense,
     Invoice,
     SupplierProduct,
     SupplierPurchase,
@@ -113,10 +113,29 @@ class SaleAdmin(admin.ModelAdmin):
     
 admin.site.register(SupplierProduct)
 admin.site.register(SupplierPurchase)
-admin.site.register(Delivery)
-admin.site.register(SupplierDelivery)
-try:
-    admin.site.register(Quotation)
-    admin.site.register(Invoice)
-except admin.sites.AlreadyRegistered:
-    pass
+@admin.register(Delivery)
+class DeliveryAdmin(admin.ModelAdmin):
+    list_display = ('display_id', 'customer_name', 'sale', 'status', 'created_at')
+    search_fields = ('delivery_code', 'customer_name', 'sale__product__product_name')
+    list_filter = ('status', 'created_at')
+
+
+@admin.register(SupplierDelivery)
+class SupplierDeliveryAdmin(admin.ModelAdmin):
+    list_display = ('display_id', 'supplier_purchase', 'status', 'created_at')
+    search_fields = ('delivery_code', 'supplier_purchase__supplier_product__supplier__supplier_name', 'supplier_purchase__supplier_product__product__product_name')
+    list_filter = ('status', 'created_at')
+
+
+@admin.register(Expense)
+class ExpenseAdmin(admin.ModelAdmin):
+    list_display = ('display_id', 'company_name', 'display_product', 'quantity', 'total_price', 'status', 'expense_date')
+    search_fields = ('expense_code', 'customer_name', 'product__product_name', 'supplier_product__supplier__supplier_name', 'supplier_product__product__product_name')
+    list_filter = ('status', 'expense_date')
+
+
+@admin.register(Invoice)
+class InvoiceAdmin(admin.ModelAdmin):
+    list_display = ('display_id', 'customer_name', 'sale', 'amount', 'status', 'invoice_date')
+    search_fields = ('invoice_code', 'sale__customer_name', 'sale__product__product_name')
+    list_filter = ('status', 'invoice_date')

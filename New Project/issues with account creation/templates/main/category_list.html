@@ -1,0 +1,153 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">
+            Categories
+        </h1>
+
+        <p class="mt-1 text-sm text-slate-500">
+            Organize inventory product categories
+        </p>
+    </div>
+
+    {% if current_user.is_admin %}
+    <a
+        href="{% url 'add_category' %}"
+        class="btn-primary"
+    >
+        <i class="fa-solid fa-plus mr-2"></i>
+        Add Category
+    </a>
+    {% endif %}
+
+</div>
+
+<div class="card overflow-hidden">
+
+    <div class="border-b border-slate-200 p-5">
+        <h2 class="font-bold text-slate-900">
+            Category List
+        </h2>
+    </div>
+
+    <div class="overflow-x-auto">
+
+        <table class="w-full min-w-175 text-sm">
+
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Category Name</th>
+                    <th class="p-4">Created At</th>
+                    {% if current_user.is_admin %}
+                    <th class="p-4 text-right">Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for category in categories %}
+                <tr class="table-row">
+
+                    <td class="p-4 font-bold text-slate-900">
+                        {{ category.category_name }}
+                    </td>
+
+                    <td class="p-4 text-slate-500">
+                        {{ category.created_at }}
+                    </td>
+
+                    {% if current_user.is_admin %}
+                    <td class="p-4">
+                        <div class="flex justify-end gap-2">
+
+                            <button
+                                onclick="toggleEditCategory('{{ category.pk }}')"
+                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white"
+                            >
+                                <i class="fa-solid fa-pen text-xs"></i>
+                            </button>
+
+                            <form
+                                method="POST"
+                                action="{% url 'delete_category' category.pk %}"
+                                onsubmit="return confirm('Delete this category?');"
+                            >
+                                {% csrf_token %}
+
+                                <button
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500 text-white"
+                                >
+                                    <i class="fa-solid fa-trash text-xs"></i>
+                                </button>
+
+                            </form>
+
+                        </div>
+                    </td>
+                    {% endif %}
+
+                </tr>
+
+                <tr id="edit-category-{{ category.pk }}" class="hidden bg-slate-50">
+
+                    <td colspan="3" class="p-5">
+
+                        <form
+                            method="POST"
+                            action="{% url 'edit_category' category.pk %}"
+                            class="flex flex-col gap-4 md:flex-row"
+                        >
+
+                            {% csrf_token %}
+
+                            <input
+                                type="text"
+                                name="category_name"
+                                value="{{ category.category_name }}"
+                                class="input flex-1"
+                            >
+
+                            <button class="btn-primary">
+                                Save Changes
+                            </button>
+
+                        </form>
+
+                    </td>
+
+                </tr>
+
+                {% empty %}
+
+                <tr>
+                    <td colspan="3" class="p-10 text-center text-slate-400">
+                        No categories found.
+                    </td>
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<script>
+function toggleEditCategory(id) {
+    document
+        .getElementById(`edit-category-${id}`)
+        .classList.toggle("hidden");
+}
+</script>
+
+{% endblock %}

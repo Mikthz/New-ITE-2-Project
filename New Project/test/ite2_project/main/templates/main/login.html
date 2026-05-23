@@ -29,6 +29,7 @@
                 <input
                     type="text"
                     name="username"
+                    value="{{ username|default:'' }}"
                     placeholder="Enter your username"
                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-orange-400 focus:bg-white"
                     required
@@ -43,11 +44,32 @@
                 <input
                     type="password"
                     name="password"
+                    value="{{ password|default:'' }}"
                     placeholder="Enter your password"
                     class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-orange-400 focus:bg-white"
                     required
                 >
             </div>
+
+            {% if pin_required %}
+            <div>
+                <label class="mb-2 block text-sm font-semibold text-slate-700">
+                    PIN Code
+                </label>
+                <input
+                    type="password"
+                    name="pin_code"
+                    placeholder="Enter your PIN"
+                    inputmode="numeric"
+                    class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-5 py-4 outline-none transition focus:border-orange-400 focus:bg-white"
+                    required
+                >
+            </div>
+            {% endif %}
+
+            {% if error %}
+            <p class="rounded-xl bg-red-100 px-4 py-3 text-sm font-semibold text-red-600">{{ error }}</p>
+            {% endif %}
 
             <div class="flex items-center gap-3 pt-1">
                 <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-orange-500 focus:ring-orange-400">

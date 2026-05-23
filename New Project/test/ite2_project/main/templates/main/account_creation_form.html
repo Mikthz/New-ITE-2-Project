@@ -24,15 +24,20 @@
                             Form Error
                         </h3>
 
-                        <div class="mt-1 text-sm text-red-100">
+                        <div class="mt-1 text-sm text-red-100 space-y-1">
                             {% for field in form %}
                                 {% for error in field.errors %}
-                                    <div>{{ error }}</div>
+                                    <div>
+                                        <strong>{{ field.label }}:</strong>
+                                        {{ error }}
+                                    </div>
                                 {% endfor %}
                             {% endfor %}
 
                             {% for error in form.non_field_errors %}
-                                <div>{{ error }}</div>
+                                <div>
+                                    {{ error }}
+                                </div>
                             {% endfor %}
                         </div>
                     </div>
@@ -87,20 +92,6 @@
                     Email
                 </label>
                 {{ form.email }}
-            </div>
-
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-slate-700">
-                    Gender
-                </label>
-                {{ form.gender }}
-            </div>
-
-            <div>
-                <label class="mb-1 block text-sm font-semibold text-slate-700">
-                    Birthday
-                </label>
-                {{ form.birthday }}
             </div>
 
             <div>

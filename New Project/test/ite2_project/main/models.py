@@ -3,6 +3,14 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+def make_business_code(prefix, pk):
+    """Return readable IDs like D0001, EXP0001, and INV0001."""
+    if not pk:
+        return ''
+
+    return f'{prefix}{pk:04d}'
+
+
 class Category(models.Model):
     category_name = models.CharField(
         max_length=100,
@@ -30,7 +38,6 @@ class Supplier(models.Model):
         max_length=20,
         blank=True,
         null=True,
-        default='N/A'
     )
 
     email = models.EmailField(
@@ -42,7 +49,6 @@ class Supplier(models.Model):
         max_length=255,
         blank=True,
         null=True,
-        default='N/A'
     )
 
     created_at = models.DateTimeField(
@@ -94,14 +100,14 @@ class Admin(models.Model):
         max_length=20,
         blank=True,
         null=True,
-        default='N/A'
+
     )
 
     address = models.CharField(
         max_length=255,
         blank=True,
         null=True,
-        default='N/A'
+
     )
 
     profile_picture = models.ImageField(
@@ -115,6 +121,13 @@ class Admin(models.Model):
         max_length=20,
         choices=ROLE_CHOICES,
         default='Staff'
+    )
+
+    pin_code = models.CharField(
+        max_length=6,
+        blank=True,
+        null=True,
+        help_text='Optional 4-6 digit login PIN.'
     )
 
     created_at = models.DateTimeField(
@@ -283,6 +296,15 @@ class SupplierDelivery(models.Model):
         ('Delivered', 'Delivered'),
     ]
 
+
+    delivery_code = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        editable=False
+    )
+
     supplier_purchase = models.ForeignKey(
         SupplierPurchase,
         on_delete=models.PROTECT
@@ -297,7 +319,7 @@ class SupplierDelivery(models.Model):
         max_length=255,
         blank=True,
         null=True,
-        default='N/A'
+
     )
 
     status = models.CharField(
@@ -314,8 +336,19 @@ class SupplierDelivery(models.Model):
         auto_now=True
     )
 
+    @property
+    def display_id(self):
+        return self.delivery_code or make_business_code('SD', self.pk)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.delivery_code:
+            self.delivery_code = make_business_code('SD', self.pk)
+            type(self).objects.filter(pk=self.pk).update(delivery_code=self.delivery_code)
+
     def __str__(self):
-        return f"Supplier Delivery - {self.supplier_purchase} - {self.status}"
+        return f"Supplier Delivery {self.display_id} - {self.supplier_purchase} - {self.status}"
 
 
 class Sale(models.Model):
@@ -328,7 +361,7 @@ class Sale(models.Model):
         max_length=150,
         blank=True,
         null=True,
-        default='N/A'
+
     )
 
     quantity_sold = models.PositiveIntegerField()
@@ -367,6 +400,15 @@ class Delivery(models.Model):
         ('Delivered', 'Delivered'),
     ]
 
+
+    delivery_code = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        editable=False
+    )
+
     sale = models.ForeignKey(
         Sale,
         on_delete=models.PROTECT,
@@ -376,19 +418,19 @@ class Delivery(models.Model):
 
     customer_name = models.CharField(
         max_length=150,
-        default='N/A'
+
     )
 
     contact_number = models.CharField(
         max_length=20,
         blank=True,
         null=True,
-        default='N/A'
+
     )
 
     delivery_address = models.CharField(
         max_length=255,
-        default='N/A'
+
     )
 
     expected_delivery_date = models.DateField(
@@ -410,27 +452,78 @@ class Delivery(models.Model):
         auto_now=True
     )
 
-    def __str__(self):
-        return f"{self.customer_name} - {self.status}"
+    @property
+    def display_id(self):
+        return self.delivery_code or make_business_code('D', self.pk)
 
-class Quotation(models.Model):
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if not self.delivery_code:
+            self.delivery_code = make_business_code('D', self.pk)
+            type(self).objects.filter(pk=self.pk).update(delivery_code=self.delivery_code)
+
+    def __str__(self):
+        return f"Delivery {self.display_id} - {self.customer_name} - {self.status}"
+
+class Expense(models.Model):
     STATUS_CHOICES = [
         ('Draft', 'Draft'),
         ('Sent', 'Sent'),
         ('Accepted', 'Accepted'),
         ('Rejected', 'Rejected'),
+        ('Converted', 'Converted'),
     ]
 
+
+    expense_code = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        editable=False
+    )
+
+    # Expense fields. Accepted/converted expense records are
+    # subtracted from paid invoice income in the income report.
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name='customer_expenses',
+        blank=True,
+        null=True
+    )
+
+    customer_name = models.CharField(
+        max_length=150,
+        blank=True,
+        null=True
+    )
+
+
+    sale = models.OneToOneField(
+        Sale,
+        on_delete=models.SET_NULL,
+        related_name='expense',
+        blank=True,
+        null=True
+    )
+
+    # Supplier expense links. These allow expense records to
+    # connect to purchases/deliveries while preserving the supplier/company
+    # name and products bought from the supplier.
     supplier_product = models.ForeignKey(
         SupplierProduct,
         on_delete=models.PROTECT,
-        related_name='quotations'
+        related_name='expenses',
+        blank=True,
+        null=True
     )
 
     supplier_purchase = models.OneToOneField(
         SupplierPurchase,
         on_delete=models.SET_NULL,
-        related_name='quotation',
+        related_name='expense',
         blank=True,
         null=True
     )
@@ -444,7 +537,7 @@ class Quotation(models.Model):
         null=True
     )
 
-    quotation_date = models.DateField(
+    expense_date = models.DateField(
         default=timezone.now
     )
 
@@ -473,27 +566,179 @@ class Quotation(models.Model):
     )
 
     @property
-    def company_name(self):
-        return self.supplier_product.supplier.company_name
+    def is_customer_expense(self):
+        return self.product_id is not None and bool(self.customer_name)
 
     @property
-    def product(self):
-        return self.supplier_product.product
+    def is_supplier_expense(self):
+        return self.supplier_product_id is not None
+
+    @property
+    def company_name(self):
+        # Direct expenses use the entered company name.
+        # Supplier expenses are linked directly to the supplier company.
+        if self.supplier_product:
+            return self.supplier_product.supplier.company_name
+
+        if self.customer_name:
+            return self.customer_name
+
+        return 'N/A'
+
+    @property
+    def display_product(self):
+        if self.product:
+            return self.product
+
+        if self.supplier_product:
+            return self.supplier_product.product
+
+        return None
 
     @property
     def unit_price(self):
-        return self.supplier_product.unit_price
+        if self.product:
+            return self.product.price
+
+        if self.supplier_product:
+            return self.supplier_product.unit_price
+
+        return 0
 
     def save(self, *args, **kwargs):
-        self.total_price = self.supplier_product.unit_price * self.quantity
+        self.total_price = self.unit_price * self.quantity
 
         if not self.valid_until:
-            self.valid_until = self.quotation_date + timedelta(days=7)
+            self.valid_until = self.expense_date + timedelta(days=7)
 
         super().save(*args, **kwargs)
 
+        if not self.expense_code:
+            self.expense_code = make_business_code('EXP', self.pk)
+            type(self).objects.filter(pk=self.pk).update(expense_code=self.expense_code)
+
+    @property
+    def display_id(self):
+        return self.expense_code or make_business_code('EXP', self.pk)
+
+    def convert_to_supplier_purchase_and_delivery(self):
+        if not self.is_supplier_expense:
+            return None
+
+        if self.supplier_purchase_id:
+            purchase = self.supplier_purchase
+
+            if purchase.supplier_product_id == self.supplier_product_id:
+                quantity_difference = self.quantity - purchase.quantity
+                if quantity_difference != 0:
+                    if quantity_difference > self.supplier_product.available_quantity:
+                        raise ValueError('Not enough supplier stock available.')
+                    self.supplier_product.available_quantity -= quantity_difference
+                    self.supplier_product.save(update_fields=['available_quantity'])
+            else:
+                old_supplier_product = purchase.supplier_product
+                old_supplier_product.available_quantity += purchase.quantity
+                old_supplier_product.save(update_fields=['available_quantity'])
+
+                if self.quantity > self.supplier_product.available_quantity:
+                    raise ValueError('Not enough supplier stock available.')
+                self.supplier_product.available_quantity -= self.quantity
+                self.supplier_product.save(update_fields=['available_quantity'])
+
+            purchase.supplier_product = self.supplier_product
+            purchase.quantity = self.quantity
+            purchase.total_price = self.total_price
+            purchase.save(update_fields=['supplier_product', 'quantity', 'total_price'])
+
+            SupplierDelivery.objects.get_or_create(
+                supplier_purchase=purchase,
+                defaults={
+                    'delivery_address': self.supplier_product.supplier.address,
+                    'status': 'Pending'
+                }
+            )
+            SupplierDelivery.objects.filter(supplier_purchase=purchase).update(
+                delivery_address=self.supplier_product.supplier.address
+            )
+            return purchase
+
+        purchase = SupplierPurchase.objects.create(
+            supplier_product=self.supplier_product,
+            quantity=self.quantity
+        )
+
+        SupplierDelivery.objects.create(
+            supplier_purchase=purchase,
+            delivery_address=self.supplier_product.supplier.address,
+            status='Pending'
+        )
+
+        self.supplier_purchase = purchase
+        self.status = 'Converted'
+        self.save(update_fields=['supplier_purchase', 'status', 'total_price', 'valid_until', 'updated_at'])
+        return purchase
+
+    def convert_to_sale_and_invoice(self, invoice_status='Paid'):
+        if not self.is_customer_expense:
+            return None
+
+        if self.sale_id:
+            sale = self.sale
+
+            if sale.product_id == self.product_id:
+                quantity_difference = self.quantity - sale.quantity_sold
+                if quantity_difference != 0:
+                    self.product.stock_quantity -= quantity_difference
+                    self.product.save(update_fields=['stock_quantity'])
+            else:
+                old_product = sale.product
+                old_product.stock_quantity += sale.quantity_sold
+                old_product.save(update_fields=['stock_quantity'])
+
+                self.product.stock_quantity -= self.quantity
+                self.product.save(update_fields=['stock_quantity'])
+
+            sale.product = self.product
+            sale.customer_name = self.customer_name
+            sale.quantity_sold = self.quantity
+            sale.total_price = self.product.price * self.quantity
+            sale.save(update_fields=['product', 'customer_name', 'quantity_sold', 'total_price'])
+
+            invoice, created = Invoice.objects.get_or_create(
+                sale=sale,
+                defaults={
+                    'status': invoice_status,
+                    'notes': f'Auto-generated from Expense {self.display_id}.'
+                }
+            )
+            if invoice.status != invoice_status or invoice.amount != sale.total_price:
+                invoice.status = invoice_status
+                invoice.amount = sale.total_price
+                invoice.save(update_fields=['status', 'amount', 'due_date', 'updated_at'])
+            return invoice
+
+        sale = Sale.objects.create(
+            product=self.product,
+            customer_name=self.customer_name,
+            quantity_sold=self.quantity
+        )
+
+        self.sale = sale
+        self.status = 'Converted'
+        self.save(update_fields=['sale', 'status', 'total_price', 'valid_until', 'updated_at'])
+
+        invoice, created = Invoice.objects.get_or_create(
+            sale=sale,
+            defaults={
+                'status': invoice_status,
+                'notes': f'Auto-generated from Expense {self.display_id}.'
+            }
+        )
+
+        return invoice
+
     def __str__(self):
-        return f"Quotation #{self.pk} - {self.company_name}"
+        return f"Expense {self.display_id} - {self.company_name}"
 
 
 class Invoice(models.Model):
@@ -503,6 +748,16 @@ class Invoice(models.Model):
         ('Overdue', 'Overdue'),
         ('Cancelled', 'Cancelled'),
     ]
+
+
+
+    invoice_code = models.CharField(
+        max_length=20,
+        unique=True,
+        blank=True,
+        null=True,
+        editable=False
+    )
 
     sale = models.OneToOneField(
         Sale,
@@ -553,9 +808,52 @@ class Invoice(models.Model):
 
         super().save(*args, **kwargs)
 
+        if not self.invoice_code:
+            self.invoice_code = make_business_code('INV', self.pk)
+            type(self).objects.filter(pk=self.pk).update(invoice_code=self.invoice_code)
+
+    @property
+    def display_id(self):
+        return self.invoice_code or make_business_code('INV', self.pk)
+
     @property
     def customer_name(self):
         return self.sale.customer_name
 
     def __str__(self):
-        return f"Invoice #{self.pk} - {self.customer_name}"
+        return f"Invoice {self.display_id} - {self.customer_name}"
+
+
+class ContactSupport(models.Model):
+    STATUS_CHOICES = [
+        ('Open', 'Open'),
+        ('In Progress', 'In Progress'),
+        ('Closed', 'Closed'),
+    ]
+
+    PRIORITY_CHOICES = [
+        ('Low', 'Low'),
+        ('Normal', 'Normal'),
+        ('High', 'High'),
+        ('Urgent', 'Urgent'),
+    ]
+
+    admin = models.ForeignKey(
+        Admin,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        related_name='support_requests'
+    )
+
+    name = models.CharField(max_length=150)
+    email = models.EmailField(blank=True, null=True)
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='Normal')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f'{self.subject} - {self.status}'

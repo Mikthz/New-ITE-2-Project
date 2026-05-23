@@ -184,27 +184,27 @@ urlpatterns = [
     ),
     
     path(
-        'quotations/',
-        views.quotations,
-        name='quotations'
+        'expenses/',
+        views.expenses,
+        name='expenses'
         ),
     
     path(
-        'create-quotation/',
-        views.create_quotation,
-        name='create_quotation'
+        'create-expense/',
+        views.create_expense,
+        name='create_expense'
         ),
 
     path(
-        'quotations/edit/<int:pk>/',
-        views.edit_quotation,
-        name='edit_quotation'
+        'expenses/edit/<int:pk>/',
+        views.edit_expense,
+        name='edit_expense'
     ),
 
     path(
-        'quotations/delete/<int:pk>/',
-        views.delete_quotation,
-        name='delete_quotation'
+        'expenses/delete/<int:pk>/',
+        views.delete_expense,
+        name='delete_expense'
     ),
     
     path(
@@ -237,6 +237,18 @@ urlpatterns = [
         views.settings_page,
         name='settings'
         ),
+
+    path(
+        'account-overview/',
+        views.account_overview,
+        name='account_overview'
+    ),
+
+    path(
+        'contact-support/',
+        views.contact_support,
+        name='contact_support'
+    ),
 
     path(
         'sales/record/',
