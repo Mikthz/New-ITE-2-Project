@@ -4,6 +4,12 @@ from . import views
 urlpatterns = [
 
     path(
+        'dashboard/',
+        views.dashboard,
+        name='dashboard'
+    ),
+
+    path(
         '',
         views.product_list,
         name='product_list'
@@ -147,6 +153,12 @@ urlpatterns = [
         name='create_delivery'
     ),
     
+    path(
+        'deliveries/<int:pk>/',
+        views.delivery_detail,
+        name='delivery_detail'
+    ),
+
     path(
         'deliveries/edit/<int:pk>/',
         views.edit_delivery,

@@ -7,13 +7,14 @@
     <title>{% block title %}Inventory System{% endblock %}</title>
 
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
 </head>
 
-<body class="bg-[#f7f4ef] text-slate-800">
+<body class="theme-light bg-[#f7f4ef] text-slate-800">
 
 <!-- Floating Alerts -->
 <div class="fixed left-1/2 top-6 z-[9999] flex w-full max-w-md -translate-x-1/2 flex-col gap-3 px-4">
@@ -92,6 +93,11 @@
 
         <nav class="space-y-4">
 
+            <a href="{% url 'dashboard' %}" class="sidebar-link">
+                <i class="fa-solid fa-gauge-high"></i>
+                Dashboard
+            </a>
+
             <!-- Inventory -->
             <div>
                 <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
@@ -169,21 +175,24 @@
                         Create Customer Delivery
                     </a>
                     {% endif %}
-
+                    <!-- INDEV -->
+                    {% comment %}
                     <a href="{% url 'supplier_delivery_list' %}" class="sidebar-sublink font-bold hidden">
                         Supplier Deliveries
                     </a>
-
+                    {% endcomment %}
+                    {% comment %}
                     {% if current_user.is_admin %}
                     <a href="{% url 'create_supplier_delivery' %}" class="sidebar-sublink font-bold hidden">
                         Create Supplier Delivery
                     </a>
                     {% endif %}
-
+                    {% endcomment %}
                 </div>
             </div>
 
-            <!-- Expenses -->
+            <!-- INDEV -->
+             {% comment %}
             <div>
                 <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
                     <i class="fa-solid fa-file-lines"></i>
@@ -203,8 +212,9 @@
 
                 </div>
             </div>
-
-            <!-- Invoices -->
+            {% endcomment %}
+            <!-- INDEV -->
+             {% comment %}
             <div>
                 <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -241,7 +251,7 @@
                     </a>
                 </div>
             </div>
-
+            {% endcomment %}
         </nav>
 
         <div class="my-4 border-t border-orange-200"></div>
@@ -312,87 +322,8 @@
 
 <div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 z-50 hidden bg-black/40 lg:hidden"></div>
 
-<script>
-function openSidebar() {
-    document.getElementById("sidebar").classList.remove("-translate-x-full");
-    document.getElementById("sidebarOverlay").classList.remove("hidden");
-}
-
-function closeSidebar() {
-    document.getElementById("sidebar").classList.add("-translate-x-full");
-    document.getElementById("sidebarOverlay").classList.add("hidden");
-}
-</script>
-
-<script>
-
-function closeAlert(id) {
-    const alertBox = document.getElementById(id);
-
-    if (alertBox) {
-        alertBox.remove();
-    }
-}
-
-setTimeout(() => {
-    const errorAlert = document.getElementById('errorAlert');
-
-    if (errorAlert) {
-        errorAlert.style.opacity = '0';
-        errorAlert.style.transform = 'translate(-50%, -20px)';
-
-        setTimeout(() => {
-            errorAlert.remove();
-        }, 300);
-    }
-}, 5000);
-
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    const SEARCH_DELAY = 600;
-
-    document.querySelectorAll("form[data-auto-search='true']").forEach(function (form) {
-        const input = form.querySelector("input[name='search']");
-
-        if (!input) {
-            return;
-        }
-
-        let timer = null;
-
-        input.addEventListener("input", function () {
-            clearTimeout(timer);
-
-            timer = setTimeout(function () {
-                const searchValue = input.value.trim();
-
-                if (searchValue === "") {
-                    window.location.href = window.location.pathname;
-                    return;
-                }
-
-                form.submit();
-            }, SEARCH_DELAY);
-        });
-    });
-});
-</script>
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll(".search-select").forEach(function (select) {
-        new TomSelect(select, {
-            create: false,
-            sortField: {
-                field: "text",
-                direction: "asc"
-            }
-        });
-    });
-});
-</script>
+<script src="{% static 'js/admin_panel.js' %}"></script>
+<script src="{% static 'js/page_modals.js' %}"></script>
 
 {% else %}
 

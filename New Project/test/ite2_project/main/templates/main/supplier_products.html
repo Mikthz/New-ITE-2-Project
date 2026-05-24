@@ -1,4 +1,5 @@
 {% extends "main/admin_panel.html" %}
+{% load static %}
 
 {% block title %}Supplier Products{% endblock %}
 
@@ -105,10 +106,5 @@
     </div>
 </div>
 
-<script>
-function toggleEditSupplierProduct(id) {
-    document.getElementById(`edit-supplier-product-${id}`).classList.toggle("hidden");
-}
-</script>
-
+<script src="{% static 'js/page_modals.js' %}"></script>
 {% endblock %}

@@ -28,6 +28,36 @@ def clean_missing_profile_picture(user):
         user.profile_picture = None
         user.save(update_fields=['profile_picture'])
 
+def dashboard(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    total_products = Product.objects.filter(is_active=True).count()
+    low_stock_count = Product.objects.filter(
+        stock_quantity__gt=0,
+        stock_quantity__lte=F('low_stock_threshold'),
+        is_active=True
+    ).count()
+    out_of_stock_count = Product.objects.filter(
+        stock_quantity=0,
+        is_active=True
+    ).count()
+    recent_sales = Sale.objects.select_related('product').order_by('-sale_date')[:5]
+
+    return render(
+        request,
+        'main/dashboard.html',
+        {
+            'current_user': current_user,
+            'total_products': total_products,
+            'low_stock_count': low_stock_count,
+            'out_of_stock_count': out_of_stock_count,
+            'recent_sales': recent_sales,
+        }
+    )
+
 def sync_expense_income(expense):
     if expense.status not in ['Accepted', 'Converted']:
         return
@@ -161,14 +191,12 @@ def product_list(request):
         'category',
         'supplier'
     ).filter(
-        stock_quantity__lte=F('low_stock_threshold')
-    ).filter(
         Q(product_name__icontains=search) |
         Q(brand__icontains=search) |
         Q(model_name__icontains=search) |
         Q(category__category_name__icontains=search) |
         Q(supplier__supplier_name__icontains=search)
-    ).order_by('stock_quantity', 'product_name')
+    ).order_by('product_name')
 
     low_stock_count = Product.objects.filter(
         stock_quantity__gt=0,
@@ -795,6 +823,27 @@ def delivery_list(request):
         }
     )
     
+
+def delivery_detail(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    delivery = get_object_or_404(
+        Delivery.objects.select_related('sale', 'sale__product'),
+        pk=pk
+    )
+
+    return render(
+        request,
+        'main/delivery_detail.html',
+        {
+            'current_user': current_user,
+            'delivery': delivery,
+        }
+    )
+
 def create_delivery(request):
     current_user = get_current_admin(request)
 
@@ -810,28 +859,42 @@ def create_delivery(request):
 
     if request.method == 'POST':
         delivery_form = DeliveryForm(request.POST)
-        sale_form = SaleForm()
+        sale_form = SaleForm(request.POST)
 
         product_ids = request.POST.getlist('product_ids[]')
         quantities = request.POST.getlist('quantities[]')
-        sale_form = SaleForm(request.POST)
         customer_name = sale_form.data.get('customer_name', '').strip()
 
+        selected_items = []
+
         if not product_ids:
-            sale_form.add_error(None, 'Please add at least one product.')
+            sale_form.add_error(None, 'Please add at least one delivery product.')
 
         if not customer_name:
-            sale_form.add_error(None, 'Customer name is required.')
+            sale_form.add_error('customer_name', 'Customer name is required.')
 
-        if delivery_form.is_valid() and product_ids and customer_name:
+        for product_id, quantity in zip(product_ids, quantities):
+            try:
+                quantity = int(quantity)
+                product = Product.objects.get(pk=product_id)
+            except (ValueError, Product.DoesNotExist):
+                sale_form.add_error(None, 'One selected product is invalid.')
+                continue
+
+            if quantity <= 0:
+                sale_form.add_error(None, 'Quantity must be greater than zero.')
+                continue
+
+            if quantity > product.stock_quantity:
+                sale_form.add_error(None, f'Not enough stock for {product.product_name}.')
+                continue
+
+            selected_items.append((product.pk, quantity))
+
+        if delivery_form.is_valid() and not sale_form.errors and selected_items:
             with transaction.atomic():
-                for product_id, quantity in zip(product_ids, quantities):
-                    product = Product.objects.select_for_update().get(pk=product_id)
-                    quantity = int(quantity)
-
-                    if quantity <= 0:
-                        sale_form.add_error(None, 'Quantity must be greater than zero.')
-                        break
+                for product_pk, quantity in selected_items:
+                    product = Product.objects.select_for_update().get(pk=product_pk)
 
                     if quantity > product.stock_quantity:
                         sale_form.add_error(None, f'Not enough stock for {product.product_name}.')
@@ -844,15 +907,14 @@ def create_delivery(request):
                     )
 
                     delivery = delivery_form.save(commit=False)
+                    delivery.pk = None
                     delivery.sale = sale
                     delivery.customer_name = customer_name
                     delivery.save()
 
                     Invoice.objects.get_or_create(
                         sale=sale,
-                        defaults={
-                            'status': 'Paid'
-                        }
+                        defaults={'status': 'Paid'}
                     )
 
                 if not sale_form.errors:

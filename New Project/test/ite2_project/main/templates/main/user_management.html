@@ -1,4 +1,5 @@
 {% extends "main/admin_panel.html" %}
+{% load static %}
 
 {% block title %}User Management{% endblock %}
 
@@ -182,22 +183,5 @@
 </div>
 {% endfor %}
 
-<script>
-function openEditModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    }
-}
-
-function closeEditModal(id) {
-    const modal = document.getElementById(id);
-    if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }
-}
-</script>
-
+<script src="{% static 'js/page_modals.js' %}"></script>
 {% endblock %}

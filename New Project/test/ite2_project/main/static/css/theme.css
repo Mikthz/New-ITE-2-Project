@@ -1,0 +1,96 @@
+body.theme-dark {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+}
+body.theme-dark aside,
+body.theme-dark #sidebar {
+    background: #334155 !important;
+    border-color: #475569 !important;
+}
+body.theme-dark header {
+    background: #1f2937 !important;
+    border-color: #475569 !important;
+}
+body.theme-dark main,
+body.theme-dark .bg-\[\#f7f4ef\] {
+    background: #1e293b !important;
+}
+body.theme-dark .card,
+body.theme-dark .bg-white,
+body.theme-dark table,
+body.theme-dark .rounded-3xl.bg-white,
+body.theme-dark .rounded-2xl.bg-white {
+    background: #334155 !important;
+    color: #cbd5e1 !important;
+    border-color: #475569 !important;
+}
+body.theme-dark .text-slate-900,
+body.theme-dark .text-slate-800,
+body.theme-dark .text-slate-700,
+body.theme-dark .font-bold {
+    color: #e2e8f0 !important;
+}
+body.theme-dark .text-slate-600,
+body.theme-dark .text-slate-500,
+body.theme-dark .text-slate-400 {
+    color: #cbd5e1 !important;
+}
+body.theme-dark .sidebar-link,
+body.theme-dark .sidebar-sublink {
+    color: #cbd5e1 !important;
+}
+body.theme-dark .text-orange-600,
+body.theme-dark .text-orange-700,
+body.theme-dark .text-orange-500,
+body.theme-dark .text-orange-400 {
+    color: #67e8f9 !important;
+}
+body.theme-dark .bg-orange-500,
+body.theme-dark .btn-primary {
+    background: #0891b2 !important;
+    color: white !important;
+}
+body.theme-dark .hover\:bg-orange-600:hover,
+body.theme-dark .btn-primary:hover {
+    background: #0e7490 !important;
+}
+body.theme-dark .bg-orange-100,
+body.theme-dark .bg-orange-50,
+body.theme-dark .bg-orange-50\/60,
+body.theme-dark .hover\:bg-orange-50:hover {
+    background: rgba(8, 145, 178, 0.18) !important;
+}
+body.theme-dark .border-orange-100,
+body.theme-dark .border-orange-200,
+body.theme-dark .border-orange-300 {
+    border-color: #0891b2 !important;
+}
+body.theme-dark input,
+body.theme-dark select,
+body.theme-dark textarea,
+body.theme-dark .input,
+body.theme-dark .ts-control,
+body.theme-dark .ts-dropdown {
+    background: #1e293b !important;
+    color: #cbd5e1 !important;
+    border-color: #475569 !important;
+}
+body.theme-dark input::placeholder,
+body.theme-dark textarea::placeholder {
+    color: #94a3b8 !important;
+}
+body.theme-dark .table-head,
+body.theme-dark thead,
+body.theme-dark .bg-slate-50 {
+    background: #475569 !important;
+    color: #e2e8f0 !important;
+}
+body.theme-dark .table-row:hover,
+body.theme-dark tr:hover {
+    background: rgba(8, 145, 178, 0.12) !important;
+}
+body.theme-dark .btn-secondary {
+    background: #475569 !important;
+    color: #cbd5e1 !important;
+    border-color: #64748b !important;
+}

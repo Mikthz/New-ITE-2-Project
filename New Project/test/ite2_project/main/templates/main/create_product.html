@@ -72,6 +72,14 @@
         </div>
 
         <div>
+            <label class="mb-2 block text-sm font-semibold">Low Stock Warning</label>
+            {{ product_form.low_stock_threshold }}
+            <p class="mt-1 text-xs text-slate-400">
+                Product will be marked as "low stock" when the stock ammount reaches this number.
+            </p>
+        </div>
+
+        <div>
             <label class="mb-2 block text-sm font-semibold">Product Image</label>
             {{ product_form.product_image }}
         </div>

@@ -60,6 +60,9 @@
                     {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="flex justify-end gap-2">
+                            <a href="{% url 'delivery_detail' delivery.pk %}" class="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500 text-white">
+                                <i class="fa-solid fa-eye text-xs"></i>
+                            </a>
                             <button onclick="toggleEditDelivery('{{ delivery.pk }}')" class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
                                 <i class="fa-solid fa-pen text-xs"></i>
                             </button>
@@ -106,10 +109,5 @@
     </div>
 </div>
 
-<script>
-function toggleEditDelivery(id) {
-    document.getElementById(`edit-delivery-${id}`).classList.toggle("hidden");
-}
-</script>
-
+<script src="{% static 'js/page_modals.js' %}"></script>
 {% endblock %}

@@ -64,6 +64,22 @@ class SupplierForm(forms.ModelForm):
         }
 
 class ProductForm(forms.ModelForm):
+    
+    low_stock_threshold = forms.IntegerField(
+        required=True,
+        min_value=1,
+        error_messages={
+            'required': 'Low stock warning is required.',
+            'min_value': 'Low stock warning must be at least 1.',
+            'invalid': 'Low stock warning must be a valid number.',
+        },
+        widget=forms.NumberInput(attrs={
+            'class': 'input',
+            'placeholder': 'Low stock threshold',
+            'min': '1'
+        })
+    )
+    
     class Meta:
         model = Product
         fields = [
@@ -88,10 +104,8 @@ class ProductForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Enter a description'}),
             'price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
             'stock_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
-            'low_stock_threshold': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Low stock threshold'}),
             'product_image': forms.FileInput(attrs={'class': 'input', 'placeholder': 'Insert Image'}),
         }
-
 
     def clean_price(self):
         price = self.cleaned_data.get('price')

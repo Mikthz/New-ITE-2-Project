@@ -107,6 +107,10 @@
                         </span>
                     </td>
 
+                    <td class="p-4">
+                        {{ product.supplier|default:"N/A" }}
+                    </td>
+
                     <td class="p-4 font-semibold">
                         {% if product.stock_quantity <= 0 %}
 
@@ -121,11 +125,11 @@
                             <i class="fa-solid fa-triangle-exclamation"></i>
                             {{ product.stock_quantity }}
                         </div>
-
+                        {% comment %}
                         <p class="mt-1 text-xs text-red-500">
                             Low Stock
                         </p>
-
+                        {% endcomment %}
                         {% else %}
 
                         <div class="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
@@ -249,10 +253,5 @@
 
 </div>
 
-<script>
-function toggleEditProduct(id) {
-    document.getElementById(`edit-product-${id}`).classList.toggle("hidden");
-}
-</script>
-
+<script src="{% static 'js/page_modals.js' %}"></script>
 {% endblock %}
