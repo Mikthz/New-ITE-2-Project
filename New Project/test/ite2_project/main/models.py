@@ -189,6 +189,10 @@ class Product(models.Model):
         default=0
     )
 
+    low_stock_threshold = models.PositiveIntegerField(
+    default=5
+    )
+
     product_image = models.ImageField(
         upload_to='products/',
         blank=True,
@@ -208,7 +212,7 @@ class Product(models.Model):
     )
 
     def is_low_stock(self):
-        return self.stock_quantity <= 5
+        return self.stock_quantity <= self.low_stock_threshold
 
     def __str__(self):
         return f"{self.brand} {self.product_name}"

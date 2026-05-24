@@ -37,6 +37,30 @@
     </div>
     {% endif %}
 
+    {% if selected_supplier_products %}
+    <div class="mb-5 rounded-2xl border border-orange-200 bg-orange-50 p-4">
+        <h3 class="font-bold text-orange-700">
+            Suggested Supplier Products
+        </h3>
+
+        <div class="mt-3 space-y-3">
+            {% for supplier_product in selected_supplier_products %}
+            <div class="rounded-xl bg-white p-4 shadow-sm">
+                <p class="font-bold text-slate-900">
+                    {{ supplier_product.product.product_name }}
+                </p>
+                <p class="text-sm text-slate-500">
+                    Supplier: {{ supplier_product.supplier.supplier_name }}
+                </p>
+                <p class="text-sm text-slate-500">
+                    Unit Price: ₱{{ supplier_product.unit_price }}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     <form method="POST" id="multiPurchaseForm" class="space-y-6">
         {% csrf_token %}
 
@@ -179,6 +203,29 @@
 
 <script>
 let selectedSupplierItems = {};
+
+function selectSuggestedSupplierProduct(id, name, company, price, image) {
+
+    selectedSupplierItems[id] = {
+        id: id,
+        name: name,
+        company: company,
+        price: price,
+        image: image,
+        quantity: 1
+    };
+
+    renderSelectedSupplierItems();
+
+    const selectedBox = document.getElementById("selectedItemsBox");
+
+    if (selectedBox) {
+        window.scrollTo({
+            top: selectedBox.offsetTop - 120,
+            behavior: "smooth"
+        });
+    }
+}
 
 function addSupplierItem() {
     const select = document.getElementById("supplierProductSelect");

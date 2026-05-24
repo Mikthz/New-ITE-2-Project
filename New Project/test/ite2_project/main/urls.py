@@ -269,6 +269,18 @@ urlpatterns = [
     ),
 
     path(
+    'support-tickets/',
+    views.support_tickets,
+    name='support_tickets'
+    ),
+
+    path(
+        'support-tickets/<int:pk>/',
+        views.support_ticket_detail,
+        name='support_ticket_detail'
+    ),
+
+    path(
         'sales/record/',
         views.record_sale,
         name='record_sale'

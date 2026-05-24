@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
-from django.db.models import Q
+from django.db.models import Q, F
 from django.db import transaction
 from django.core.paginator import Paginator
 from django.db.models.deletion import ProtectedError
@@ -9,7 +9,7 @@ from django.core.files.storage import default_storage
 from django.db.models import Sum, Avg
 from django.utils import timezone
 from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
-from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm, ChangePINForm
+from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm, ChangePINForm, ChangePasswordForm
 
 def get_current_admin(request):
     admin_pk = request.session.get('admin_id')
@@ -157,12 +157,27 @@ def product_list(request):
 
     search = request.GET.get('search', '').strip()
 
-    products = Product.objects.filter(
+    products = Product.objects.select_related(
+        'category',
+        'supplier'
+    ).filter(
+        stock_quantity__lte=F('low_stock_threshold')
+    ).filter(
         Q(product_name__icontains=search) |
         Q(brand__icontains=search) |
         Q(model_name__icontains=search) |
-        Q(category__category_name__icontains=search)
-    ).order_by('product_name')
+        Q(category__category_name__icontains=search) |
+        Q(supplier__supplier_name__icontains=search)
+    ).order_by('stock_quantity', 'product_name')
+
+    low_stock_count = Product.objects.filter(
+        stock_quantity__gt=0,
+        stock_quantity__lte=F('low_stock_threshold')
+    ).count()
+
+    out_of_stock_count = Product.objects.filter(
+        stock_quantity=0
+    ).count()
 
     paginator = Paginator(products, 5)
     page_number = request.GET.get('page')
@@ -180,6 +195,8 @@ def product_list(request):
             'search': search,
             'product_form': product_form,
             'sale_form': sale_form,
+            'low_stock_count': low_stock_count,
+            'out_of_stock_count': out_of_stock_count,
         }
     )
 
@@ -243,16 +260,43 @@ def low_stock(request):
     if not current_user:
         return redirect('login')
 
-    products = Product.objects.filter(
-        stock_quantity__lte=5
-    ).order_by('stock_quantity')
+    search = request.GET.get('search', '').strip()
+
+    products = Product.objects.select_related(
+        'category',
+        'supplier'
+    ).filter(
+        stock_quantity__lte=F('low_stock_threshold')
+    ).filter(
+        Q(product_name__icontains=search) |
+        Q(brand__icontains=search) |
+        Q(model_name__icontains=search) |
+        Q(category__category_name__icontains=search) |
+        Q(supplier__supplier_name__icontains=search)
+    ).order_by('stock_quantity', 'product_name')
+
+    out_of_stock_count = products.filter(
+        stock_quantity=0
+    ).count()
+
+    low_stock_count = products.filter(
+        stock_quantity__gt=0
+    ).count()
+
+    paginator = Paginator(products, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
     return render(
         request,
         'main/low_stock.html',
         {
             'current_user': current_user,
-            'low_stock_products': products
+            'low_stock_products': page_obj,
+            'page_obj': page_obj,
+            'search': search,
+            'low_stock_count': low_stock_count,
+            'out_of_stock_count': out_of_stock_count,
         }
     )
 
@@ -495,6 +539,17 @@ def buy_supplier_products(request):
 
     form = SupplierPurchaseForm()
 
+    selected_product_id = request.GET.get('product')
+    selected_supplier_products = SupplierProduct.objects.none()
+
+    if selected_product_id:
+        selected_supplier_products = SupplierProduct.objects.filter(
+            product_id=selected_product_id
+        ).select_related(
+            'supplier',
+            'product'
+        )
+
     if request.method == 'POST':
         product_ids = request.POST.getlist('supplier_product_ids[]')
         quantities = request.POST.getlist('quantities[]')
@@ -593,6 +648,8 @@ def buy_supplier_products(request):
             'form': form,
             'supplier_expenses': supplier_expenses,
             'purchases': supplier_expenses,
+            'selected_product_id': selected_product_id,
+            'selected_supplier_products': selected_supplier_products,
             'supplier_products': supplier_products
         }
     )
@@ -747,44 +804,59 @@ def create_delivery(request):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
+    products = Product.objects.filter(
+        is_active=True
+    ).order_by('product_name')
+
     if request.method == 'POST':
-        sale_form = SaleForm(request.POST)
         delivery_form = DeliveryForm(request.POST)
+        sale_form = SaleForm()
 
-        if sale_form.is_valid() and delivery_form.is_valid():
-            try:
-                with transaction.atomic():
-                    sale = sale_form.save(commit=False)
+        product_ids = request.POST.getlist('product_ids[]')
+        quantities = request.POST.getlist('quantities[]')
+        sale_form = SaleForm(request.POST)
+        customer_name = sale_form.data.get('customer_name', '').strip()
 
-                    product = Product.objects.select_for_update().get(
-                        pk=sale.product.pk
+        if not product_ids:
+            sale_form.add_error(None, 'Please add at least one product.')
+
+        if not customer_name:
+            sale_form.add_error(None, 'Customer name is required.')
+
+        if delivery_form.is_valid() and product_ids and customer_name:
+            with transaction.atomic():
+                for product_id, quantity in zip(product_ids, quantities):
+                    product = Product.objects.select_for_update().get(pk=product_id)
+                    quantity = int(quantity)
+
+                    if quantity <= 0:
+                        sale_form.add_error(None, 'Quantity must be greater than zero.')
+                        break
+
+                    if quantity > product.stock_quantity:
+                        sale_form.add_error(None, f'Not enough stock for {product.product_name}.')
+                        break
+
+                    sale = Sale.objects.create(
+                        product=product,
+                        customer_name=customer_name,
+                        quantity_sold=quantity
                     )
 
-                    if sale.quantity_sold > product.stock_quantity:
-                        sale_form.add_error(
-                            None,
-                            'Not enough stock available.'
-                        )
-                    else:
-                        sale.product = product
-                        sale.save()
+                    delivery = delivery_form.save(commit=False)
+                    delivery.sale = sale
+                    delivery.customer_name = customer_name
+                    delivery.save()
 
-                        delivery = delivery_form.save(commit=False)
-                        delivery.sale = sale
-                        delivery.customer_name = sale.customer_name
-                        delivery.save()
+                    Invoice.objects.get_or_create(
+                        sale=sale,
+                        defaults={
+                            'status': 'Paid'
+                        }
+                    )
 
-                        Invoice.objects.get_or_create(
-                            sale=sale,
-                            defaults={
-                                'status': 'Paid'
-                            }
-                        )
-
-                        return redirect('delivery_list')
-
-            except ValueError as error:
-                sale_form.add_error(None, str(error))
+                if not sale_form.errors:
+                    return redirect('delivery_list')
 
     else:
         sale_form = SaleForm()
@@ -797,7 +869,8 @@ def create_delivery(request):
             'current_user': current_user,
             'sale_form': sale_form,
             'delivery_form': delivery_form,
-            'form': sale_form
+            'form': sale_form if sale_form.errors else delivery_form,
+            'products': products,
         }
     )
 
@@ -1467,29 +1540,30 @@ def change_password(request):
         return redirect('login')
 
     if request.method == 'POST':
-        current_password = request.POST.get('current_password')
-        new_password = request.POST.get('new_password')
-        confirm_password = request.POST.get('confirm_password')
+        form = ChangePasswordForm(request.POST)
 
-        if current_password != current_user.password:
-            return render(request, 'main/change_password.html', {
-                'current_user': current_user,
-                'error': 'Current password is incorrect.'
-            })
+        if form.is_valid():
+            current_password = form.cleaned_data.get('current_password')
+            new_password = form.cleaned_data.get('new_password')
+            confirm_password = form.cleaned_data.get('confirm_password')
 
-        if new_password != confirm_password:
-            return render(request, 'main/change_password.html', {
-                'current_user': current_user,
-                'error': 'New passwords do not match.'
-            })
+            if current_password != current_user.password:
+                form.add_error('current_password', 'Current password is incorrect.')
 
-        current_user.password = new_password
-        current_user.save(update_fields=['password'])
+            elif new_password != confirm_password:
+                form.add_error('confirm_password', 'New passwords do not match.')
 
-        return redirect('settings')
+            else:
+                current_user.password = new_password
+                current_user.save(update_fields=['password'])
+                return redirect('settings')
+
+    else:
+        form = ChangePasswordForm()
 
     return render(request, 'main/change_password.html', {
-        'current_user': current_user
+        'current_user': current_user,
+        'form': form
     })
 
 
@@ -1557,22 +1631,55 @@ def contact_support(request):
 
     if request.method == 'POST':
         form = ContactSupportForm(request.POST)
+
         if form.is_valid():
             ticket = form.save(commit=False)
             ticket.admin = current_user
             ticket.save()
-            return redirect('contact_support')
+            return redirect('support_ticket_detail', pk=ticket.pk)
     else:
         form = ContactSupportForm(initial={
             'name': f'{current_user.first_name} {current_user.last_name}'.strip() or current_user.username,
             'email': current_user.email,
         })
 
-    tickets = ContactSupport.objects.filter(admin=current_user).order_by('-created_at')
+    return render(request, 'main/contact_support.html', {
+        'current_user': current_user,
+        'form': form
+    })
+
+def support_tickets(request):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
     if current_user.is_admin:
         tickets = ContactSupport.objects.all().order_by('-created_at')
+    else:
+        tickets = ContactSupport.objects.filter(admin=current_user).order_by('-created_at')
 
-    return render(request, 'main/contact_support.html', {'current_user': current_user, 'form': form, 'tickets': tickets})
+    return render(request, 'main/support_tickets.html', {
+        'current_user': current_user,
+        'tickets': tickets
+    })
+
+
+def support_ticket_detail(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    if current_user.is_admin:
+        ticket = get_object_or_404(ContactSupport, pk=pk)
+    else:
+        ticket = get_object_or_404(ContactSupport, pk=pk, admin=current_user)
+
+    return render(request, 'main/support_ticket_detail.html', {
+        'current_user': current_user,
+        'ticket': ticket
+    })
 
 def account_creation(request):
 

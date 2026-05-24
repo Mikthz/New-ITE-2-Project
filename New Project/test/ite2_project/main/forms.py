@@ -75,6 +75,7 @@ class ProductForm(forms.ModelForm):
             'description',
             'price',
             'stock_quantity',
+            'low_stock_threshold',
             'product_image'
         ]
         
@@ -87,6 +88,7 @@ class ProductForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'class': 'input', 'rows': 4, 'placeholder': 'Enter a description'}),
             'price': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter price tag'}),
             'stock_quantity': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Enter stock quantity'}),
+            'low_stock_threshold': forms.NumberInput(attrs={'class': 'input', 'placeholder': 'Low stock threshold'}),
             'product_image': forms.FileInput(attrs={'class': 'input', 'placeholder': 'Insert Image'}),
         }
 
@@ -730,5 +732,30 @@ class ChangePINForm(forms.Form):
         widget=forms.PasswordInput(attrs={
             'class': 'input',
             'placeholder': 'Confirm New PIN'
+        })
+    )
+
+class ChangePasswordForm(forms.Form):
+    current_password = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'class': 'input',
+            'placeholder': 'Current Password'
+        })
+    )
+
+    new_password = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'class': 'input',
+            'placeholder': 'New Password'
+        })
+    )
+
+    confirm_password = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={
+            'class': 'input',
+            'placeholder': 'Confirm New Password'
         })
     )
