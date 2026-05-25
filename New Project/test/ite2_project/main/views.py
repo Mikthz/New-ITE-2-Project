@@ -907,8 +907,6 @@ def delivery_detail(request, pk):
 
 def create_delivery(request):
     current_user = get_current_admin(request)
-    
-    delivery_group = uuid.uuid4().hex
 
     if not current_user:
         return redirect('login')
@@ -927,62 +925,80 @@ def create_delivery(request):
         product_ids = request.POST.getlist('product_ids[]')
         quantities = request.POST.getlist('quantities[]')
         customer_name = sale_form.data.get('customer_name', '').strip()
-
         selected_items = []
 
         if not product_ids:
             sale_form.add_error(None, 'Please add at least one product.')
+
+        if len(product_ids) != len(quantities):
+            sale_form.add_error(None, 'The selected products and quantities do not match.')
 
         if not customer_name:
             sale_form.add_error('customer_name', 'Customer name is required.')
 
         for product_id, quantity in zip(product_ids, quantities):
             try:
+                product_id = int(product_id)
                 quantity = int(quantity)
-                product = Product.objects.get(pk=product_id)
-            except (ValueError, Product.DoesNotExist):
-                sale_form.add_error(None, 'The selected product is invalid.')
+            except ValueError:
+                sale_form.add_error(None, 'One selected product or quantity is invalid.')
                 continue
 
             if quantity <= 0:
                 sale_form.add_error(None, 'Quantity must be greater than zero.')
                 continue
 
-            if quantity > product.stock_quantity:
-                sale_form.add_error(None, f'Not enough stock for {product.product_name}.')
-                continue
-
-            selected_items.append((product.pk, quantity))
+            selected_items.append((product_id, quantity))
 
         if delivery_form.is_valid() and not sale_form.errors and selected_items:
+            delivery_group = uuid.uuid4().hex
+
             with transaction.atomic():
-                for product_pk, quantity in selected_items:
-                    product = Product.objects.select_for_update().get(pk=product_pk)
+                locked_products = {
+                    product.pk: product
+                    for product in Product.objects.select_for_update().filter(
+                        pk__in=[product_id for product_id, quantity in selected_items],
+                        is_active=True
+                    )
+                }
+
+                for product_id, quantity in selected_items:
+                    product = locked_products.get(product_id)
+
+                    if not product:
+                        sale_form.add_error(None, 'One selected product is invalid or inactive.')
+                        break
 
                     if quantity > product.stock_quantity:
                         sale_form.add_error(None, f'Not enough stock for {product.product_name}.')
                         break
 
-                    sale = Sale.objects.create(
-                        product=product,
-                        customer_name=customer_name,
-                        quantity_sold=quantity
-                    )
+                if sale_form.errors:
+                    transaction.set_rollback(True)
+                else:
+                    for product_id, quantity in selected_items:
+                        product = locked_products[product_id]
 
-                    delivery = delivery_form.save(commit=False)
-                    delivery.pk = None
-                    delivery.sale = sale
-                    delivery.customer_name = customer_name
-                    delivery.delivery_group = delivery_group
-                    delivery.save()
+                        sale = Sale.objects.create(
+                            product=product,
+                            customer_name=customer_name,
+                            quantity_sold=quantity
+                        )
 
-                    Invoice.objects.get_or_create(
-                        sale=sale,
-                        defaults={'status': 'Paid'}
-                    )
+                        delivery = delivery_form.save(commit=False)
+                        delivery.pk = None
+                        delivery.sale = sale
+                        delivery.customer_name = customer_name
+                        delivery.delivery_group = delivery_group
+                        delivery.save()
 
-                if not sale_form.errors:
-                    return redirect('delivery_list')
+                        Invoice.objects.get_or_create(
+                            sale=sale,
+                            defaults={'status': 'Paid'}
+                        )
+
+            if not sale_form.errors:
+                return redirect('delivery_list')
 
     else:
         sale_form = SaleForm()

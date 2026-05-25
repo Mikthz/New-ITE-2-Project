@@ -1,16 +1,26 @@
 (function () {
     function setTheme(theme) {
         const safeTheme = theme === "dark" ? "dark" : "light";
+
+        document.documentElement.classList.add("theme-loading");
+        document.documentElement.classList.toggle("dark", safeTheme === "dark");
+        document.documentElement.dataset.theme = safeTheme;
+
         document.body.classList.toggle("theme-dark", safeTheme === "dark");
         document.body.classList.toggle("theme-light", safeTheme === "light");
-        document.documentElement.dataset.theme = safeTheme;
+
         localStorage.setItem("appTheme", safeTheme);
+        localStorage.removeItem("theme");
 
         document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
             const isActive = button.dataset.themeToggle === safeTheme;
             button.classList.toggle("ring-2", isActive);
-            button.classList.toggle("ring-cyan-400", isActive);
+            button.classList.toggle("ring-cyan-400", isActive && safeTheme === "dark");
             button.classList.toggle("ring-orange-400", isActive && safeTheme === "light");
+        });
+
+        requestAnimationFrame(function () {
+            document.documentElement.classList.remove("theme-loading");
         });
     }
 
