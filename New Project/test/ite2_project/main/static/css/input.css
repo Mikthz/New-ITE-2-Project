@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source "../../templates";
 @source "../../**/*.html";
 @source "../../**/*.py";
@@ -13,15 +15,15 @@
 @layer components {
 
     .sidebar-link {
-        @apply flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-orange-50 hover:text-orange-600;
+        @apply flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-orange-50 hover:text-orange-600 dark:text-slate-300 dark:hover:bg-cyan-900/30 dark:hover:text-cyan-300;
     }
 
     .sidebar-sublink {
-        @apply ml-8 block rounded-xl px-4 py-2 text-sm text-slate-500 transition hover:bg-orange-50 hover:text-orange-600;
+        @apply ml-8 block rounded-xl px-4 py-2 text-sm text-slate-500 transition hover:bg-orange-50 hover:text-orange-600 dark:text-slate-300 dark:hover:bg-cyan-900/30 dark:hover:text-cyan-300;
     }
 
     .sidebar-active {
-        @apply bg-orange-50 text-orange-600 border-r-4 border-orange-500 font-semibold;
+        @apply bg-orange-50 text-orange-600 border-r-4 border-orange-500 font-semibold dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-400;
     }
 
     .card {
@@ -45,7 +47,7 @@
     }
 
     .table-row {
-        @apply border-b border-slate-100 transition hover:bg-orange-50/40;
+        @apply border-b border-slate-100 transition hover:bg-orange-50/40 dark:border-slate-700 dark:hover:bg-slate-700;
     }
 
     .status-success {
@@ -103,4 +105,117 @@
     .animate-slide-down {
         animation: slide-down 0.3s ease-out;
     }
+}
+
+/* Fifth-pass targeted fixes: force dark sidebar hover and inventory stock hues. */
+html.dark #sidebar .sidebar-link:hover,
+html.dark #sidebar .sidebar-sublink:hover,
+html[data-theme="dark"] #sidebar .sidebar-link:hover,
+html[data-theme="dark"] #sidebar .sidebar-sublink:hover,
+body.theme-dark #sidebar .sidebar-link:hover,
+body.theme-dark #sidebar .sidebar-sublink:hover {
+    background: #1e293b !important;
+    color: #67e8f9 !important;
+}
+
+html.dark #sidebar .sidebar-active,
+html[data-theme="dark"] #sidebar .sidebar-active,
+body.theme-dark #sidebar .sidebar-active {
+    background: rgba(8, 145, 178, 0.28) !important;
+    color: #67e8f9 !important;
+    border-color: #06b6d4 !important;
+}
+
+html.dark #sidebar .sidebar-active:hover,
+html[data-theme="dark"] #sidebar .sidebar-active:hover,
+body.theme-dark #sidebar .sidebar-active:hover {
+    background: #1e293b !important;
+    color: #67e8f9 !important;
+}
+
+html.dark tr.inventory-row-out,
+html[data-theme="dark"] tr.inventory-row-out,
+body.theme-dark tr.inventory-row-out {
+    background: rgba(127, 29, 29, 0.62) !important;
+    color: #fee2e2 !important;
+    border-color: rgba(248, 113, 113, 0.55) !important;
+}
+
+html.dark tr.inventory-row-out:hover,
+html[data-theme="dark"] tr.inventory-row-out:hover,
+body.theme-dark tr.inventory-row-out:hover {
+    background: rgba(153, 27, 27, 0.78) !important;
+}
+
+html.dark tr.inventory-row-low,
+html[data-theme="dark"] tr.inventory-row-low,
+body.theme-dark tr.inventory-row-low {
+    background: rgba(124, 45, 18, 0.50) !important;
+    color: #ffedd5 !important;
+    border-color: rgba(251, 146, 60, 0.45) !important;
+}
+
+html.dark tr.inventory-row-low:hover,
+html[data-theme="dark"] tr.inventory-row-low:hover,
+body.theme-dark tr.inventory-row-low:hover {
+    background: rgba(154, 52, 18, 0.68) !important;
+}
+
+html.dark tr.inventory-row-normal:hover,
+html[data-theme="dark"] tr.inventory-row-normal:hover,
+body.theme-dark tr.inventory-row-normal:hover {
+    background: #3f5168 !important;
+}
+
+html.dark tr.inventory-row-out td,
+html.dark tr.inventory-row-out p,
+html.dark tr.inventory-row-out .font-bold,
+html.dark tr.inventory-row-out .font-semibold,
+html[data-theme="dark"] tr.inventory-row-out td,
+html[data-theme="dark"] tr.inventory-row-out p,
+html[data-theme="dark"] tr.inventory-row-out .font-bold,
+html[data-theme="dark"] tr.inventory-row-out .font-semibold,
+body.theme-dark tr.inventory-row-out td,
+body.theme-dark tr.inventory-row-out p,
+body.theme-dark tr.inventory-row-out .font-bold,
+body.theme-dark tr.inventory-row-out .font-semibold {
+    color: #fee2e2 !important;
+}
+
+html.dark tr.inventory-row-low td,
+html.dark tr.inventory-row-low p,
+html.dark tr.inventory-row-low .font-bold,
+html.dark tr.inventory-row-low .font-semibold,
+html[data-theme="dark"] tr.inventory-row-low td,
+html[data-theme="dark"] tr.inventory-row-low p,
+html[data-theme="dark"] tr.inventory-row-low .font-bold,
+html[data-theme="dark"] tr.inventory-row-low .font-semibold,
+body.theme-dark tr.inventory-row-low td,
+body.theme-dark tr.inventory-row-low p,
+body.theme-dark tr.inventory-row-low .font-bold,
+body.theme-dark tr.inventory-row-low .font-semibold {
+    color: #ffedd5 !important;
+}
+
+html.dark tr.inventory-row-out .bg-red-100,
+html[data-theme="dark"] tr.inventory-row-out .bg-red-100,
+body.theme-dark tr.inventory-row-out .bg-red-100 {
+    background: #fecaca !important;
+    color: #b91c1c !important;
+}
+
+html.dark tr.inventory-row-low .bg-orange-100,
+html[data-theme="dark"] tr.inventory-row-low .bg-orange-100,
+body.theme-dark tr.inventory-row-low .bg-orange-100 {
+    background: #fed7aa !important;
+    color: #c2410c !important;
+}
+
+html.dark tr.inventory-row-out .bg-red-100 *,
+html.dark tr.inventory-row-low .bg-orange-100 *,
+html[data-theme="dark"] tr.inventory-row-out .bg-red-100 *,
+html[data-theme="dark"] tr.inventory-row-low .bg-orange-100 *,
+body.theme-dark tr.inventory-row-out .bg-red-100 *,
+body.theme-dark tr.inventory-row-low .bg-orange-100 * {
+    color: inherit !important;
 }

@@ -1,13 +1,17 @@
 (function () {
     function setTheme(theme) {
         const safeTheme = theme === "dark" ? "dark" : "light";
+        const root = document.documentElement;
+        const body = document.body;
 
-        document.documentElement.classList.add("theme-loading");
-        document.documentElement.classList.toggle("dark", safeTheme === "dark");
-        document.documentElement.dataset.theme = safeTheme;
+        root.classList.add("theme-loading");
+        root.classList.toggle("dark", safeTheme === "dark");
+        root.dataset.theme = safeTheme;
 
-        document.body.classList.toggle("theme-dark", safeTheme === "dark");
-        document.body.classList.toggle("theme-light", safeTheme === "light");
+        if (body) {
+            body.classList.remove("theme-dark", "theme-light");
+            body.classList.add(safeTheme === "dark" ? "theme-dark" : "theme-light");
+        }
 
         localStorage.setItem("appTheme", safeTheme);
         localStorage.removeItem("theme");
@@ -20,7 +24,9 @@
         });
 
         requestAnimationFrame(function () {
-            document.documentElement.classList.remove("theme-loading");
+            requestAnimationFrame(function () {
+                root.classList.remove("theme-loading");
+            });
         });
     }
 
