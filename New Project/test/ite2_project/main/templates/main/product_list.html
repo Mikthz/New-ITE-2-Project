@@ -62,7 +62,7 @@
                     <th class="p-4">Product ID</th>
                     <th class="p-4">Category</th>
                     <th class="p-4">Supplier</th>
-                    <th class="p-4">Available</th>
+                    <th class="p-4">Availability</th>
                     <th class="p-4">Price</th>
                     <th class="p-4">Status</th>
                     {% if current_user.is_admin %}
@@ -169,9 +169,9 @@
                     {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="flex gap-2">
-                            <button class="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500 text-white">
+                            <a href="{% url 'product_detail' product.pk %}" class="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-500 text-white">
                                 <i class="fa-solid fa-eye text-xs"></i>
-                            </button>
+                            </a>
 
                             <button onclick="toggleEditProduct('{{ product.pk }}')" class="flex h-7 w-7 items-center justify-center rounded-lg bg-sky-500 text-white">
                                 <i class="fa-solid fa-pen text-xs"></i>

@@ -6,6 +6,8 @@ from django.core.paginator import Paginator
 from django.db.models.deletion import ProtectedError
 from django.core.files.storage import default_storage
 
+import uuid
+
 from django.db.models import Sum, Avg
 from django.utils import timezone
 from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
@@ -255,6 +257,39 @@ def add_product(request):
             'current_user': current_user,
             'form': form,
             'product_form': form
+        }
+    )
+
+def product_detail(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    product = get_object_or_404(
+        Product.objects.select_related(
+            'category',
+            'supplier'
+        ),
+        pk=pk
+    )
+
+    related_sales = Sale.objects.filter(
+        product=product
+    ).order_by('-sale_date')[:10]
+
+    total_sold = sum(
+        sale.quantity_sold for sale in related_sales
+    )
+
+    return render(
+        request,
+        'main/product_detail.html',
+        {
+            'current_user': current_user,
+            'product': product,
+            'related_sales': related_sales,
+            'total_sold': total_sold,
         }
     )
 
@@ -835,17 +870,45 @@ def delivery_detail(request, pk):
         pk=pk
     )
 
+    if delivery.delivery_group:
+        delivery_items = Delivery.objects.select_related(
+            'sale',
+            'sale__product'
+        ).filter(
+            delivery_group=delivery.delivery_group
+        ).order_by('pk')
+    else:
+        delivery_items = Delivery.objects.select_related(
+            'sale',
+            'sale__product'
+        ).filter(
+            pk=delivery.pk
+        )
+
+    total_amount = sum(
+        item.sale.total_price for item in delivery_items if item.sale
+    )
+
+    total_quantity = sum(
+        item.sale.quantity_sold for item in delivery_items if item.sale
+    )
+
     return render(
         request,
         'main/delivery_detail.html',
         {
             'current_user': current_user,
             'delivery': delivery,
+            'delivery_items': delivery_items,
+            'total_amount': total_amount,
+            'total_quantity': total_quantity,
         }
     )
 
 def create_delivery(request):
     current_user = get_current_admin(request)
+    
+    delivery_group = uuid.uuid4().hex
 
     if not current_user:
         return redirect('login')
@@ -868,7 +931,7 @@ def create_delivery(request):
         selected_items = []
 
         if not product_ids:
-            sale_form.add_error(None, 'Please add at least one delivery product.')
+            sale_form.add_error(None, 'Please add at least one product.')
 
         if not customer_name:
             sale_form.add_error('customer_name', 'Customer name is required.')
@@ -878,7 +941,7 @@ def create_delivery(request):
                 quantity = int(quantity)
                 product = Product.objects.get(pk=product_id)
             except (ValueError, Product.DoesNotExist):
-                sale_form.add_error(None, 'One selected product is invalid.')
+                sale_form.add_error(None, 'The selected product is invalid.')
                 continue
 
             if quantity <= 0:
@@ -910,6 +973,7 @@ def create_delivery(request):
                     delivery.pk = None
                     delivery.sale = sale
                     delivery.customer_name = customer_name
+                    delivery.delivery_group = delivery_group
                     delivery.save()
 
                     Invoice.objects.get_or_create(

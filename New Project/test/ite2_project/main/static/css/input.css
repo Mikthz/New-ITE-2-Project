@@ -4,6 +4,12 @@
 @source "../../**/*.html";
 @source "../../**/*.py";
 
+.theme-loading *,
+.theme-loading *::before,
+.theme-loading *::after {
+    transition: none !important;
+}
+
 @layer components {
 
     .sidebar-link {

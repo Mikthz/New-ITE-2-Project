@@ -58,6 +58,12 @@ urlpatterns = [
     ),
 
     path(
+        'products/<int:pk>/',
+        views.product_detail,
+        name='product_detail'
+    ),
+
+    path(
         'products/edit/<int:pk>/',
         views.edit_product,
         name='edit_product'

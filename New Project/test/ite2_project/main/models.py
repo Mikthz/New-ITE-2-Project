@@ -441,6 +441,13 @@ class Delivery(models.Model):
         blank=True,
         null=True
     )
+    
+    delivery_group = models.CharField(
+        max_length=50,
+        blank=True,
+        null=True,
+        db_index=True
+    )
 
     status = models.CharField(
         max_length=20,
