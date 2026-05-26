@@ -122,18 +122,117 @@
         animation: login-error-slide-down 0.8s ease-out both;
     }
 
+    /* Login button */
     .login-3d-button {
-        box-shadow: 0 7px 0 #c2410c, 0 12px 18px rgba(194, 65, 12, 0.25);
+        box-shadow:
+            0 7px 0 #c2410c,
+            0 12px 18px rgba(194, 65, 12, 0.25);
+
         transform: translateY(0);
     }
 
     .login-3d-button:hover {
-        box-shadow: 0 7px 0 #9a3412, 0 12px 18px rgba(194, 65, 12, 0.28);
+        box-shadow:
+            0 7px 0 #9a3412,
+            0 12px 18px rgba(194, 65, 12, 0.28);
     }
 
     .login-3d-button:active {
-        box-shadow: 0 1px 0 #9a3412, 0 4px 8px rgba(194, 65, 12, 0.22);
         transform: translateY(6px);
+
+        box-shadow:
+            0 1px 0 #9a3412,
+            0 4px 8px rgba(194, 65, 12, 0.22);
+    }
+
+    /* Generic 3D buttons */
+    .pressable-button {
+        cursor: pointer;
+
+        transition:
+            transform 150ms ease,
+            box-shadow 150ms ease,
+            filter 150ms ease,
+            background-color 150ms ease,
+            border-color 150ms ease,
+            color 150ms ease;
+
+        will-change: transform;
+
+        box-shadow:
+            0 5px 0 rgba(15, 23, 42, 0.28),
+            0 10px 16px rgba(15, 23, 42, 0.16);
+    }
+
+    .pressable-button:hover {
+        filter: brightness(1.04);
+    }
+
+    .pressable-button:active,
+    .pressable-button.is-pressed {
+        transform: translateY(4px);
+
+        box-shadow:
+            0 1px 0 rgba(15, 23, 42, 0.30),
+            0 4px 8px rgba(15, 23, 42, 0.14);
+    }
+
+    /* Icon buttons */
+    .pressable-button.pressable-icon {
+        box-shadow:
+            0 4px 0 rgba(15, 23, 42, 0.30),
+            0 7px 11px rgba(15, 23, 42, 0.16);
+    }
+
+    .pressable-button.pressable-icon:active,
+    .pressable-button.pressable-icon.is-pressed {
+        transform: translateY(3px);
+
+        box-shadow:
+            0 1px 0 rgba(15, 23, 42, 0.32),
+            0 3px 6px rgba(15, 23, 42, 0.14);
+    }
+
+    /* Disabled buttons */
+    .pressable-button:disabled,
+    .pressable-button[aria-disabled="true"] {
+        cursor: not-allowed;
+        transform: none;
+        filter: none;
+        box-shadow: none;
+    }
+
+    /* Navbar links */
+    .nav-press-link {
+        cursor: pointer;
+        display: inline-flex;
+
+        transition:
+            transform 150ms ease,
+            filter 150ms ease;
+    }
+
+    .nav-press-link:hover {
+        filter: brightness(1.08);
+    }
+
+    .nav-press-link:active,
+    .nav-press-link.is-pressed {
+        transform: translateY(2px);
+    }
+
+    /* Excluded elements */
+    .no-press-effect,
+    .no-press-effect:hover,
+    .no-press-effect:active,
+    .no-press-effect.is-pressed,
+    .no-press-effect.pressable-button,
+    .no-press-effect.pressable-button:hover,
+    .no-press-effect.pressable-button:active,
+    .no-press-effect.pressable-button.is-pressed {
+        box-shadow: none !important;
+        transform: none !important;
+        filter: none !important;
     }
 }
 
@@ -249,3 +348,88 @@ body.theme-dark tr.inventory-row-out .bg-red-100 *,
 body.theme-dark tr.inventory-row-low .bg-orange-100 * {
     color: inherit !important;
 }
+
+button:not(:disabled),
+a[href],
+[role="button"] {
+    cursor: pointer;
+}
+
+/* Directional page transitions for sidebar navigation */
+.page-transition-surface {
+    will-change: transform, opacity;
+}
+
+.page-slide-in-up {
+    animation: page-slide-in-up 220ms ease-out both;
+}
+
+.page-slide-in-down {
+    animation: page-slide-in-down 220ms ease-out both;
+}
+
+.page-slide-out-up {
+    animation: page-slide-out-up 140ms ease-in both;
+}
+
+.page-slide-out-down {
+    animation: page-slide-out-down 140ms ease-in both;
+}
+
+@keyframes page-slide-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes page-slide-in-down {
+    from {
+        opacity: 0;
+        transform: translateY(-24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes page-slide-out-up {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-18px);
+    }
+}
+
+@keyframes page-slide-out-down {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-slide-in-up,
+    .page-slide-in-down,
+    .page-slide-out-up,
+    .page-slide-out-down {
+        animation: none !important;
+    }
+}
+
