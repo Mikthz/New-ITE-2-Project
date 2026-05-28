@@ -1,0 +1,199 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Expenses{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Expenses</h1>
+        <p class="mt-1 text-sm text-slate-500">Manage expenses from companies/suppliers and products bought</p>
+    </div>
+
+    {% if current_user.is_admin %}
+    <a href="{% url 'create_expense' %}" class="btn-primary">
+        <i class="fa-solid fa-plus mr-2"></i>
+        Create Expense
+    </a>
+    {% endif %}
+</div>
+
+<form method="GET" class="mb-6 grid grid-cols-1 gap-3 rounded-3xl border border-orange-100 bg-white p-5 shadow-sm md:grid-cols-5">
+    <div>
+        <label class="mb-2 block text-xs font-bold uppercase text-slate-400">Period</label>
+        <select name="period" class="input">
+            <option value="all" {% if period == 'all' %}selected{% endif %}>All</option>
+            <option value="daily" {% if period == 'daily' %}selected{% endif %}>Daily</option>
+            <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly</option>
+            <option value="quarterly" {% if period == 'quarterly' %}selected{% endif %}>Quarterly</option>
+            <option value="bi_yearly" {% if period == 'bi_yearly' %}selected{% endif %}>Bi-yearly</option>
+            <option value="yearly" {% if period == 'yearly' %}selected{% endif %}>Yearly</option>
+            <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom</option>
+        </select>
+    </div>
+    <div>
+        <label class="mb-2 block text-xs font-bold uppercase text-slate-400">Start</label>
+        <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="input">
+    </div>
+    <div>
+        <label class="mb-2 block text-xs font-bold uppercase text-slate-400">End</label>
+        <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="input">
+    </div>
+    <div class="flex items-end">
+        <button class="btn-primary w-full">Apply Filter</button>
+    </div>
+    <div class="flex items-end">
+        <a href="{{ request.path }}" class="w-full rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-slate-50">Reset</a>
+    </div>
+</form>
+
+<div class="card overflow-hidden">
+    <div class="border-b border-slate-200 p-5">
+        <form method="GET" data-auto-search="true" class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3">
+            <i class="fa-solid fa-magnifying-glass text-slate-400"></i>
+            <input
+                type="text"
+                name="search"
+                value="{{ search }}"
+                placeholder="Search expenses by company/supplier, product, or status..."
+                class="w-full bg-transparent text-sm outline-none"
+            >
+        </form>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-225 text-sm">
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Expense ID</th>
+                    <th class="p-4">Company / Supplier</th>
+                    <th class="p-4">Product</th>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Valid Until</th>
+                    <th class="p-4">Quantity</th>
+                    <th class="p-4">Amount</th>
+                    <th class="p-4">Status</th>
+                    {% if current_user.is_admin %}
+                    <th class="p-4 text-right">Actions</th>
+                    {% endif %}
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for expense in expenses %}
+                <tr class="border-b last:border-0 hover:bg-orange-50/40">
+                    <td class="p-4 font-bold">{{ expense.display_id }}</td>
+                    <td class="p-4">{{ expense.company_name }}</td>
+                    <td class="p-4">{{ expense.display_product.product_name|default:"N/A" }}</td>
+                    <td class="p-4">{{ expense.expense_date }}</td>
+                    <td class="p-4">{{ expense.valid_until }}</td>
+                    <td class="p-4">{{ expense.quantity }}</td>
+                    <td class="p-4 font-bold text-orange-600">₱{{ expense.total_price }}</td>
+                    <td class="p-4">{{ expense.status }}</td>
+                    {% if current_user.is_admin %}
+                    <td class="p-4 text-right">
+                        <button onclick="document.getElementById('editExpense{{ expense.pk }}').classList.remove('hidden')" class="btn-secondary mr-2">
+                            Edit
+                        </button>
+                        <form method="POST" action="{% url 'delete_expense' expense.pk %}" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn-danger" onclick="return confirm('Delete this expense?')">
+                                Delete
+                            </button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="p-10 text-center text-slate-400">
+                        No expenses found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if current_user.is_admin %}
+    {% for expense in expenses %}
+    <div id="editExpense{{ expense.pk }}" class="fixed inset-0 z-50 hidden bg-black/40 p-4">
+        <div class="mx-auto mt-10 max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
+            <div class="mb-6 flex items-center justify-between">
+                <h2 class="text-xl font-bold text-slate-900">Edit Expense {{ expense.display_id }}</h2>
+                <button type="button" onclick="document.getElementById('editExpense{{ expense.pk }}').classList.add('hidden')">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form method="POST" action="{% url 'edit_expense' expense.pk %}" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                {% csrf_token %}
+
+                <div class="md:col-span-2">
+                    <label class="mb-2 block text-sm font-semibold">Company / Supplier Name</label>
+                    <input type="text" name="customer_name" value="{{ expense.customer_name }}" class="input">
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="mb-2 block text-sm font-semibold">Direct Product Expense</label>
+                    <select name="product" class="search-select input">
+                        <option value="">Select customer product</option>
+                        {% for product in expense_form.fields.product.queryset %}
+                            <option value="{{ product.pk }}" {% if expense.product and product.pk == expense.product.pk %}selected{% endif %}>{{ product.product_name }} - ₱{{ product.price }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="mb-2 block text-sm font-semibold">Supplier Product</label>
+                    <select name="supplier_product" class="search-select input">
+                        <option value="">Select supplier product</option>
+                        {% for supplier_product in expense_form.fields.supplier_product.queryset %}
+                            <option value="{{ supplier_product.pk }}" {% if expense.supplier_product and supplier_product.pk == expense.supplier_product.pk %}selected{% endif %}>{{ supplier_product.supplier.company_name }} - {% if supplier_product.product %}{{ supplier_product.product.product_name }}{% else %}No product selected{% endif %} - ₱{{ supplier_product.unit_price }}</option>
+                        {% endfor %}
+                    </select>
+                    <p class="mt-1 text-xs text-slate-500">Select either a direct product expense or supplier product expense, not both.</p>
+                </div>
+
+                <div>
+                    <label class="mb-2 block text-sm font-semibold">Quantity</label>
+                    <input type="number" name="quantity" min="1" value="{{ expense.quantity }}" class="input" required>
+                </div>
+
+                <div>
+                    <label class="mb-2 block text-sm font-semibold">Expense Date</label>
+                    <input type="date" name="expense_date" value="{{ expense.expense_date|date:'Y-m-d' }}" class="input" required>
+                </div>
+
+                <div>
+                    <label class="mb-2 block text-sm font-semibold">Valid Until</label>
+                    <input type="date" name="valid_until" value="{{ expense.valid_until|date:'Y-m-d' }}" class="input">
+                </div>
+
+                <div>
+                    <label class="mb-2 block text-sm font-semibold">Status</label>
+                    <select name="status" class="input">
+                        <option value="Draft" {% if expense.status == 'Draft' %}selected{% endif %}>Draft</option>
+                        <option value="Sent" {% if expense.status == 'Sent' %}selected{% endif %}>Sent</option>
+                        <option value="Accepted" {% if expense.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                        <option value="Rejected" {% if expense.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="Converted" {% if expense.status == 'Converted' %}selected{% endif %}>Converted</option>
+                    </select>
+                </div>
+
+                <div class="md:col-span-2">
+                    <label class="mb-2 block text-sm font-semibold">Remarks</label>
+                    <textarea name="remarks" class="input" rows="4">{{ expense.remarks }}</textarea>
+                </div>
+
+                <div class="md:col-span-2 flex justify-end">
+                    <button type="submit" class="btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+{% endif %}
+
+{% endblock %}

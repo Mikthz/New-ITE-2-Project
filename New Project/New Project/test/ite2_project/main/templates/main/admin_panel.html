@@ -1,0 +1,343 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Inventory System{% endblock %}</title>
+
+    <script src="{% static 'js/admin_panel_head.js' %}"></script>
+
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    <link rel="stylesheet" href="{% static 'css/theme.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
+</head>
+
+<body class="theme-light bg-[#f7f4ef] text-slate-800">
+
+<!-- Floating Alerts -->
+<div class="fixed left-1/2 top-6 z-[9999] flex w-full max-w-md -translate-x-1/2 flex-col gap-3 px-4">
+
+    {% if form.errors %}
+    <div id="errorAlert"
+         class="animate-slide-down rounded-2xl border border-red-200 bg-red-500 px-5 py-4 text-white shadow-2xl">
+
+        <div class="flex items-start justify-between gap-4">
+
+            <div class="flex gap-3">
+                <i class="fa-solid fa-circle-exclamation mt-1 text-lg"></i>
+
+                <div>
+                    <h3 class="font-bold">
+                        Form Error
+                    </h3>
+
+                    <div class="mt-1 text-sm text-red-100">
+                        {% for field in form %}
+                            {% for error in field.errors %}
+                                <div>{{ error }}</div>
+                            {% endfor %}
+                        {% endfor %}
+
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeAlert('errorAlert')"
+                    class="text-white/80 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% if current_user %}
+
+<div class="min-h-screen lg:flex lg:items-start">
+
+    <aside
+        id="sidebar"
+        class="fixed left-0 top-0 z-[60] h-screen w-72 -translate-x-full overflow-y-auto border-r border-orange-200 bg-orange-100 p-5 shadow-xl transition-transform duration-300 lg:sticky lg:top-0 lg:shrink-0 lg:self-start lg:translate-x-0 lg:shadow-none"
+    >
+        <div class="mb-8 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500 text-white">
+                    <i class="fa-solid fa-boxes-stacked"></i>
+                </div>
+
+                <div>
+                    <h1 class="text-sm font-bold text-orange-600">
+                        Elektronika
+                    </h1>
+                    <p class="text-xs text-slate-400">
+                        Inventory Management System
+                    </p>
+                </div>
+            </div>
+
+            <button onclick="closeSidebar()" class="lg:hidden">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-orange-400">
+            Main Menu
+        </p>
+
+        <nav class="space-y-4">
+
+            <a href="{% url 'dashboard' %}" class="sidebar-link">
+                <i class="fa-solid fa-gauge-high"></i>
+                Dashboard
+            </a>
+
+            <!-- Inventory -->
+            <div>
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700">
+                    <i class="fa-solid fa-box"></i>
+                    Inventory
+                </p>
+
+                <div class="space-y-1">
+                    <a href="{% url 'product_list' %}" class="sidebar-sublink font-bold">
+                        All Products
+                    </a>
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'add_product' %}" class="sidebar-sublink font-bold">
+                        Add Product
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'low_stock' %}" class="sidebar-sublink font-bold">
+                        Low Stock
+                    </a>
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'category_list' %}" class="sidebar-sublink font-bold">
+                        Categories
+                    </a>
+
+                    <a href="{% url 'add_category' %}" class="sidebar-sublink font-bold">
+                        Add Category
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'suppliers' %}" class="sidebar-sublink font-bold">
+                        Suppliers
+                    </a>
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'create_supplier' %}" class="sidebar-sublink font-bold">
+                        Create Supplier
+                    </a>
+                    {% endif %}
+
+                    <a href="{% url 'supplier_products' %}" class="sidebar-sublink font-bold">
+                        Supplier Products
+                    </a>
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'add_supplier_products' %}" class="sidebar-sublink font-bold">
+                        Add Supplier Product
+                    </a>
+                    {% endif %}
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'buy_supplier_products' %}" class="sidebar-sublink font-bold">
+                        Buy Supplier Products
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Deliveries -->
+            <div>
+            <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold uppercase text-orange-700">
+                <i class="fa-solid fa-truck"></i>
+                Deliveries
+            </p>
+
+                <div class="space-y-1">
+                    <a href="{% url 'delivery_list' %}" class="sidebar-sublink font-bold">
+                        Customer Deliveries
+                    </a>
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'create_delivery' %}" class="sidebar-sublink font-bold">
+                        Create Customer Delivery
+                    </a>
+                    {% endif %}
+                    <!-- INDEV -->
+                    {% comment %}
+                    <a href="{% url 'supplier_delivery_list' %}" class="sidebar-sublink font-bold hidden">
+                        Supplier Deliveries
+                    </a>
+                    {% endcomment %}
+                    {% comment %}
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'create_supplier_delivery' %}" class="sidebar-sublink font-bold hidden">
+                        Create Supplier Delivery
+                    </a>
+                    {% endif %}
+                    {% endcomment %}
+                </div>
+            </div>
+
+            <!-- INDEV -->
+             {% comment %}
+            <div>
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                    <i class="fa-solid fa-file-lines"></i>
+                    Expenses
+                </p>
+
+                <div class="space-y-1">
+                    <a href="{% url 'expenses' %}" class="sidebar-sublink font-bold hidden">
+                        All Expenses
+                    </a>
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'create_expense' %}" class="sidebar-sublink font-bold hidden">
+                        Create Expense
+                    </a>
+                    {% endif %}
+
+                </div>
+            </div>
+            {% endcomment %}
+            <!-- INDEV -->
+             {% comment %}
+            <div>
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    Invoices
+                </p>
+
+                <div class="space-y-1">
+                    <a href="{% url 'invoices' %}" class="sidebar-sublink font-bold hidden">
+                        All Invoices
+                    </a>
+
+                    {% if current_user.is_admin %}
+                    <a href="{% url 'create_invoice' %}" class="sidebar-sublink font-bold hidden">
+                        Create Invoice
+                    </a>
+                    {% endif %}
+                    
+                </div>
+            </div>
+
+            <div>
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                    <i class="fa-solid fa-chart-line"></i>
+                    Reports
+                </p>
+
+                <div class="space-y-1">
+                    <a href="{% url 'sales_report' %}" class="sidebar-sublink font-bold hidden">
+                        Sales Report
+                    </a>
+
+                    <a href="{% url 'income_report' %}" class="sidebar-sublink font-bold hidden">
+                        Income Report
+                    </a>
+                </div>
+            </div>
+            {% endcomment %}
+        </nav>
+
+        <div class="my-4 border-t border-orange-200"></div>
+
+        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-orange-700">
+            Others
+        </p>
+
+        <nav class="space-y-1">
+            {% if current_user.is_admin %}
+            <a href="{% url 'user_management' %}" class="sidebar-link">
+                <i class="fa-solid fa-users-gear"></i>
+                User Management
+            </a>
+            {% endif %}
+
+            <a href="{% url 'contact_support' %}" class="sidebar-link">
+                <i class="fa-solid fa-headset"></i>
+                Contact Support
+            </a>
+
+            <a href="{% url 'settings' %}" class="sidebar-link">
+                <i class="fa-solid fa-gear"></i>
+                Settings
+            </a>
+        </nav>
+    </aside>
+
+    <div class="flex min-h-screen min-w-0 flex-1 flex-col">
+
+        <header class="sticky top-0 z-40 border-b border-orange-100 bg-white">
+            <div class="flex items-center justify-between px-4 py-4 lg:px-8">
+
+                <div class="flex items-center gap-4">
+                    <button
+                        onclick="openSidebar()"
+                        class="rounded-xl border border-orange-300 bg-orange-100 p-3 text-orange-600 transition hover:bg-orange-200 lg:hidden"
+                    >
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <!-- This has no fuctionality yet lol, probably would add a notif for low stock/no stock, etc. alerts -->
+                    <i class="fa-regular fa-bell text-slate-600"></i>
+
+                        <div onclick="window.location.href='{% url 'account_overview' %}'" style="cursor: pointer;" class="flex items-center gap-3 rounded-xl px-2 py-1 transition hover:bg-slate-100 dark:hover:bg-slate-700"
+                        >
+                                <img src="{% if current_user.profile_picture %}{{ current_user.profile_picture.url }}{% else %}/media/profiles/default-avatar.jpg{% endif %}" class="h-9 w-9 rounded-full object-cover" alt="Profile" onerror="this.onerror=null; this.src='/media/profiles default-avatar.jpg';"
+                                >
+
+                            <span class="hidden text-sm font-bold md:block">
+                                {{ current_user.username }}
+                            </span>
+                        </div>
+
+                    <a href="{% url 'logout' %}" class="nav-press-link text-sm font-semibold text-red-500">
+                        Logout
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <main id="pageTransitionContent" class="page-transition-surface flex-1 p-4 lg:p-8">
+            {% block content %}
+            {% endblock %}
+        </main>
+
+    </div>
+</div>
+
+<div id="sidebarOverlay" onclick="closeSidebar()" class="fixed inset-0 z-50 hidden bg-black/40 lg:hidden"></div>
+
+<script src="{% static 'js/admin_panel.js' %}"></script>
+<script src="{% static 'js/page_modals.js' %}"></script>
+
+{% else %}
+
+<main class="min-h-screen bg-[#f7f4ef] p-4 lg:p-8">
+    {% block unauthenticated_content %}
+    {% endblock %}
+</main>
+
+{% endif %}
+
+</body>
+</html>

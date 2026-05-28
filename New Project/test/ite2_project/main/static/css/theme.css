@@ -1,6 +1,4 @@
-/* Theme bridge for manual Light/Dark mode.
-   Tailwind dark utilities are class-driven by @custom-variant in input.css.
-   These rules keep old template classes readable without editing every page. */
+/* Theme bridge for manual Light/Dark mode. */
 
 html.theme-loading *,
 html.theme-loading *::before,
@@ -242,7 +240,6 @@ body.theme-dark .status-neutral {
     color: #e2e8f0 !important;
 }
 
-/* Keep status pills readable. The generic text-slate override above can otherwise wash them out. */
 html[data-theme="dark"] .status-success,
 body.theme-dark .status-success {
     background: #bbf7d0 !important;

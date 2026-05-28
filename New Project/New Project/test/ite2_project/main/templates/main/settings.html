@@ -1,0 +1,76 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Settings{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">Settings</h1>
+</div>
+
+<form class="space-y-6" method="POST">
+    {% csrf_token %}
+
+    <section class="card p-6">
+        <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                <i class="fa-solid fa-user"></i>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-900">
+                Account Info
+            </h2>
+        </div>
+
+        <div class="space-y-4">
+            <a href="{% url 'account_overview' %}"
+            class="block w-full rounded-2xl bg-slate-50 p-4 text-left hover:bg-orange-50">
+                <p class="font-semibold">Update Account</p>
+                <p class="text-sm text-slate-500">Update your account information</p>
+            </a>
+
+            <a href="{% url 'change_password' %}"
+            class="block w-full rounded-2xl bg-slate-50 p-4 text-left hover:bg-orange-50">
+                <p class="font-semibold">Change Password</p>
+                <p class="text-sm text-slate-500">Update your account password</p>
+            </a>
+
+            <a href="{% url 'change_pin' %}"
+            class="block w-full rounded-2xl bg-slate-50 p-4 text-left hover:bg-orange-50">
+                <p class="font-semibold">
+                    {% if current_user.pin_code %}Change PIN{% else %}Create a PIN{% endif %}
+                </p>
+                <p class="text-sm text-slate-500">Add an extra layer of security</p>
+            </a>
+
+        </div>
+
+    </section>
+
+    <section class="card p-6">
+        <div class="mb-6 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-orange-600">
+                <i class="fa-solid fa-palette"></i>
+            </div>
+
+            <h2 class="text-lg font-bold text-slate-900">
+                Appearance
+            </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <button type="button" data-theme-toggle="light" data-press-theme="light" class="rounded-2xl border border-orange-200 bg-slate-50 p-4 text-left hover:bg-orange-50">
+                <p class="font-semibold"><i class="fa-solid fa-sun mr-2 text-orange-500"></i>Light Mode</p>
+                <p class="mt-1 text-sm text-slate-500">The default theme.</p>
+            </button>
+
+            <button type="button" data-theme-toggle="dark" data-press-theme="dark" class="rounded-2xl border border-slate-600 bg-slate-700 p-4 text-left text-slate-100 hover:bg-slate-600">
+                <p class="font-semibold"><i class="fa-solid fa-moon mr-2 text-cyan-300"></i>Dark Mode</p>
+                <p class="mt-1 text-sm text-slate-300">Dark mode.</p>
+            </button>
+        </div>
+    </section>
+
+</form>
+
+{% endblock %}

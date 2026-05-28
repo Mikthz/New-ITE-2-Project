@@ -1,0 +1,152 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Income Report{% endblock %}
+
+{% block content %}
+
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-900">Income Report</h1>
+    <p class="mt-1 text-sm text-slate-500">Paid invoice income summary</p>
+</div>
+
+<form method="GET" class="mb-6 grid grid-cols-1 gap-3 rounded-3xl border border-orange-100 bg-white p-5 shadow-sm md:grid-cols-5">
+    <div>
+        <label class="mb-2 block text-xs font-bold uppercase text-slate-400">Period</label>
+        <select name="period" class="input">
+            <option value="all" {% if period == 'all' %}selected{% endif %}>All</option>
+            <option value="daily" {% if period == 'daily' %}selected{% endif %}>Daily</option>
+            <option value="monthly" {% if period == 'monthly' %}selected{% endif %}>Monthly</option>
+            <option value="quarterly" {% if period == 'quarterly' %}selected{% endif %}>Quarterly</option>
+            <option value="bi_yearly" {% if period == 'bi_yearly' %}selected{% endif %}>Bi-yearly</option>
+            <option value="yearly" {% if period == 'yearly' %}selected{% endif %}>Yearly</option>
+            <option value="custom" {% if period == 'custom' %}selected{% endif %}>Custom</option>
+        </select>
+    </div>
+    <div>
+        <label class="mb-2 block text-xs font-bold uppercase text-slate-400">Start</label>
+        <input type="date" name="start_date" value="{{ start_date|date:'Y-m-d' }}" class="input">
+    </div>
+    <div>
+        <label class="mb-2 block text-xs font-bold uppercase text-slate-400">End</label>
+        <input type="date" name="end_date" value="{{ end_date|date:'Y-m-d' }}" class="input">
+    </div>
+    <div class="flex items-end">
+        <button class="btn-primary w-full">Apply Filter</button>
+    </div>
+    <div class="flex items-end">
+        <a href="{{ request.path }}" class="w-full rounded-xl border border-slate-200 px-5 py-3 text-center text-sm font-bold text-slate-600 hover:bg-slate-50">Reset</a>
+    </div>
+</form>
+
+<div class="grid grid-cols-1 gap-5 md:grid-cols-4">
+    <!-- Make sure this gets influenced by expenses -->
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Total Income</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">₱{{ total_sales }}</h2>
+    </div>
+    <!---->
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Total Invoices</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">{{ total_orders }}</h2>
+    </div>
+
+    <!-- Change this part to be influenced by expense -->
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Total Expenses</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">₱{{ total_expense_amount }}</h2>
+        <p class="mt-1 text-xs text-slate-500">{{ total_expense_records }} expense record(s)</p>
+    </div>
+    <div class="card p-6">
+        <p class="text-sm font-semibold text-slate-500">Net Income</p>
+        <h2 class="mt-2 text-3xl font-bold text-slate-900">₱{{ net_income }}</h2>
+        <p class="mt-1 text-xs text-slate-500">Income minus expenses</p>
+    </div>
+    <!---->
+</div>
+
+<div class="mt-8 card overflow-hidden">
+    <div class="border-b border-slate-200 p-5">
+        <h2 class="font-bold text-slate-900">
+            <i class="fa-solid fa-chart-line mr-2 text-orange-500"></i>
+            Paid Invoice Income Details
+        </h2>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-225 text-sm">
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">ID</th>
+                    <th class="p-4">Product</th>
+                    <th class="p-4">Customer</th>
+                    <th class="p-4">Quantity</th>
+                    <th class="p-4">Total</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for invoice in paid_invoices %}
+                <tr class="border-b last:border-0 hover:bg-orange-50/40">
+                    <td class="p-4">{{ invoice.invoice_date }}</td>
+                    <td class="p-4 font-bold">{{ invoice.display_id }}</td>
+                    <td class="p-4 font-bold">{{ invoice.sale.product.product_name }}</td>
+                    <td class="p-4">{{ invoice.sale.customer_name }}</td>
+                    <td class="p-4">{{ invoice.sale.quantity_sold }}</td>
+                    <td class="p-4 font-bold text-orange-600">₱{{ invoice.amount }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-10 text-center text-slate-400">
+                        No paid invoice income records found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<div class="mt-8 card overflow-hidden">
+    <div class="border-b border-slate-200 p-5">
+        <h2 class="font-bold text-slate-900">
+            <i class="fa-solid fa-receipt mr-2 text-orange-500"></i>
+            Expense Details
+        </h2>
+        <p class="mt-1 text-sm text-slate-500">Accepted and converted expenses are subtracted from paid invoice income.</p>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full min-w-225 text-sm">
+            <thead class="table-head">
+                <tr>
+                    <th class="p-4">Date</th>
+                    <th class="p-4">Expense ID</th>
+                    <th class="p-4">Company / Supplier</th>
+                    <th class="p-4">Product Bought</th>
+                    <th class="p-4">Quantity</th>
+                    <th class="p-4">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for expense in accepted_expenses %}
+                <tr class="border-b last:border-0 hover:bg-orange-50/40">
+                    <td class="p-4">{{ expense.expense_date }}</td>
+                    <td class="p-4 font-bold">{{ expense.display_id }}</td>
+                    <td class="p-4">{{ expense.company_name }}</td>
+                    <td class="p-4">{{ expense.display_product.product_name|default:"N/A" }}</td>
+                    <td class="p-4">{{ expense.quantity }}</td>
+                    <td class="p-4 font-bold text-orange-600">₱{{ expense.total_price }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-10 text-center text-slate-400">No accepted or converted expense records found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

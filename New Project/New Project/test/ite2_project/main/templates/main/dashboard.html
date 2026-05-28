@@ -1,0 +1,87 @@
+{% extends "main/admin_panel.html" %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-8 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">System Dashboard</h1>
+        <p class="mt-1 text-sm text-slate-500">Welcome back, <span class="font-bold text-orange-600">{{ current_user.username }}</span></p>
+    </div>
+
+    <div class="flex gap-2">
+        <button type="button" data-theme-toggle="light" data-press-theme="light" class="rounded-xl border border-orange-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 hover:bg-orange-50">
+            <i class="fa-solid fa-sun mr-2 text-orange-500"></i>Light
+        </button>
+        <button type="button" data-theme-toggle="dark" data-press-theme="dark" class="rounded-xl border border-slate-600 bg-slate-700 px-4 py-2 text-sm font-bold text-slate-100 hover:bg-slate-600">
+            <i class="fa-solid fa-moon mr-2 text-cyan-300"></i>Dark
+        </button>
+    </div>
+</div>
+
+<div class="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
+    <section class="card p-6">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Items in Inventory</p>
+        <div class="mt-8 flex items-center gap-3">
+            <span class="text-3xl font-bold text-slate-900">{{ total_products }}</span>
+            <span class="rounded-full border px-3 py-1 text-xs font-bold text-slate-600">Registered</span>
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <p class="text-xs font-bold uppercase tracking-wide text-slate-500">Low Stock Items</p>
+        <div class="mt-8 flex items-center gap-3">
+            <span class="text-3xl font-bold text-orange-600">{{ low_stock_count }}</span>
+            <span class="rounded-full border border-orange-300 px-3 py-1 text-xs font-bold text-orange-600">Reorder soon</span>
+        </div>
+    </section>
+
+    <section class="card p-6">
+        <p class="text-xs font-bold uppercase tracking-wide text-red-500">Out of Stock Items</p>
+        <div class="mt-8 flex items-center gap-3">
+            <span class="text-3xl font-bold text-red-600">{{ out_of_stock_count }}</span>
+            <span class="rounded-full border border-red-300 px-3 py-1 text-xs font-bold text-red-600">Empty asset</span>
+        </div>
+    </section>
+</div>
+
+<div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+    <a href="{% url 'product_list' %}" class="dashboard-action-card">
+        <h2 class="text-lg font-bold">Inventory Directory →</h2>
+        <p class="mt-2 text-sm text-slate-500">Review, search, sort, and update active inventory models.</p>
+    </a>
+
+    <a href="{% url 'create_delivery' %}" class="dashboard-action-card">
+        <h2 class="text-lg font-bold">Stock Checkout Portal →</h2>
+        <p class="mt-2 text-sm text-slate-500">Process customer deliveries and automatic stock subtraction.</p>
+    </a>
+
+    <section class="card p-6">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-slate-700">Display Controls</h2>
+        <p class="mt-2 text-sm text-slate-500">Toggle the temporary dashboard appearance mode.</p>
+        <div class="mt-5 flex gap-2">
+            <button type="button" data-theme-toggle="light" class="rounded-xl border px-4 py-2 text-sm font-bold hover:bg-orange-50">☀️ Light</button>
+            <button type="button" data-theme-toggle="dark" class="rounded-xl border px-4 py-2 text-sm font-bold hover:bg-slate-100">🌙 Dark</button>
+        </div>
+    </section>
+</div>
+
+<section class="card overflow-hidden">
+    <div class="border-b border-slate-300 dark:border-slate-600 p-5">
+        <h2 class="font-bold text-slate-900">Activity History</h2>
+        <p class="mt-1 text-sm text-slate-500">Latest sales and delivery updates</p>
+    </div>
+
+    <div class="divide-y divide-slate-300 dark:divide-slate-600">
+        {% for sale in recent_sales %}
+        <div class="p-5">
+            <p class="font-bold text-slate-900">{{ sale.product.product_name }}</p>
+            <p class="mt-1 text-xs text-slate-500">Sold {{ sale.quantity_sold }} item(s) to {{ sale.customer_name|default:"N/A" }}</p>
+        </div>
+        {% empty %}
+        <div class="p-10 text-center text-slate-400">No recent activity yet.</div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

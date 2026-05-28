@@ -1,0 +1,435 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@source "../../templates";
+@source "../../**/*.html";
+@source "../../**/*.py";
+
+.theme-loading *,
+.theme-loading *::before,
+.theme-loading *::after {
+    transition: none !important;
+}
+
+@layer components {
+
+    .sidebar-link {
+        @apply flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-600 transition hover:bg-orange-50 hover:text-orange-600 dark:text-slate-300 dark:hover:bg-cyan-900/30 dark:hover:text-cyan-300;
+    }
+
+    .sidebar-sublink {
+        @apply ml-8 block rounded-xl px-4 py-2 text-sm text-slate-500 transition hover:bg-orange-50 hover:text-orange-600 dark:text-slate-300 dark:hover:bg-cyan-900/30 dark:hover:text-cyan-300;
+    }
+
+    .sidebar-active {
+        @apply bg-orange-50 text-orange-600 border-r-4 border-orange-500 font-semibold dark:bg-cyan-900/30 dark:text-cyan-300 dark:border-cyan-400;
+    }
+
+    .card {
+        @apply rounded-3xl border border-orange-100 bg-white shadow-sm;
+    }
+
+    .input {
+        @apply w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-orange-400;
+    }
+
+    .btn-primary {
+        @apply rounded-xl bg-orange-500 px-5 py-3 font-semibold text-white transition hover:bg-orange-600;
+    }
+
+    .btn-secondary {
+        @apply rounded-xl border border-orange-200 bg-white px-5 py-3 font-semibold text-slate-700 transition hover:bg-orange-50;
+    }
+
+    .table-head {
+        @apply border-b bg-slate-50 text-left text-xs font-semibold uppercase tracking-wide text-slate-500;
+    }
+
+    .table-row {
+        @apply border-b border-slate-100 transition hover:bg-orange-50/40 dark:border-slate-700 dark:hover:bg-slate-700;
+    }
+
+    .status-success {
+        @apply rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600;
+    }
+
+    .status-warning {
+        @apply rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600;
+    }
+
+    .status-danger {
+        @apply rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600;
+    }
+
+    .status-neutral {
+        @apply rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-500;
+    }
+
+    .ts-wrapper.single .ts-control,
+    .ts-wrapper.multi .ts-control {
+        @apply rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-800 shadow-none;
+    }
+
+    .ts-wrapper.focus .ts-control {
+        @apply border-orange-400 ring-0;
+    }
+
+    .ts-dropdown {
+        @apply rounded-xl border border-orange-100 bg-white shadow-lg;
+    }
+
+    .ts-dropdown .active {
+        @apply bg-orange-50 text-orange-600;
+    }
+
+    .ts-control input {
+        @apply text-slate-800;
+    }
+}
+
+@layer utilities {
+
+    @keyframes slide-down {
+        from {
+            opacity: 0;
+            transform: translate(-50%, -20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+    }
+
+    .animate-slide-down {
+        animation: slide-down 0.3s ease-out;
+    }
+
+    @keyframes login-error-slide-down {
+        from {
+            opacity: 0;
+            transform: translateY(-18px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .login-error-slide {
+        animation: login-error-slide-down 0.8s ease-out both;
+    }
+
+    /* Login button */
+    .login-3d-button {
+        box-shadow:
+            0 7px 0 #c2410c,
+            0 12px 18px rgba(194, 65, 12, 0.25);
+
+        transform: translateY(0);
+    }
+
+    .login-3d-button:hover {
+        box-shadow:
+            0 7px 0 #9a3412,
+            0 12px 18px rgba(194, 65, 12, 0.28);
+    }
+
+    .login-3d-button:active {
+        transform: translateY(6px);
+
+        box-shadow:
+            0 1px 0 #9a3412,
+            0 4px 8px rgba(194, 65, 12, 0.22);
+    }
+
+    /* Generic 3D buttons */
+    .pressable-button {
+        cursor: pointer;
+
+        transition:
+            transform 150ms ease,
+            box-shadow 150ms ease,
+            filter 150ms ease,
+            background-color 150ms ease,
+            border-color 150ms ease,
+            color 150ms ease;
+
+        will-change: transform;
+
+        box-shadow:
+            0 5px 0 rgba(15, 23, 42, 0.28),
+            0 10px 16px rgba(15, 23, 42, 0.16);
+    }
+
+    .pressable-button:hover {
+        filter: brightness(1.04);
+    }
+
+    .pressable-button:active,
+    .pressable-button.is-pressed {
+        transform: translateY(4px);
+
+        box-shadow:
+            0 1px 0 rgba(15, 23, 42, 0.30),
+            0 4px 8px rgba(15, 23, 42, 0.14);
+    }
+
+    /* Icon buttons */
+    .pressable-button.pressable-icon {
+        box-shadow:
+            0 4px 0 rgba(15, 23, 42, 0.30),
+            0 7px 11px rgba(15, 23, 42, 0.16);
+    }
+
+    .pressable-button.pressable-icon:active,
+    .pressable-button.pressable-icon.is-pressed {
+        transform: translateY(3px);
+
+        box-shadow:
+            0 1px 0 rgba(15, 23, 42, 0.32),
+            0 3px 6px rgba(15, 23, 42, 0.14);
+    }
+
+    /* Disabled buttons */
+    .pressable-button:disabled,
+    .pressable-button[aria-disabled="true"] {
+        cursor: not-allowed;
+        transform: none;
+        filter: none;
+        box-shadow: none;
+    }
+
+    /* Navbar links */
+    .nav-press-link {
+        cursor: pointer;
+        display: inline-flex;
+
+        transition:
+            transform 150ms ease,
+            filter 150ms ease;
+    }
+
+    .nav-press-link:hover {
+        filter: brightness(1.08);
+    }
+
+    .nav-press-link:active,
+    .nav-press-link.is-pressed {
+        transform: translateY(2px);
+    }
+
+    /* Excluded elements */
+    .no-press-effect,
+    .no-press-effect:hover,
+    .no-press-effect:active,
+    .no-press-effect.is-pressed,
+    .no-press-effect.pressable-button,
+    .no-press-effect.pressable-button:hover,
+    .no-press-effect.pressable-button:active,
+    .no-press-effect.pressable-button.is-pressed {
+        box-shadow: none !important;
+        transform: none !important;
+        filter: none !important;
+    }
+}
+
+/* Fifth-pass targeted fixes: force dark sidebar hover and inventory stock hues. */
+html.dark #sidebar .sidebar-link:hover,
+html.dark #sidebar .sidebar-sublink:hover,
+html[data-theme="dark"] #sidebar .sidebar-link:hover,
+html[data-theme="dark"] #sidebar .sidebar-sublink:hover,
+body.theme-dark #sidebar .sidebar-link:hover,
+body.theme-dark #sidebar .sidebar-sublink:hover {
+    background: #1e293b !important;
+    color: #67e8f9 !important;
+}
+
+html.dark #sidebar .sidebar-active,
+html[data-theme="dark"] #sidebar .sidebar-active,
+body.theme-dark #sidebar .sidebar-active {
+    background: rgba(8, 145, 178, 0.28) !important;
+    color: #67e8f9 !important;
+    border-color: #06b6d4 !important;
+}
+
+html.dark #sidebar .sidebar-active:hover,
+html[data-theme="dark"] #sidebar .sidebar-active:hover,
+body.theme-dark #sidebar .sidebar-active:hover {
+    background: #1e293b !important;
+    color: #67e8f9 !important;
+}
+
+html.dark tr.inventory-row-out,
+html[data-theme="dark"] tr.inventory-row-out,
+body.theme-dark tr.inventory-row-out {
+    background: rgba(127, 29, 29, 0.62) !important;
+    color: #fee2e2 !important;
+    border-color: rgba(248, 113, 113, 0.55) !important;
+}
+
+html.dark tr.inventory-row-out:hover,
+html[data-theme="dark"] tr.inventory-row-out:hover,
+body.theme-dark tr.inventory-row-out:hover {
+    background: rgba(153, 27, 27, 0.78) !important;
+}
+
+html.dark tr.inventory-row-low,
+html[data-theme="dark"] tr.inventory-row-low,
+body.theme-dark tr.inventory-row-low {
+    background: rgba(124, 45, 18, 0.50) !important;
+    color: #ffedd5 !important;
+    border-color: rgba(251, 146, 60, 0.45) !important;
+}
+
+html.dark tr.inventory-row-low:hover,
+html[data-theme="dark"] tr.inventory-row-low:hover,
+body.theme-dark tr.inventory-row-low:hover {
+    background: rgba(154, 52, 18, 0.68) !important;
+}
+
+html.dark tr.inventory-row-normal:hover,
+html[data-theme="dark"] tr.inventory-row-normal:hover,
+body.theme-dark tr.inventory-row-normal:hover {
+    background: #3f5168 !important;
+}
+
+html.dark tr.inventory-row-out td,
+html.dark tr.inventory-row-out p,
+html.dark tr.inventory-row-out .font-bold,
+html.dark tr.inventory-row-out .font-semibold,
+html[data-theme="dark"] tr.inventory-row-out td,
+html[data-theme="dark"] tr.inventory-row-out p,
+html[data-theme="dark"] tr.inventory-row-out .font-bold,
+html[data-theme="dark"] tr.inventory-row-out .font-semibold,
+body.theme-dark tr.inventory-row-out td,
+body.theme-dark tr.inventory-row-out p,
+body.theme-dark tr.inventory-row-out .font-bold,
+body.theme-dark tr.inventory-row-out .font-semibold {
+    color: #fee2e2 !important;
+}
+
+html.dark tr.inventory-row-low td,
+html.dark tr.inventory-row-low p,
+html.dark tr.inventory-row-low .font-bold,
+html.dark tr.inventory-row-low .font-semibold,
+html[data-theme="dark"] tr.inventory-row-low td,
+html[data-theme="dark"] tr.inventory-row-low p,
+html[data-theme="dark"] tr.inventory-row-low .font-bold,
+html[data-theme="dark"] tr.inventory-row-low .font-semibold,
+body.theme-dark tr.inventory-row-low td,
+body.theme-dark tr.inventory-row-low p,
+body.theme-dark tr.inventory-row-low .font-bold,
+body.theme-dark tr.inventory-row-low .font-semibold {
+    color: #ffedd5 !important;
+}
+
+html.dark tr.inventory-row-out .bg-red-100,
+html[data-theme="dark"] tr.inventory-row-out .bg-red-100,
+body.theme-dark tr.inventory-row-out .bg-red-100 {
+    background: #fecaca !important;
+    color: #b91c1c !important;
+}
+
+html.dark tr.inventory-row-low .bg-orange-100,
+html[data-theme="dark"] tr.inventory-row-low .bg-orange-100,
+body.theme-dark tr.inventory-row-low .bg-orange-100 {
+    background: #fed7aa !important;
+    color: #c2410c !important;
+}
+
+html.dark tr.inventory-row-out .bg-red-100 *,
+html.dark tr.inventory-row-low .bg-orange-100 *,
+html[data-theme="dark"] tr.inventory-row-out .bg-red-100 *,
+html[data-theme="dark"] tr.inventory-row-low .bg-orange-100 *,
+body.theme-dark tr.inventory-row-out .bg-red-100 *,
+body.theme-dark tr.inventory-row-low .bg-orange-100 * {
+    color: inherit !important;
+}
+
+button:not(:disabled),
+a[href],
+[role="button"] {
+    cursor: pointer;
+}
+
+/* Directional page transitions for sidebar navigation */
+.page-transition-surface {
+    will-change: transform, opacity;
+}
+
+.page-slide-in-up {
+    animation: page-slide-in-up 220ms ease-out both;
+}
+
+.page-slide-in-down {
+    animation: page-slide-in-down 220ms ease-out both;
+}
+
+.page-slide-out-up {
+    animation: page-slide-out-up 140ms ease-in both;
+}
+
+.page-slide-out-down {
+    animation: page-slide-out-down 140ms ease-in both;
+}
+
+@keyframes page-slide-in-up {
+    from {
+        opacity: 0;
+        transform: translateY(24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes page-slide-in-down {
+    from {
+        opacity: 0;
+        transform: translateY(-24px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes page-slide-out-up {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-18px);
+    }
+}
+
+@keyframes page-slide-out-down {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .page-slide-in-up,
+    .page-slide-in-down,
+    .page-slide-out-up,
+    .page-slide-out-down {
+        animation: none !important;
+    }
+}
+

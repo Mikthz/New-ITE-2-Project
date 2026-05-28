@@ -1,0 +1,101 @@
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Create Expense{% endblock %}
+
+{% block content %}
+
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-3xl font-bold text-slate-900">Create Expense</h1>
+        <p class="mt-1 text-sm text-slate-500">Record a company/supplier expense</p>
+    </div>
+
+    <a href="{% url 'expenses' %}" class="btn-secondary">
+        <i class="fa-solid fa-arrow-left mr-2"></i>
+        Back
+    </a>
+</div>
+
+<div class="card p-8">
+    <div class="mb-6 flex items-center gap-3 border-b border-slate-200 pb-5">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600">
+            <i class="fa-solid fa-file-lines text-lg"></i>
+        </div>
+
+        <div>
+            <h2 class="text-xl font-bold text-slate-900">Expense Information</h2>
+            <p class="text-sm text-slate-500">Expenses are subtracted from the income report. Supplier expenses keep the supplier company name and product bought, and can create supplier purchases/deliveries after they are accepted or converted.</p>
+        </div>
+    </div>
+
+    {% if form.errors %}
+    <div class="mb-6 rounded-2xl border border-red-200 bg-red-500 px-5 py-4 text-white shadow-lg">
+        <h3 class="font-bold">Form Error</h3>
+        <div class="mt-1 text-sm text-red-100">
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <div>{{ error }}</div>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+        {% csrf_token %}
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Company / Supplier Name</label>
+            {{ form.customer_name }}
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Direct Product Expense</label>
+            {{ form.product }}
+            <p class="mt-1 text-xs text-slate-500">Use this only for a direct product expense. Supplier purchases should use Supplier Product below.</p>
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Supplier Product</label>
+            {{ form.supplier_product }}
+            <p class="mt-1 text-xs text-slate-500">Use this for supplier expenses from Buy Supplier Products. Do not select both product fields.</p>
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Quantity</label>
+            {{ form.quantity }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Expense Date</label>
+            {{ form.expense_date }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Valid Until</label>
+            {{ form.valid_until }}
+        </div>
+
+        <div>
+            <label class="mb-2 block text-sm font-semibold">Status</label>
+            {{ form.status }}
+        </div>
+
+        <div class="md:col-span-2">
+            <label class="mb-2 block text-sm font-semibold">Remarks</label>
+            {{ form.remarks }}
+        </div>
+
+        <div class="md:col-span-2 flex justify-end">
+            <button type="submit" class="btn-primary">
+                <i class="fa-solid fa-floppy-disk mr-2"></i>
+                Save Expense
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}
