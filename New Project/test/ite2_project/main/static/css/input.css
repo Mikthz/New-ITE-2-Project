@@ -236,7 +236,6 @@
     }
 }
 
-/* Fifth-pass targeted fixes: force dark sidebar hover and inventory stock hues. */
 html.dark #sidebar .sidebar-link:hover,
 html.dark #sidebar .sidebar-sublink:hover,
 html[data-theme="dark"] #sidebar .sidebar-link:hover,
@@ -355,7 +354,6 @@ a[href],
     cursor: pointer;
 }
 
-/* Directional page transitions for sidebar navigation */
 .page-transition-surface {
     will-change: transform, opacity;
 }

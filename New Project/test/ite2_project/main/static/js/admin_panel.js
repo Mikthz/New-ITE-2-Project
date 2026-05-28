@@ -53,7 +53,7 @@
         const alertBox = document.getElementById(id);
         if (alertBox) alertBox.remove();
     };
-
+    // Reynel 
         function setupPressableButtons() {
             const isDarkMode = function () {
                 return document.documentElement.classList.contains("dark") ||
@@ -111,7 +111,7 @@
                     button.closest("#sidebar") ||
                     button.classList.contains("sidebar-link") ||
                     button.classList.contains("sidebar-sublink") ||
-                    button.classList.contains("login-3d-button") ||
+                    button.classList.contains("3d-button") ||
                     button.classList.contains("no-press-effect") ||
                     button.dataset.noPress === "true"
                 ) {
@@ -239,7 +239,7 @@
             });
         }
 
-
+    // Alvin
     function setupPageTransitions() {
         const content = document.getElementById("pageTransitionContent");
         const sidebar = document.getElementById("sidebar");
