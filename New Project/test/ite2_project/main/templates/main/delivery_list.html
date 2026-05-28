@@ -21,16 +21,16 @@
 
 <div class="card overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="w-full min-w-262.5 text-sm">
+        <table class="sortable-table w-full min-w-262.5 text-sm" data-sort-table="true">
             <thead class="table-head">
                 <tr>
-                    <th class="p-4">Delivery ID</th>
-                    <th class="p-4">Customer</th>
-                    <th class="p-4">Contact</th>
-                    <th class="p-4">Address</th>
-                    <th class="p-4">Product/Sale</th>
-                    <th class="p-4">Expected Date</th>
-                    <th class="p-4">Status</th>
+                    <th class="p-4" data-sort-column="0" data-sort-type="text">Delivery ID</th>
+                    <th class="p-4" data-sort-column="1" data-sort-type="text">Customer</th>
+                    <th class="p-4" data-sort-column="2" data-sort-type="text">Contact</th>
+                    <th class="p-4" data-sort-column="3" data-sort-type="text">Address</th>
+                    <th class="p-4" data-sort-column="4" data-sort-type="text">Product/Sale</th>
+                    <th class="p-4" data-sort-column="5" data-sort-type="date">Expected Date</th>
+                    <th class="p-4" data-sort-column="6" data-sort-type="text">Status</th>
                     {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
                     {% endif %}

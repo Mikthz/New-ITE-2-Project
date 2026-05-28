@@ -233,6 +233,221 @@
             });
         }
 
+
+    function setupSortableTables() {
+        const tables = document.querySelectorAll("table[data-sort-table='true']");
+
+        tables.forEach(function (table) {
+            const tbody = table.querySelector("tbody");
+            const sortableHeaders = Array.from(table.querySelectorAll("th[data-sort-column]"));
+
+            if (!tbody || sortableHeaders.length === 0) return;
+
+            const getRowGroups = function () {
+                const rows = Array.from(tbody.children).filter(function (row) {
+                    return row.tagName && row.tagName.toLowerCase() === "tr";
+                });
+
+                const groups = [];
+                let currentGroup = null;
+
+                rows.forEach(function (row) {
+                    const isEditRow = row.id && row.id.indexOf("edit-") === 0;
+                    const isEmptyRow = row.querySelector("td[colspan]") && rows.length === 1;
+
+                    if (isEditRow && currentGroup) {
+                        currentGroup.rows.push(row);
+                        return;
+                    }
+
+                    currentGroup = {
+                        mainRow: row,
+                        rows: [row],
+                        isEmptyRow: Boolean(isEmptyRow)
+                    };
+                    groups.push(currentGroup);
+                });
+
+                return groups;
+            };
+
+            const originalGroups = getRowGroups().map(function (group) {
+                return {
+                    mainRow: group.mainRow,
+                    rows: group.rows
+                };
+            });
+
+            const normalizeText = function (value) {
+                return value.replace(/\s+/g, " ").trim().toLowerCase();
+            };
+
+            const getCellValue = function (row, columnIndex, type) {
+                const cell = row.children[columnIndex];
+                if (!cell) return "";
+
+                const rawValue = normalizeText(cell.textContent || "");
+
+                if (type === "number") {
+                    const numericValue = parseFloat(rawValue.replace(/[^0-9.-]/g, ""));
+                    return Number.isNaN(numericValue) ? 0 : numericValue;
+                }
+
+                if (type === "date") {
+                    if (rawValue === "n/a" || rawValue === "") return 0;
+                    const timestamp = Date.parse(rawValue);
+                    return Number.isNaN(timestamp) ? 0 : timestamp;
+                }
+
+                return rawValue;
+            };
+
+            const setSortStatus = function (label, direction) {
+                const wrapper = table.closest(".overflow-x-auto") || table.parentElement;
+                if (!wrapper) return;
+
+                let status = wrapper.previousElementSibling;
+                if (!status || !status.classList || !status.classList.contains("sortable-table-status")) {
+                    status = document.createElement("div");
+                    status.className = "sortable-table-status";
+                    wrapper.insertAdjacentElement("beforebegin", status);
+                }
+
+                if (!direction) {
+                    status.textContent = "Default table order";
+                } else {
+                    status.textContent = "Sorted by " + label + " (" + (direction === "asc" ? "ascending" : "descending") + ")";
+                }
+
+                status.classList.remove("is-visible");
+                requestAnimationFrame(function () {
+                    status.classList.add("is-visible");
+                });
+            };
+
+            const flashTable = function () {
+                table.classList.add("is-sorting");
+
+                window.setTimeout(function () {
+                    table.classList.remove("is-sorting");
+                }, 180);
+            };
+
+            const updateHeaderStates = function (activeHeader, direction) {
+                sortableHeaders.forEach(function (header) {
+                    const icon = header.querySelector(".sortable-table-icon");
+                    const isActive = header === activeHeader && direction;
+
+                    header.classList.toggle("is-active", Boolean(isActive));
+                    header.dataset.sortDirection = isActive ? direction : "";
+
+                    if (icon) {
+                        icon.textContent = isActive
+                            ? (direction === "asc" ? "▲" : "▼")
+                            : "↕";
+                    }
+                });
+            };
+
+            const renderGroups = function (groups) {
+                const fragment = document.createDocumentFragment();
+
+                groups.forEach(function (group) {
+                    group.rows.forEach(function (row) {
+                        fragment.appendChild(row);
+                    });
+                });
+
+                tbody.appendChild(fragment);
+
+                if (table.dataset.sortHasIndex === "true") {
+                    let displayIndex = 1;
+
+                    groups.forEach(function (group) {
+                        const firstCell = group.mainRow && group.mainRow.children[0];
+                        if (!firstCell) return;
+
+                        firstCell.textContent = displayIndex;
+                        displayIndex += 1;
+                    });
+                }
+            };
+
+            sortableHeaders.forEach(function (header) {
+                const columnLabel = normalizeText(header.textContent || "Column");
+                const labelText = header.textContent.trim();
+                const headerText = header.textContent.trim();
+
+                header.setAttribute("role", "button");
+                header.setAttribute("tabindex", "0");
+                header.classList.add("sortable-table-header");
+
+                if (!header.querySelector(".sortable-table-label")) {
+                    header.innerHTML = "<span class=\"sortable-table-label\">" + headerText + "</span><span class=\"sortable-table-icon\" aria-hidden=\"true\">↕</span>";
+                }
+
+                const sortByHeader = function () {
+                    const availableGroups = getRowGroups();
+                    if (availableGroups.length === 0 || availableGroups.every(function (group) { return group.isEmptyRow; })) {
+                        return;
+                    }
+
+                    const currentColumn = table.dataset.sortColumn || "";
+                    const currentDirection = table.dataset.sortDirection || "";
+                    const column = header.dataset.sortColumn;
+                    const type = header.dataset.sortType || "text";
+                    let nextDirection = "asc";
+
+                    if (currentColumn === column && currentDirection === "asc") {
+                        nextDirection = "desc";
+                    } else if (currentColumn === column && currentDirection === "desc") {
+                        nextDirection = "";
+                    }
+
+                    flashTable();
+
+                    window.setTimeout(function () {
+                        if (!nextDirection) {
+                            renderGroups(originalGroups);
+                            table.dataset.sortColumn = "";
+                            table.dataset.sortDirection = "";
+                            updateHeaderStates(null, "");
+                            setSortStatus(labelText, "");
+                            return;
+                        }
+
+                        const groups = getRowGroups().filter(function (group) {
+                            return !group.isEmptyRow;
+                        });
+
+                        groups.sort(function (a, b) {
+                            const aValue = getCellValue(a.mainRow, parseInt(column, 10), type);
+                            const bValue = getCellValue(b.mainRow, parseInt(column, 10), type);
+
+                            if (aValue < bValue) return nextDirection === "asc" ? -1 : 1;
+                            if (aValue > bValue) return nextDirection === "asc" ? 1 : -1;
+                            return 0;
+                        });
+
+                        renderGroups(groups);
+                        table.dataset.sortColumn = column;
+                        table.dataset.sortDirection = nextDirection;
+                        updateHeaderStates(header, nextDirection);
+                        setSortStatus(labelText, nextDirection);
+                    }, 120);
+                };
+
+                header.addEventListener("click", sortByHeader);
+                header.addEventListener("keydown", function (event) {
+                    if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        sortByHeader();
+                    }
+                });
+            });
+        });
+    }
+
     // Alvin
     function setupPageTransitions() {
         const content = document.getElementById("pageTransitionContent");
@@ -352,6 +567,7 @@
         setTheme(localStorage.getItem("appTheme") || "light");
         setupPressableButtons();
         setupPageTransitions();
+        setupSortableTables();
 
         document.querySelectorAll("[data-theme-toggle]").forEach(function (button) {
             button.addEventListener("click", function () {

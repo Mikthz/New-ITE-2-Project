@@ -31,13 +31,13 @@
     </form>
 
     <div class="overflow-x-auto">
-        <table class="w-full min-w-225">
+        <table class="sortable-table w-full min-w-225" data-sort-table="true">
             <thead class="table-head">
                 <tr>
-                    <th class="p-4">Supplier</th>
-                    <th class="p-4">Email</th>
-                    <th class="p-4">Phone</th>
-                    <th class="p-4">Address</th>
+                    <th class="p-4" data-sort-column="0" data-sort-type="text">Supplier</th>
+                    <th class="p-4" data-sort-column="1" data-sort-type="text">Email</th>
+                    <th class="p-4" data-sort-column="2" data-sort-type="text">Phone</th>
+                    <th class="p-4" data-sort-column="3" data-sort-type="text">Address</th>
                     {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
                     {% endif %}

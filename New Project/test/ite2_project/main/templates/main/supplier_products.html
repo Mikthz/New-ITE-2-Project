@@ -25,15 +25,15 @@
     </form>
 
     <div class="overflow-x-auto">
-        <table class="w-full min-w-237.5 text-sm">
+        <table class="sortable-table w-full min-w-237.5 text-sm" data-sort-table="true">
             <thead class="table-head">
                 <tr>
-                    <th class="p-4">Company Name</th>
-                    <th class="p-4">Product</th>
-                    <th class="p-4">Brand</th>
-                    <th class="p-4">Model</th>
-                    <th class="p-4">Unit Price</th>
-                    <th class="p-4">Available Stock</th>
+                    <th class="p-4" data-sort-column="0" data-sort-type="text">Company Name</th>
+                    <th class="p-4" data-sort-column="1" data-sort-type="text">Product</th>
+                    <th class="p-4" data-sort-column="2" data-sort-type="text">Brand</th>
+                    <th class="p-4" data-sort-column="3" data-sort-type="text">Model</th>
+                    <th class="p-4" data-sort-column="4" data-sort-type="number">Unit Price</th>
+                    <th class="p-4" data-sort-column="5" data-sort-type="number">Available Stock</th>
                     {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
                     {% endif %}

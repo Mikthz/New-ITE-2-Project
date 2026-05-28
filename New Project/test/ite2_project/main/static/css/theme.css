@@ -621,11 +621,96 @@ body.theme-dark .low-stock-summary-icon-neutral {
 }
 
 .low-stock-summary-icon-out i {
-    color: #dc2626 Imp !important;
+    color: #dc2626 !important;
 }
 
 html.dark .low-stock-summary-icon-out i,
 html[data-theme="dark"] .low-stock-summary-icon-out i,
 body.theme-dark .low-stock-summary-icon-out i {
     color: #f87171 !important;
+}
+/* Sortable table controls */
+.sortable-table {
+    transition: filter 180ms ease, opacity 180ms ease;
+}
+
+.sortable-table.is-sorting {
+    filter: brightness(0.76);
+    opacity: 0.86;
+}
+
+.sortable-table-header {
+    cursor: pointer;
+    user-select: none;
+    transition: color 160ms ease, background-color 160ms ease, filter 160ms ease;
+}
+
+.sortable-table-header:hover {
+    color: #ea580c !important;
+}
+
+html.dark .sortable-table-header:hover,
+html[data-theme="dark"] .sortable-table-header:hover,
+body.theme-dark .sortable-table-header:hover {
+    color: #67e8f9 !important;
+}
+
+.sortable-table-header.is-active {
+    color: #ea580c !important;
+}
+
+html.dark .sortable-table-header.is-active,
+html[data-theme="dark"] .sortable-table-header.is-active,
+body.theme-dark .sortable-table-header.is-active {
+    color: #67e8f9 !important;
+}
+
+.sortable-table-label {
+    display: inline-flex;
+    align-items: center;
+}
+
+.sortable-table-icon {
+    display: inline-flex;
+    margin-left: 0.4rem;
+    font-size: 0.68rem;
+    opacity: 0.58;
+    transform: translateY(-1px);
+    transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.sortable-table-header:hover .sortable-table-icon,
+.sortable-table-header.is-active .sortable-table-icon {
+    opacity: 1;
+}
+
+.sortable-table-status {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 0 0.65rem 0;
+    border-radius: 9999px;
+    border: 1px solid rgba(251, 146, 60, 0.45);
+    background: rgba(255, 247, 237, 0.92);
+    padding: 0.4rem 0.75rem;
+    color: #c2410c;
+    font-size: 0.75rem;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.sortable-table-status.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+html.dark .sortable-table-status,
+html[data-theme="dark"] .sortable-table-status,
+body.theme-dark .sortable-table-status {
+    border-color: rgba(34, 211, 238, 0.45);
+    background: rgba(8, 47, 73, 0.72);
+    color: #67e8f9;
 }

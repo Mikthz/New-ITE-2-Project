@@ -92,15 +92,15 @@
     </div>
 
     <div class="overflow-x-auto">
-        <table class="w-full min-w-225 text-sm">
+        <table class="sortable-table w-full min-w-225 text-sm" data-sort-table="true">
             <thead class="bg-orange-50 text-xs uppercase tracking-wide text-orange-700 dark:bg-slate-600 dark:text-cyan-100">
                 <tr>
-                    <th class="p-4 text-left">Product</th>
-                    <th class="p-4 text-left">Product ID</th>
-                    <th class="p-4 text-left">Category</th>
-                    <th class="p-4 text-left">Supplier</th>
-                    <th class="p-4 text-left">Stock</th>
-                    <th class="p-4 text-left">Status</th>
+                    <th class="p-4 text-left" data-sort-column="0" data-sort-type="text">Product</th>
+                    <th class="p-4 text-left" data-sort-column="1" data-sort-type="text">Product ID</th>
+                    <th class="p-4 text-left" data-sort-column="2" data-sort-type="text">Category</th>
+                    <th class="p-4 text-left" data-sort-column="3" data-sort-type="text">Supplier</th>
+                    <th class="p-4 text-left" data-sort-column="4" data-sort-type="number">Stock</th>
+                    <th class="p-4 text-left" data-sort-column="5" data-sort-type="text">Status</th>
                     {% if current_user.is_admin %}
                     <th class="p-4 text-left">Action</th>
                     {% endif %}

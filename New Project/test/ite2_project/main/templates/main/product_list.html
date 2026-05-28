@@ -54,7 +54,7 @@
     </div>
 
     <div class="overflow-x-auto">
-        <table class="w-full min-w-[1200px] table-fixed text-sm">
+        <table class="sortable-table w-full min-w-[1200px] table-fixed text-sm" data-sort-table="true" data-sort-has-index="true">
             <colgroup>
                 <col class="w-[55px]">
                 <col class="w-[470px]">
@@ -72,13 +72,13 @@
             <thead>
                 <tr class="border-b text-left text-xs font-semibold text-slate-400">
                     <th class="p-4">No</th>
-                    <th class="p-4">Product</th>
-                    <th class="p-4">Product ID</th>
-                    <th class="p-4">Category</th>
-                    <th class="p-4">Supplier</th>
-                    <th class="p-4">Availability</th>
-                    <th class="p-4">Price</th>
-                    <th class="p-4">Status</th>
+                    <th class="p-4" data-sort-column="1" data-sort-type="text">Product</th>
+                    <th class="p-4" data-sort-column="2" data-sort-type="text">Product ID</th>
+                    <th class="p-4" data-sort-column="3" data-sort-type="text">Category</th>
+                    <th class="p-4" data-sort-column="4" data-sort-type="text">Supplier</th>
+                    <th class="p-4" data-sort-column="5" data-sort-type="number">Availability</th>
+                    <th class="p-4" data-sort-column="6" data-sort-type="number">Price</th>
+                    <th class="p-4" data-sort-column="7" data-sort-type="text">Status</th>
                     {% if current_user.is_admin %}
                     <th class="p-4">Action</th>
                     {% endif %}
