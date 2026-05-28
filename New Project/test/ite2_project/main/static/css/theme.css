@@ -630,15 +630,6 @@ body.theme-dark .low-stock-summary-icon-out i {
     color: #f87171 !important;
 }
 /* Sortable table controls */
-.sortable-table {
-    transition: filter 180ms ease, opacity 180ms ease;
-}
-
-.sortable-table.is-sorting {
-    filter: brightness(0.76);
-    opacity: 0.86;
-}
-
 .sortable-table-header {
     cursor: pointer;
     user-select: none;
