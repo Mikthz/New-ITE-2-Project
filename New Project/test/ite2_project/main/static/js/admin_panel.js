@@ -254,6 +254,26 @@
             return parsedUrl.pathname.replace(/\/+$/, "") || "/";
         };
 
+        const markActiveSidebarLink = function () {
+            const currentPath = normalizePath(window.location.href);
+
+            sidebarLinks.forEach(function (link) {
+                const isActive = normalizePath(link.href) === currentPath;
+
+                link.classList.toggle("sidebar-active", isActive);
+                link.classList.toggle("sidebar-current", isActive);
+                link.setAttribute("aria-current", isActive ? "page" : "false");
+
+                if (isActive) {
+                    link.dataset.noPress = "true";
+                    link.tabIndex = -1;
+                } else {
+                    delete link.dataset.noPress;
+                    link.removeAttribute("tabindex");
+                }
+            });
+        };
+
         const getCurrentOrder = function () {
             const currentPath = normalizePath(window.location.href);
 
@@ -268,6 +288,8 @@
             const storedOrder = parseInt(sessionStorage.getItem("pageTransitionOrder") || "0", 10);
             return Number.isNaN(storedOrder) ? 0 : storedOrder;
         };
+
+        markActiveSidebarLink();
 
         const entryDirection = sessionStorage.getItem("pageTransitionDirection");
 
@@ -295,6 +317,10 @@
                     link.target === "_blank" ||
                     normalizePath(link.href) === normalizePath(window.location.href)
                 ) {
+                    if (normalizePath(link.href) === normalizePath(window.location.href)) {
+                        event.preventDefault();
+                    }
+
                     return;
                 }
 
