@@ -28,12 +28,12 @@
         <table class="sortable-table w-full min-w-237.5 text-sm" data-sort-table="true">
             <thead class="table-head">
                 <tr>
-                    <th class="p-4" data-sort-column="0" data-sort-type="text">Company Name</th>
-                    <th class="p-4" data-sort-column="1" data-sort-type="text">Product</th>
-                    <th class="p-4" data-sort-column="2" data-sort-type="text">Brand</th>
-                    <th class="p-4" data-sort-column="3" data-sort-type="text">Model</th>
-                    <th class="p-4" data-sort-column="4" data-sort-type="number">Unit Price</th>
-                    <th class="p-4" data-sort-column="5" data-sort-type="number">Available Stock</th>
+                    <th class="p-4" data-sort-column="0" data-sort-type="text" data-sort-field="company">Company Name</th>
+                    <th class="p-4" data-sort-column="1" data-sort-type="text" data-sort-field="product">Product</th>
+                    <th class="p-4" data-sort-column="2" data-sort-type="text" data-sort-field="brand">Brand</th>
+                    <th class="p-4" data-sort-column="3" data-sort-type="text" data-sort-field="model">Model</th>
+                    <th class="p-4" data-sort-column="4" data-sort-type="number" data-sort-field="unit_price">Unit Price</th>
+                    <th class="p-4" data-sort-column="5" data-sort-type="number" data-sort-field="available_stock">Available Stock</th>
                     {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
                     {% endif %}

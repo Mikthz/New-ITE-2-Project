@@ -95,12 +95,12 @@
         <table class="sortable-table w-full min-w-225 text-sm" data-sort-table="true">
             <thead class="bg-orange-50 text-xs uppercase tracking-wide text-orange-700 dark:bg-slate-600 dark:text-cyan-100">
                 <tr>
-                    <th class="p-4 text-left" data-sort-column="0" data-sort-type="text">Product</th>
-                    <th class="p-4 text-left" data-sort-column="1" data-sort-type="text">Product ID</th>
-                    <th class="p-4 text-left" data-sort-column="2" data-sort-type="text">Category</th>
-                    <th class="p-4 text-left" data-sort-column="3" data-sort-type="text">Supplier</th>
-                    <th class="p-4 text-left" data-sort-column="4" data-sort-type="number">Stock</th>
-                    <th class="p-4 text-left" data-sort-column="5" data-sort-type="text">Status</th>
+                    <th class="p-4 text-left" data-sort-column="0" data-sort-type="text" data-sort-field="product">Product</th>
+                    <th class="p-4 text-left" data-sort-column="1" data-sort-type="text" data-sort-field="product_id">Product ID</th>
+                    <th class="p-4 text-left" data-sort-column="2" data-sort-type="text" data-sort-field="category">Category</th>
+                    <th class="p-4 text-left" data-sort-column="3" data-sort-type="text" data-sort-field="supplier">Supplier</th>
+                    <th class="p-4 text-left" data-sort-column="4" data-sort-type="number" data-sort-field="stock">Stock</th>
+                    <th class="p-4 text-left" data-sort-column="5" data-sort-type="text" data-sort-field="status">Status</th>
                     {% if current_user.is_admin %}
                     <th class="p-4 text-left">Action</th>
                     {% endif %}
@@ -182,7 +182,7 @@
 
             <div class="flex gap-2">
                 {% if page_obj.has_previous %}
-                <a href="?search={{ search|urlencode }}&page={{ page_obj.previous_page_number }}" class="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-500 dark:text-slate-100">
+                <a href="?{% if sort_query %}{{ sort_query }}&{% elif search %}search={{ search|urlencode }}&{% endif %}page={{ page_obj.previous_page_number }}" class="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-500 dark:text-slate-100">
                     <i class="fa-solid fa-angle-left"></i>
                 </a>
                 {% endif %}
@@ -191,12 +191,12 @@
                     {% if num == page_obj.number %}
                     <span class="rounded-lg bg-orange-500 px-3 py-2 font-bold text-white dark:bg-cyan-600">{{ num }}</span>
                     {% else %}
-                    <a href="?search={{ search|urlencode }}&page={{ num }}" class="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-500 dark:text-slate-100">{{ num }}</a>
+                    <a href="?{% if sort_query %}{{ sort_query }}&{% elif search %}search={{ search|urlencode }}&{% endif %}page={{ num }}" class="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-500 dark:text-slate-100">{{ num }}</a>
                     {% endif %}
                 {% endfor %}
 
                 {% if page_obj.has_next %}
-                <a href="?search={{ search|urlencode }}&page={{ page_obj.next_page_number }}" class="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-500 dark:text-slate-100">
+                <a href="?{% if sort_query %}{{ sort_query }}&{% elif search %}search={{ search|urlencode }}&{% endif %}page={{ page_obj.next_page_number }}" class="rounded-lg border border-slate-300 px-3 py-2 dark:border-slate-500 dark:text-slate-100">
                     <i class="fa-solid fa-angle-right"></i>
                 </a>
                 {% endif %}

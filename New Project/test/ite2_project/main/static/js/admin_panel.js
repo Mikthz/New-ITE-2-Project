@@ -237,11 +237,144 @@
     function setupSortableTables() {
         const tables = document.querySelectorAll("table[data-sort-table='true']");
 
+        const normalizeText = function (value) {
+            return value.replace(/\s+/g, " ").trim().toLowerCase();
+        };
+
+        const getCurrentUrlSort = function () {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                field: params.get("sort") || "",
+                direction: params.get("order") || ""
+            };
+        };
+
+        const setSortStatus = function (table, label, direction) {
+            const wrapper = table.closest(".overflow-x-auto") || table.parentElement;
+            if (!wrapper) return;
+
+            let status = wrapper.previousElementSibling;
+            if (!status || !status.classList || !status.classList.contains("sortable-table-status")) {
+                status = document.createElement("div");
+                status.className = "sortable-table-status hidden";
+                wrapper.insertAdjacentElement("beforebegin", status);
+            }
+
+            if (!direction) {
+                status.textContent = "";
+                status.classList.remove("is-visible");
+                status.classList.add("hidden");
+                return;
+            }
+
+            status.textContent = "Sorted by " + label + " (" + (direction === "asc" ? "ascending" : "descending") + ")";
+            status.classList.remove("hidden");
+            status.classList.remove("is-visible");
+
+            requestAnimationFrame(function () {
+                status.classList.add("is-visible");
+            });
+        };
+
+        const updateHeaderStates = function (sortableHeaders, activeHeader, direction) {
+            sortableHeaders.forEach(function (header) {
+                const icon = header.querySelector(".sortable-table-icon");
+                const isActive = header === activeHeader && direction;
+
+                header.classList.toggle("is-active", Boolean(isActive));
+                header.dataset.sortDirection = isActive ? direction : "";
+
+                if (icon) {
+                    icon.innerHTML = isActive
+                        ? (direction === "asc"
+                            ? '<i class="fa-solid fa-sort-up"></i>'
+                            : '<i class="fa-solid fa-sort-down"></i>')
+                        : '<i class="fa-solid fa-sort"></i>';
+                }
+            });
+        };
+
         tables.forEach(function (table) {
             const tbody = table.querySelector("tbody");
-            const sortableHeaders = Array.from(table.querySelectorAll("th[data-sort-column]"));
+            const sortableHeaders = Array.from(table.querySelectorAll("th[data-sort-column], th[data-sort-field]"));
 
             if (!tbody || sortableHeaders.length === 0) return;
+
+            sortableHeaders.forEach(function (header) {
+                const headerText = header.textContent.trim();
+
+                header.setAttribute("role", "button");
+                header.setAttribute("tabindex", "0");
+                header.classList.add("sortable-table-header");
+
+                if (!header.querySelector(".sortable-table-label")) {
+                    header.innerHTML = "<span class=\"sortable-table-label\">" + headerText + "</span><span class=\"sortable-table-icon\" aria-hidden=\"true\"><i class=\"fa-solid fa-sort\"></i></span>";
+                }
+            });
+
+            const serverSortableHeaders = sortableHeaders.filter(function (header) {
+                return Boolean(header.dataset.sortField);
+            });
+
+            if (serverSortableHeaders.length > 0) {
+                const currentSort = getCurrentUrlSort();
+                const activeHeader = serverSortableHeaders.find(function (header) {
+                    return header.dataset.sortField === currentSort.field;
+                }) || null;
+                const activeDirection = activeHeader && (currentSort.direction === "asc" || currentSort.direction === "desc")
+                    ? currentSort.direction
+                    : "";
+
+                updateHeaderStates(sortableHeaders, activeHeader, activeDirection);
+
+                if (activeHeader && activeDirection) {
+                    const label = activeHeader.querySelector(".sortable-table-label")
+                        ? activeHeader.querySelector(".sortable-table-label").textContent.trim()
+                        : activeHeader.textContent.trim();
+                    setSortStatus(table, label, activeDirection);
+                } else {
+                    setSortStatus(table, "", "");
+                }
+
+                serverSortableHeaders.forEach(function (header) {
+                    const sortByHeader = function () {
+                        const params = new URLSearchParams(window.location.search);
+                        const currentField = params.get("sort") || "";
+                        const currentDirection = params.get("order") || "";
+                        const nextField = header.dataset.sortField;
+                        let nextDirection = "asc";
+
+                        if (currentField === nextField && currentDirection === "asc") {
+                            nextDirection = "desc";
+                        } else if (currentField === nextField && currentDirection === "desc") {
+                            nextDirection = "";
+                        }
+
+                        params.delete("page");
+
+                        if (!nextDirection) {
+                            params.delete("sort");
+                            params.delete("order");
+                        } else {
+                            params.set("sort", nextField);
+                            params.set("order", nextDirection);
+                        }
+
+                        const queryString = params.toString();
+                        window.location.href = window.location.pathname + (queryString ? "?" + queryString : "");
+                    };
+
+                    header.addEventListener("click", sortByHeader);
+                    header.addEventListener("keydown", function (event) {
+                        if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            sortByHeader();
+                        }
+                    });
+                });
+
+                return;
+            }
 
             const getRowGroups = function () {
                 const rows = Array.from(tbody.children).filter(function (row) {
@@ -278,10 +411,6 @@
                 };
             });
 
-            const normalizeText = function (value) {
-                return value.replace(/\s+/g, " ").trim().toLowerCase();
-            };
-
             const getCellValue = function (row, columnIndex, type) {
                 const cell = row.children[columnIndex];
                 if (!cell) return "";
@@ -300,59 +429,6 @@
                 }
 
                 return rawValue;
-            };
-
-            const setSortStatus = function (label, direction) {
-                const wrapper = table.closest(".overflow-x-auto") || table.parentElement;
-                if (!wrapper) return;
-
-                let status = wrapper.previousElementSibling;
-                if (!status || !status.classList || !status.classList.contains("sortable-table-status")) {
-                    status = document.createElement("div");
-                    status.className = "sortable-table-status hidden";
-                    wrapper.insertAdjacentElement("beforebegin", status);
-                }
-
-                if (!direction) {
-                    status.textContent = "";
-                    status.classList.remove("is-visible");
-                    status.classList.add("hidden");
-                    return;
-                }
-
-                status.textContent = "Sorted by " + label + " (" + (direction === "asc" ? "ascending" : "descending") + ")";
-                status.classList.remove("hidden");
-                status.classList.remove("is-visible");
-
-                requestAnimationFrame(function () {
-                    status.classList.add("is-visible");
-                });
-            };
-
-            const flashTable = function () {
-                table.classList.add("is-sorting");
-
-                window.setTimeout(function () {
-                    table.classList.remove("is-sorting");
-                }, 180);
-            };
-
-            const updateHeaderStates = function (activeHeader, direction) {
-                sortableHeaders.forEach(function (header) {
-                    const icon = header.querySelector(".sortable-table-icon");
-                    const isActive = header === activeHeader && direction;
-
-                    header.classList.toggle("is-active", Boolean(isActive));
-                    header.dataset.sortDirection = isActive ? direction : "";
-
-                    if (icon) {
-                        icon.innerHTML = isActive
-                            ? (direction === "asc" 
-                                ? '<i class="fa-solid fa-sort-up"></i>'
-                                : '<i class="fa-solid fa-sort-down"></i>')
-                            : '<i class="fa-solid fa-sort"></i>';
-                    }
-                });
             };
 
             const renderGroups = function (groups) {
@@ -380,17 +456,9 @@
             };
 
             sortableHeaders.forEach(function (header) {
-                const columnLabel = normalizeText(header.textContent || "Column");
-                const labelText = header.textContent.trim();
-                const headerText = header.textContent.trim();
-
-                header.setAttribute("role", "button");
-                header.setAttribute("tabindex", "0");
-                header.classList.add("sortable-table-header");
-
-                if (!header.querySelector(".sortable-table-label")) {
-                    header.innerHTML = "<span class=\"sortable-table-label\">" + headerText + "</span><span class=\"sortable-table-icon\" aria-hidden=\"true\"><i class=\"fa-solid fa-sort\"></i></span>";
-                }
+                const labelText = header.querySelector(".sortable-table-label")
+                    ? header.querySelector(".sortable-table-label").textContent.trim()
+                    : header.textContent.trim();
 
                 const sortByHeader = function () {
                     const availableGroups = getRowGroups();
@@ -410,37 +478,33 @@
                         nextDirection = "";
                     }
 
-                    flashTable();
+                    if (!nextDirection) {
+                        renderGroups(originalGroups);
+                        table.dataset.sortColumn = "";
+                        table.dataset.sortDirection = "";
+                        updateHeaderStates(sortableHeaders, null, "");
+                        setSortStatus(table, labelText, "");
+                        return;
+                    }
 
-                    window.setTimeout(function () {
-                        if (!nextDirection) {
-                            renderGroups(originalGroups);
-                            table.dataset.sortColumn = "";
-                            table.dataset.sortDirection = "";
-                            updateHeaderStates(null, "");
-                            setSortStatus(labelText, "");
-                            return;
-                        }
+                    const groups = getRowGroups().filter(function (group) {
+                        return !group.isEmptyRow;
+                    });
 
-                        const groups = getRowGroups().filter(function (group) {
-                            return !group.isEmptyRow;
-                        });
+                    groups.sort(function (a, b) {
+                        const aValue = getCellValue(a.mainRow, parseInt(column, 10), type);
+                        const bValue = getCellValue(b.mainRow, parseInt(column, 10), type);
 
-                        groups.sort(function (a, b) {
-                            const aValue = getCellValue(a.mainRow, parseInt(column, 10), type);
-                            const bValue = getCellValue(b.mainRow, parseInt(column, 10), type);
+                        if (aValue < bValue) return nextDirection === "asc" ? -1 : 1;
+                        if (aValue > bValue) return nextDirection === "asc" ? 1 : -1;
+                        return 0;
+                    });
 
-                            if (aValue < bValue) return nextDirection === "asc" ? -1 : 1;
-                            if (aValue > bValue) return nextDirection === "asc" ? 1 : -1;
-                            return 0;
-                        });
-
-                        renderGroups(groups);
-                        table.dataset.sortColumn = column;
-                        table.dataset.sortDirection = nextDirection;
-                        updateHeaderStates(header, nextDirection);
-                        setSortStatus(labelText, nextDirection);
-                    }, 120);
+                    renderGroups(groups);
+                    table.dataset.sortColumn = column;
+                    table.dataset.sortDirection = nextDirection;
+                    updateHeaderStates(sortableHeaders, header, nextDirection);
+                    setSortStatus(table, labelText, nextDirection);
                 };
 
                 header.addEventListener("click", sortByHeader);

@@ -24,13 +24,13 @@
         <table class="sortable-table w-full min-w-262.5 text-sm" data-sort-table="true">
             <thead class="table-head">
                 <tr>
-                    <th class="p-4" data-sort-column="0" data-sort-type="text">Delivery ID</th>
-                    <th class="p-4" data-sort-column="1" data-sort-type="text">Customer</th>
-                    <th class="p-4" data-sort-column="2" data-sort-type="text">Contact</th>
-                    <th class="p-4" data-sort-column="3" data-sort-type="text">Address</th>
-                    <th class="p-4" data-sort-column="4" data-sort-type="text">Product/Sale</th>
-                    <th class="p-4" data-sort-column="5" data-sort-type="date">Expected Date</th>
-                    <th class="p-4" data-sort-column="6" data-sort-type="text">Status</th>
+                    <th class="p-4" data-sort-column="0" data-sort-type="text" data-sort-field="delivery_id">Delivery ID</th>
+                    <th class="p-4" data-sort-column="1" data-sort-type="text" data-sort-field="customer">Customer</th>
+                    <th class="p-4" data-sort-column="2" data-sort-type="text" data-sort-field="contact">Contact</th>
+                    <th class="p-4" data-sort-column="3" data-sort-type="text" data-sort-field="address">Address</th>
+                    <th class="p-4" data-sort-column="4" data-sort-type="text" data-sort-field="product_sale">Product/Sale</th>
+                    <th class="p-4" data-sort-column="5" data-sort-type="date" data-sort-field="expected_date">Expected Date</th>
+                    <th class="p-4" data-sort-column="6" data-sort-type="text" data-sort-field="status">Status</th>
                     {% if current_user.is_admin %}
                     <th class="p-4 text-right">Actions</th>
                     {% endif %}

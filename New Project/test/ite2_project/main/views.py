@@ -5,6 +5,7 @@ from django.db import transaction
 from django.core.paginator import Paginator
 from django.db.models.deletion import ProtectedError
 from django.core.files.storage import default_storage
+from urllib.parse import quote
 
 import uuid
 
@@ -180,6 +181,31 @@ def logout_view(request):
     request.session.flush()
     return redirect('login')
 
+
+def get_table_sort(request, allowed_sorts, default_ordering):
+    sort = request.GET.get('sort', '').strip()
+    order = request.GET.get('order', '').strip().lower()
+
+    if sort not in allowed_sorts or order not in ('asc', 'desc'):
+        return '', '', default_ordering
+
+    field = allowed_sorts[sort]
+    ordering = field if order == 'asc' else f'-{field}'
+
+    return sort, order, [ordering]
+
+def get_sort_query(search, sort, order):
+    parts = []
+
+    if search:
+        parts.append(f'search={quote(search)}')
+
+    if sort and order:
+        parts.append(f'sort={quote(sort)}')
+        parts.append(f'order={quote(order)}')
+
+    return '&'.join(parts)
+
 def product_list(request):
 
     current_user = get_current_admin(request)
@@ -188,6 +214,21 @@ def product_list(request):
         return redirect('login')
 
     search = request.GET.get('search', '').strip()
+
+    product_sort_map = {
+        'product': 'product_name',
+        'product_id': 'id',
+        'category': 'category__category_name',
+        'supplier': 'supplier__supplier_name',
+        'availability': 'stock_quantity',
+        'price': 'price',
+        'status': 'stock_quantity',
+    }
+    current_sort, current_order, product_ordering = get_table_sort(
+        request,
+        product_sort_map,
+        ['product_name']
+    )
 
     products = Product.objects.select_related(
         'category',
@@ -198,7 +239,7 @@ def product_list(request):
         Q(model_name__icontains=search) |
         Q(category__category_name__icontains=search) |
         Q(supplier__supplier_name__icontains=search)
-    ).order_by('product_name')
+    ).order_by(*product_ordering)
 
     low_stock_count = Product.objects.filter(
         stock_quantity__gt=0,
@@ -215,6 +256,7 @@ def product_list(request):
 
     product_form = ProductForm()
     sale_form = SaleForm()
+    categories = Category.objects.all().order_by('category_name')
 
     return render(
         request,
@@ -225,8 +267,12 @@ def product_list(request):
             'search': search,
             'product_form': product_form,
             'sale_form': sale_form,
+            'categories': categories,
             'low_stock_count': low_stock_count,
             'out_of_stock_count': out_of_stock_count,
+            'current_sort': current_sort,
+            'current_order': current_order,
+            'sort_query': get_sort_query(search, current_sort, current_order),
         }
     )
 
@@ -325,6 +371,20 @@ def low_stock(request):
 
     search = request.GET.get('search', '').strip()
 
+    low_stock_sort_map = {
+        'product': 'product_name',
+        'product_id': 'id',
+        'category': 'category__category_name',
+        'supplier': 'supplier__supplier_name',
+        'stock': 'stock_quantity',
+        'status': 'stock_quantity',
+    }
+    current_sort, current_order, low_stock_ordering = get_table_sort(
+        request,
+        low_stock_sort_map,
+        ['stock_quantity', 'product_name']
+    )
+
     products = Product.objects.select_related(
         'category',
         'supplier'
@@ -336,7 +396,7 @@ def low_stock(request):
         Q(model_name__icontains=search) |
         Q(category__category_name__icontains=search) |
         Q(supplier__supplier_name__icontains=search)
-    ).order_by('stock_quantity', 'product_name')
+    ).order_by(*low_stock_ordering)
 
     out_of_stock_count = products.filter(
         stock_quantity=0
@@ -360,6 +420,9 @@ def low_stock(request):
             'search': search,
             'low_stock_count': low_stock_count,
             'out_of_stock_count': out_of_stock_count,
+            'current_sort': current_sort,
+            'current_order': current_order,
+            'sort_query': get_sort_query(search, current_sort, current_order),
         }
     )
 
@@ -394,12 +457,24 @@ def suppliers(request):
 
     search = request.GET.get('search', '').strip()
 
+    supplier_sort_map = {
+        'supplier': 'supplier_name',
+        'email': 'email',
+        'phone': 'contact_number',
+        'address': 'address',
+    }
+    current_sort, current_order, supplier_ordering = get_table_sort(
+        request,
+        supplier_sort_map,
+        ['supplier_name']
+    )
+
     suppliers = Supplier.objects.filter(
         Q(supplier_name__icontains=search) |
         Q(email__icontains=search) |
         Q(contact_number__icontains=search) |
         Q(address__icontains=search)
-    ).order_by('supplier_name')
+    ).order_by(*supplier_ordering)
 
     return render(
         request,
@@ -408,6 +483,8 @@ def suppliers(request):
             'current_user': current_user,
             'suppliers': suppliers,
             'search': search,
+            'current_sort': current_sort,
+            'current_order': current_order,
         }
     )
 
@@ -488,12 +565,26 @@ def supplier_products(request):
 
     search = request.GET.get('search', '').strip()
 
+    supplier_product_sort_map = {
+        'company': 'supplier__supplier_name',
+        'product': 'product__product_name',
+        'brand': 'product__brand',
+        'model': 'product__model_name',
+        'unit_price': 'unit_price',
+        'available_stock': 'available_quantity',
+    }
+    current_sort, current_order, supplier_product_ordering = get_table_sort(
+        request,
+        supplier_product_sort_map,
+        ['product__product_name']
+    )
+
     supplier_products = SupplierProduct.objects.filter(
         Q(supplier__supplier_name__icontains=search) |
         Q(product__product_name__icontains=search) |
         Q(product__brand__icontains=search) |
         Q(product__model_name__icontains=search)
-    ).select_related('supplier', 'product').order_by('product__product_name')
+    ).select_related('supplier', 'product').order_by(*supplier_product_ordering)
 
     products = Product.objects.all().order_by('product_name')
     suppliers_list = Supplier.objects.all().order_by('supplier_name')
@@ -507,6 +598,8 @@ def supplier_products(request):
             'products': products,
             'suppliers_list': suppliers_list,
             'search': search,
+            'current_sort': current_sort,
+            'current_order': current_order,
         }
     )
     
@@ -847,14 +940,31 @@ def delivery_list(request):
     if not current_user:
         return redirect('login')
 
-    deliveries = Delivery.objects.all().order_by('-created_at')
+    delivery_sort_map = {
+        'delivery_id': 'delivery_code',
+        'customer': 'customer_name',
+        'contact': 'contact_number',
+        'address': 'delivery_address',
+        'product_sale': 'sale__product__product_name',
+        'expected_date': 'expected_delivery_date',
+        'status': 'status',
+    }
+    current_sort, current_order, delivery_ordering = get_table_sort(
+        request,
+        delivery_sort_map,
+        ['-created_at']
+    )
+
+    deliveries = Delivery.objects.select_related('sale', 'sale__product').order_by(*delivery_ordering)
 
     return render(
         request,
         'main/delivery_list.html',
         {
             'current_user': current_user,
-            'deliveries': deliveries
+            'deliveries': deliveries,
+            'current_sort': current_sort,
+            'current_order': current_order,
         }
     )
     
