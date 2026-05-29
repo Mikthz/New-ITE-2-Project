@@ -95,10 +95,11 @@ def remove_expense_income(expense):
 
         if product:
             product = Product.objects.select_for_update().get(pk=product.pk)
-            product.stock_quantity = max(
-                0,
-                product.stock_quantity - supplier_purchase.quantity
-            )
+
+            if product.stock_quantity < supplier_purchase.quantity:
+                raise ValueError('Cannot reverse this supplier purchase because product stock is lower than the purchased quantity.')
+
+            product.stock_quantity -= supplier_purchase.quantity
             product.save(update_fields=['stock_quantity'])
 
         SupplierDelivery.objects.filter(
@@ -959,32 +960,39 @@ def delete_supplier_purchase(request, pk):
     purchase = get_object_or_404(SupplierPurchase, pk=pk)
 
     if request.method == 'POST':
-        with transaction.atomic():
-            supplier_product = SupplierProduct.objects.select_for_update().get(
-                pk=purchase.supplier_product.pk
-            )
-            supplier_product.available_quantity += purchase.quantity
-            supplier_product.save(update_fields=['available_quantity'])
-
-            product = supplier_product.product
-
-            if product:
-                product = Product.objects.select_for_update().get(pk=product.pk)
-                product.stock_quantity = max(
-                    0,
-                    product.stock_quantity - purchase.quantity
+        try:
+            with transaction.atomic():
+                supplier_product = SupplierProduct.objects.select_for_update().get(
+                    pk=purchase.supplier_product.pk
                 )
-                product.save(update_fields=['stock_quantity'])
 
-            SupplierDelivery.objects.filter(
-                supplier_purchase=purchase
-            ).delete()
+                product = supplier_product.product
 
-            Expense.objects.filter(
-                supplier_purchase=purchase
-            ).delete()
+                if product:
+                    product = Product.objects.select_for_update().get(pk=product.pk)
 
-            purchase.delete()
+                    if product.stock_quantity < purchase.quantity:
+                        raise ValueError(
+                            'Cannot delete this supplier purchase because product stock is lower than the purchased quantity.'
+                        )
+
+                    product.stock_quantity -= purchase.quantity
+                    product.save(update_fields=['stock_quantity'])
+
+                supplier_product.available_quantity += purchase.quantity
+                supplier_product.save(update_fields=['available_quantity'])
+
+                SupplierDelivery.objects.filter(
+                    supplier_purchase=purchase
+                ).delete()
+
+                Expense.objects.filter(
+                    supplier_purchase=purchase
+                ).delete()
+
+                purchase.delete()
+        except ValueError as error:
+            return HttpResponseForbidden(str(error))
 
     return redirect('buy_supplier_products')
 
@@ -1117,7 +1125,7 @@ def create_delivery(request):
 
             selected_items.append((product_id, quantity))
 
-        if product_ids and not selected_items:
+        if product_ids and not selected_items and not custom_errors:
             custom_errors.append('Please select a product and enter a valid quantity.')
 
         for error in custom_errors:
@@ -1444,9 +1452,12 @@ def delete_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk)
 
     if request.method == 'POST':
-        with transaction.atomic():
-            remove_expense_income(expense)
-            expense.delete()
+        try:
+            with transaction.atomic():
+                remove_expense_income(expense)
+                expense.delete()
+        except ValueError as error:
+            return HttpResponseForbidden(str(error))
 
     return redirect('expenses')
 
