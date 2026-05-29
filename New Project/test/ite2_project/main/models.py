@@ -283,7 +283,13 @@ class SupplierPurchase(models.Model):
                 raise ValueError('Not enough supplier stock available.')
 
             self.supplier_product.available_quantity -= self.quantity
-            self.supplier_product.save()
+            self.supplier_product.save(update_fields=['available_quantity'])
+
+            product = self.supplier_product.product
+
+            if product:
+                product.stock_quantity += self.quantity
+                product.save(update_fields=['stock_quantity'])
 
         super().save(*args, **kwargs)
 
@@ -641,20 +647,46 @@ class Expense(models.Model):
 
             if purchase.supplier_product_id == self.supplier_product_id:
                 quantity_difference = self.quantity - purchase.quantity
+
                 if quantity_difference != 0:
                     if quantity_difference > self.supplier_product.available_quantity:
                         raise ValueError('Not enough supplier stock available.')
+
+                    product = self.supplier_product.product
+
+                    if product and product.stock_quantity + quantity_difference < 0:
+                        raise ValueError('Cannot reduce product stock below zero.')
+
                     self.supplier_product.available_quantity -= quantity_difference
                     self.supplier_product.save(update_fields=['available_quantity'])
+
+                    if product:
+                        product.stock_quantity += quantity_difference
+                        product.save(update_fields=['stock_quantity'])
             else:
                 old_supplier_product = purchase.supplier_product
+                old_product = old_supplier_product.product
+                new_product = self.supplier_product.product
+
+                if old_product and old_product.stock_quantity < purchase.quantity:
+                    raise ValueError('Cannot reduce product stock below zero.')
+
                 old_supplier_product.available_quantity += purchase.quantity
                 old_supplier_product.save(update_fields=['available_quantity'])
 
+                if old_product:
+                    old_product.stock_quantity -= purchase.quantity
+                    old_product.save(update_fields=['stock_quantity'])
+
                 if self.quantity > self.supplier_product.available_quantity:
                     raise ValueError('Not enough supplier stock available.')
+
                 self.supplier_product.available_quantity -= self.quantity
                 self.supplier_product.save(update_fields=['available_quantity'])
+
+                if new_product:
+                    new_product.stock_quantity += self.quantity
+                    new_product.save(update_fields=['stock_quantity'])
 
             purchase.supplier_product = self.supplier_product
             purchase.quantity = self.quantity

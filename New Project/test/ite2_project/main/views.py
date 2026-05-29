@@ -91,6 +91,16 @@ def remove_expense_income(expense):
         supplier_product.available_quantity += supplier_purchase.quantity
         supplier_product.save(update_fields=['available_quantity'])
 
+        product = supplier_product.product
+
+        if product:
+            product = Product.objects.select_for_update().get(pk=product.pk)
+            product.stock_quantity = max(
+                0,
+                product.stock_quantity - supplier_purchase.quantity
+            )
+            product.save(update_fields=['stock_quantity'])
+
         SupplierDelivery.objects.filter(
             supplier_purchase=supplier_purchase
         ).delete()
@@ -850,6 +860,9 @@ def edit_supplier_purchase(request, pk):
                 old_supplier_product = locked_product_map[old_supplier_product.pk]
                 new_supplier_product = locked_product_map[new_supplier_product.pk]
 
+                old_inventory_product = old_supplier_product.product
+                new_inventory_product = new_supplier_product.product
+
                 if old_supplier_product.pk == new_supplier_product.pk:
                     quantity_difference = new_quantity - old_quantity
 
@@ -860,8 +873,22 @@ def edit_supplier_purchase(request, pk):
                         )
                         return redirect('buy_supplier_products')
 
+                    if (
+                        old_inventory_product and
+                        old_inventory_product.stock_quantity + quantity_difference < 0
+                    ):
+                        form.add_error(
+                            None,
+                            'Cannot reduce product stock below zero.'
+                        )
+                        return redirect('buy_supplier_products')
+
                     new_supplier_product.available_quantity -= quantity_difference
-                    new_supplier_product.save()
+                    new_supplier_product.save(update_fields=['available_quantity'])
+
+                    if old_inventory_product:
+                        old_inventory_product.stock_quantity += quantity_difference
+                        old_inventory_product.save(update_fields=['stock_quantity'])
                 else:
                     if new_quantity > new_supplier_product.available_quantity:
                         form.add_error(
@@ -870,11 +897,26 @@ def edit_supplier_purchase(request, pk):
                         )
                         return redirect('buy_supplier_products')
 
+                    if old_inventory_product and old_inventory_product.stock_quantity < old_quantity:
+                        form.add_error(
+                            None,
+                            'Cannot reduce product stock below zero.'
+                        )
+                        return redirect('buy_supplier_products')
+
                     old_supplier_product.available_quantity += old_quantity
-                    old_supplier_product.save()
+                    old_supplier_product.save(update_fields=['available_quantity'])
+
+                    if old_inventory_product:
+                        old_inventory_product.stock_quantity -= old_quantity
+                        old_inventory_product.save(update_fields=['stock_quantity'])
 
                     new_supplier_product.available_quantity -= new_quantity
-                    new_supplier_product.save()
+                    new_supplier_product.save(update_fields=['available_quantity'])
+
+                    if new_inventory_product:
+                        new_inventory_product.stock_quantity += new_quantity
+                        new_inventory_product.save(update_fields=['stock_quantity'])
 
                 edited_purchase.supplier_product = new_supplier_product
                 edited_purchase.total_price = (
@@ -922,7 +964,17 @@ def delete_supplier_purchase(request, pk):
                 pk=purchase.supplier_product.pk
             )
             supplier_product.available_quantity += purchase.quantity
-            supplier_product.save()
+            supplier_product.save(update_fields=['available_quantity'])
+
+            product = supplier_product.product
+
+            if product:
+                product = Product.objects.select_for_update().get(pk=product.pk)
+                product.stock_quantity = max(
+                    0,
+                    product.stock_quantity - purchase.quantity
+                )
+                product.save(update_fields=['stock_quantity'])
 
             SupplierDelivery.objects.filter(
                 supplier_purchase=purchase
