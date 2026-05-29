@@ -177,19 +177,9 @@
                         Create Customer Delivery
                     </a>
                     {% endif %}
-                    <!-- INDEV -->
-                    {% comment %}
-                    <a href="{% url 'supplier_delivery_list' %}" class="sidebar-sublink font-bold hidden">
+                    <a href="{% url 'supplier_delivery_list' %}" class="sidebar-sublink font-bold">
                         Supplier Deliveries
                     </a>
-                    {% endcomment %}
-                    {% comment %}
-                    {% if current_user.is_admin %}
-                    <a href="{% url 'create_supplier_delivery' %}" class="sidebar-sublink font-bold hidden">
-                        Create Supplier Delivery
-                    </a>
-                    {% endif %}
-                    {% endcomment %}
                 </div>
             </div>
 

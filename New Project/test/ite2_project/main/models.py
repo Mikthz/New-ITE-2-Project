@@ -697,11 +697,12 @@ class Expense(models.Model):
                 supplier_purchase=purchase,
                 defaults={
                     'delivery_address': self.supplier_product.supplier.address,
-                    'status': 'Pending'
+                    'status': 'Delivered'
                 }
             )
             SupplierDelivery.objects.filter(supplier_purchase=purchase).update(
-                delivery_address=self.supplier_product.supplier.address
+                delivery_address=self.supplier_product.supplier.address,
+                status='Delivered'
             )
             return purchase
 
@@ -713,7 +714,7 @@ class Expense(models.Model):
         SupplierDelivery.objects.create(
             supplier_purchase=purchase,
             delivery_address=self.supplier_product.supplier.address,
-            status='Pending'
+            status='Delivered'
         )
 
         self.supplier_purchase = purchase

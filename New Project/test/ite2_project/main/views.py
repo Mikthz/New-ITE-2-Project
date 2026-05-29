@@ -933,7 +933,8 @@ def edit_supplier_purchase(request, pk):
                 SupplierDelivery.objects.filter(
                     supplier_purchase=edited_purchase
                 ).update(
-                    delivery_address=new_supplier_product.supplier.address
+                    delivery_address=new_supplier_product.supplier.address,
+                    status='Delivered'
                 )
 
                 Expense.objects.update_or_create(

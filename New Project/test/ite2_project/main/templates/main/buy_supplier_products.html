@@ -16,7 +16,7 @@
                 New Supplier Expense
             </h2>
             <p class="text-sm text-slate-500">
-            Select supplier products and quantities.{% comment %} This creates expense records first; purchases and deliveries are created only after acceptance/conversion. {% endcomment %}
+            Select supplier products and quantities.{% comment %} This creates supplier expense records first. Accepting a supplier expense creates the supplier purchase, marks the supplier delivery as delivered, and updates product stock. {% endcomment %}
             </p>
         </div>
     </div>
@@ -136,7 +136,7 @@
 <div class="card overflow-hidden">
     <div class="border-b border-slate-200 p-5">
         <h2 class="font-bold text-slate-900">Supplier Expense History</h2>
-        <p class="mt-1 text-sm text-slate-500">Accept/convert a supplier expense to create the supplier purchase and delivery.</p>
+        <p class="mt-1 text-sm text-slate-500">Accept a supplier expense to create the supplier purchase, create the supplier delivery record, and update product stock.</p>
     </div>
 
     <div class="overflow-x-auto">
@@ -177,7 +177,7 @@
                                 <input type="hidden" name="status" value="Accepted">
                                 <input type="hidden" name="remarks" value="{{ expense.remarks }}">
                                 <button class="rounded-lg bg-green-500 px-3 py-2 text-xs font-bold text-white">
-                                    Accept
+                                    Accept & Create Delivery
                                 </button>
                             </form>
                             {% endif %}
