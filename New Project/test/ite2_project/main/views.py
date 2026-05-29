@@ -1169,6 +1169,7 @@ def create_delivery(request):
 
                         delivery = delivery_form.save(commit=False)
                         delivery.pk = None
+                        delivery.delivery_code = None
                         delivery.sale = sale
                         delivery.customer_name = customer_name
                         delivery.delivery_group = delivery_group
