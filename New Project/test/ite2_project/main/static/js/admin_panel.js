@@ -309,17 +309,21 @@
                 let status = wrapper.previousElementSibling;
                 if (!status || !status.classList || !status.classList.contains("sortable-table-status")) {
                     status = document.createElement("div");
-                    status.className = "sortable-table-status";
+                    status.className = "sortable-table-status hidden";
                     wrapper.insertAdjacentElement("beforebegin", status);
                 }
 
                 if (!direction) {
-                    status.textContent = "Default table order";
-                } else {
-                    status.textContent = "Sorted by " + label + " (" + (direction === "asc" ? "ascending" : "descending") + ")";
+                    status.textContent = "";
+                    status.classList.remove("is-visible");
+                    status.classList.add("hidden");
+                    return;
                 }
 
+                status.textContent = "Sorted by " + label + " (" + (direction === "asc" ? "ascending" : "descending") + ")";
+                status.classList.remove("hidden");
                 status.classList.remove("is-visible");
+
                 requestAnimationFrame(function () {
                     status.classList.add("is-visible");
                 });
@@ -342,9 +346,11 @@
                     header.dataset.sortDirection = isActive ? direction : "";
 
                     if (icon) {
-                        icon.textContent = isActive
-                            ? (direction === "asc" ? "▲" : "▼")
-                            : "↕";
+                        icon.innerHTML = isActive
+                            ? (direction === "asc" 
+                                ? '<i class="fa-solid fa-sort-up"></i>'
+                                : '<i class="fa-solid fa-sort-down"></i>')
+                            : '<i class="fa-solid fa-sort"></i>';
                     }
                 });
             };
@@ -383,7 +389,7 @@
                 header.classList.add("sortable-table-header");
 
                 if (!header.querySelector(".sortable-table-label")) {
-                    header.innerHTML = "<span class=\"sortable-table-label\">" + headerText + "</span><span class=\"sortable-table-icon\" aria-hidden=\"true\">↕</span>";
+                    header.innerHTML = "<span class=\"sortable-table-label\">" + headerText + "</span><span class=\"sortable-table-icon\" aria-hidden=\"true\"><i class=\"fa-solid fa-sort\"></i></span>";
                 }
 
                 const sortByHeader = function () {

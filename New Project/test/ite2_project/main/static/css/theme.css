@@ -705,3 +705,28 @@ body.theme-dark .sortable-table-status {
     background: rgba(8, 47, 73, 0.72);
     color: #67e8f9;
 }
+
+.sortable-table-status.hidden {
+    display: none !important;
+}
+
+.sortable-table-icon {
+    margin-left: 0.25rem;
+    color: #64748b;
+}
+
+.sortable-table-header.is-active .sortable-table-icon {
+    color: #ea580c;
+}
+
+html.dark .sortable-table-icon,
+html[data-theme="dark"] .sortable-table-icon,
+body.theme-dark .sortable-table-icon {
+    color: #94a3b8;
+}
+
+html.dark .sortable-table-header.is-active .sortable-table-icon,
+html[data-theme="dark"] .sortable-table-header.is-active .sortable-table-icon,
+body.theme-dark .sortable-table-header.is-active .sortable-table-icon {
+    color: #67e8f9;
+}
