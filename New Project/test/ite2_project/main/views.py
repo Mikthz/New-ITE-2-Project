@@ -1034,33 +1034,42 @@ def create_delivery(request):
 
         product_ids = request.POST.getlist('product_ids[]')
         quantities = request.POST.getlist('quantities[]')
-        customer_name = sale_form.data.get('customer_name', '').strip()
+        customer_name = request.POST.get('customer_name', '').strip()
         selected_items = []
+        custom_errors = []
+
+        delivery_is_valid = delivery_form.is_valid()
 
         if not product_ids:
-            sale_form.add_error(None, 'Please add at least one product.')
+            custom_errors.append('Please add at least one product to the delivery.')
 
         if len(product_ids) != len(quantities):
-            sale_form.add_error(None, 'The selected products and quantities do not match.')
+            custom_errors.append('The selected products and quantities do not match.')
 
         if not customer_name:
-            sale_form.add_error('customer_name', 'Customer name is required.')
+            custom_errors.append('Customer name is required.')
 
         for product_id, quantity in zip(product_ids, quantities):
             try:
                 product_id = int(product_id)
                 quantity = int(quantity)
-            except ValueError:
-                sale_form.add_error(None, 'One selected product or quantity is invalid.')
+            except (TypeError, ValueError):
+                custom_errors.append('One selected product or quantity is invalid.')
                 continue
 
             if quantity <= 0:
-                sale_form.add_error(None, 'Quantity must be greater than zero.')
+                custom_errors.append('Quantity must be greater than zero.')
                 continue
 
             selected_items.append((product_id, quantity))
 
-        if delivery_form.is_valid() and not sale_form.errors and selected_items:
+        if product_ids and not selected_items:
+            custom_errors.append('Please select a product and enter a valid quantity.')
+
+        for error in custom_errors:
+            delivery_form.add_error(None, error)
+
+        if delivery_is_valid and not delivery_form.errors and selected_items:
             delivery_group = uuid.uuid4().hex
 
             with transaction.atomic():
@@ -1076,14 +1085,14 @@ def create_delivery(request):
                     product = locked_products.get(product_id)
 
                     if not product:
-                        sale_form.add_error(None, 'One selected product is invalid or inactive.')
+                        delivery_form.add_error(None, 'One selected product is invalid or inactive.')
                         break
 
                     if quantity > product.stock_quantity:
-                        sale_form.add_error(None, f'Not enough stock for {product.product_name}.')
+                        delivery_form.add_error(None, f'Not enough stock for {product.product_name}.')
                         break
 
-                if sale_form.errors:
+                if delivery_form.errors:
                     transaction.set_rollback(True)
                 else:
                     for product_id, quantity in selected_items:
@@ -1107,7 +1116,7 @@ def create_delivery(request):
                             defaults={'status': 'Paid'}
                         )
 
-            if not sale_form.errors:
+            if not delivery_form.errors:
                 return redirect('delivery_list')
 
     else:
@@ -1121,7 +1130,7 @@ def create_delivery(request):
             'current_user': current_user,
             'sale_form': sale_form,
             'delivery_form': delivery_form,
-            'form': sale_form if sale_form.errors else delivery_form,
+            'form': delivery_form,
             'products': products,
         }
     )

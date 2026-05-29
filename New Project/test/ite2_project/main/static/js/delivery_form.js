@@ -1,5 +1,26 @@
 let selectedDeliveryItems = {};
 
+function showDeliveryFormError(message) {
+    const errorBox = document.getElementById("deliveryFormClientError");
+    const errorText = document.getElementById("deliveryFormClientErrorText");
+
+    if (!errorBox || !errorText) return;
+
+    errorText.textContent = message;
+    errorBox.classList.remove("hidden");
+    errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function clearDeliveryFormError() {
+    const errorBox = document.getElementById("deliveryFormClientError");
+    const errorText = document.getElementById("deliveryFormClientErrorText");
+
+    if (!errorBox || !errorText) return;
+
+    errorText.textContent = "";
+    errorBox.classList.add("hidden");
+}
+
 function addDeliveryItem() {
     const select = document.getElementById("productSelect");
     const quantityInput = document.getElementById("productQuantity");
@@ -11,14 +32,16 @@ function addDeliveryItem() {
     const stock = parseInt(selectedOption?.dataset?.stock || 0, 10);
 
     if (!productId || quantity < 1 || Number.isNaN(quantity)) {
-        alert("Please select a product and enter a valid quantity.");
+        showDeliveryFormError("Please select a product and enter a valid quantity.");
         return;
     }
 
     if (quantity > stock) {
-        alert("Quantity cannot be greater than available stock.");
+        showDeliveryFormError("Quantity cannot be greater than available stock.");
         return;
     }
+
+    clearDeliveryFormError();
 
     selectedDeliveryItems[productId] = {
         id: productId,
@@ -89,3 +112,16 @@ function renderSelectedDeliveryItems() {
             <input type="hidden" name="quantities[]" value="${item.quantity}">`;
     });
 }
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("multiDeliveryForm");
+
+    if (!form) return;
+
+    form.addEventListener("submit", function (event) {
+        if (Object.keys(selectedDeliveryItems).length === 0) {
+            event.preventDefault();
+            showDeliveryFormError("Please add at least one product before creating the delivery.");
+        }
+    });
+});

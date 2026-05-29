@@ -38,6 +38,20 @@
     <form method="POST" id="multiDeliveryForm" class="space-y-8">
         {% csrf_token %}
 
+        <div
+            id="deliveryFormClientError"
+            class="hidden rounded-2xl border border-red-200 bg-red-500 px-5 py-4 text-white shadow-lg"
+        >
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-circle-exclamation mt-1 text-lg"></i>
+
+                <div>
+                    <h3 class="font-bold">Form Error</h3>
+                    <p id="deliveryFormClientErrorText" class="mt-1 text-sm text-red-100"></p>
+                </div>
+            </div>
+        </div>
+
         <section class="space-y-6">
 
             <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
