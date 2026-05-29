@@ -695,6 +695,11 @@ def buy_supplier_products(request):
 
     form = SupplierPurchaseForm()
 
+    def add_supplier_purchase_error(message):
+        if not hasattr(form, 'cleaned_data'):
+            form.cleaned_data = {}
+        form.add_error(None, message)
+
     selected_product_id = request.GET.get('product')
     selected_supplier_products = SupplierProduct.objects.none()
 
@@ -711,9 +716,8 @@ def buy_supplier_products(request):
         quantities = request.POST.getlist('quantities[]')
 
         if not product_ids:
-            form.add_error(
-                None,
-                'Please add at least one supplier product.'
+            add_supplier_purchase_error(
+                'Please add at least one supplier product before creating a supplier expense.'
             )
 
         else:
@@ -725,12 +729,12 @@ def buy_supplier_products(request):
                     product_id = int(product_id)
                     quantity = int(quantity)
                 except (TypeError, ValueError):
-                    form.add_error(None, 'Supplier product and quantity must be valid numbers.')
+                    add_supplier_purchase_error('Supplier product and quantity must be valid numbers.')
                     has_error = True
                     continue
 
                 if quantity <= 0:
-                    form.add_error(None, 'Quantity must be greater than zero.')
+                    add_supplier_purchase_error('Quantity must be greater than zero.')
                     has_error = True
                     continue
 
@@ -746,7 +750,7 @@ def buy_supplier_products(request):
                 supplier_product = supplier_product_map.get(product_id)
 
                 if not supplier_product:
-                    form.add_error(None, 'Selected supplier product does not exist.')
+                    add_supplier_purchase_error('Selected supplier product does not exist.')
                     has_error = True
                     continue
 
@@ -756,8 +760,7 @@ def buy_supplier_products(request):
                         if supplier_product.product
                         else str(supplier_product)
                     )
-                    form.add_error(
-                        None,
+                    add_supplier_purchase_error(
                         f'Not enough supplier stock for {product_name}.'
                     )
                     has_error = True
@@ -775,8 +778,7 @@ def buy_supplier_products(request):
                         supplier_product = locked_supplier_products.get(product_id)
 
                         if not supplier_product or quantity > supplier_product.available_quantity:
-                            form.add_error(
-                                None,
+                            add_supplier_purchase_error(
                                 'Not enough supplier stock available.'
                             )
                             has_error = True
