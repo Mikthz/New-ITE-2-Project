@@ -11,6 +11,13 @@ function showSupplierFormError(message) {
     errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
 }
 
+
+function getSelectedSupplierId() {
+    const items = Object.values(selectedSupplierItems);
+    if (items.length === 0) return "";
+    return items[0].supplierId || "";
+}
+
 function clearSupplierFormError() {
     const errorBox = document.getElementById("supplierFormClientError");
     const errorText = document.getElementById("supplierFormClientErrorText");
@@ -21,8 +28,15 @@ function clearSupplierFormError() {
     errorBox.classList.add("hidden");
 }
 
-function selectSuggestedSupplierProduct(id, name, company, price, image) {
-    selectedSupplierItems[id] = { id, name, company, price, image, quantity: 1 };
+function selectSuggestedSupplierProduct(id, name, company, price, image, supplierId) {
+    const selectedSupplierId = getSelectedSupplierId();
+
+    if (selectedSupplierId && supplierId && selectedSupplierId !== String(supplierId)) {
+        showSupplierFormError("Please create one supplier expense per supplier. Remove the current selected items before choosing a different supplier.");
+        return;
+    }
+
+    selectedSupplierItems[id] = { id, name, company, price, image, supplierId: supplierId || "", quantity: 1 };
     renderSelectedSupplierItems();
     const selectedBox = document.getElementById("selectedItemsBox");
     if (selectedBox) window.scrollTo({ top: selectedBox.offsetTop - 120, behavior: "smooth" });
@@ -35,6 +49,13 @@ function addSupplierItem() {
     const selectedOption = select.options[select.selectedIndex];
     const productId = select.value;
     const quantity = parseInt(quantityInput.value, 10);
+    const supplierId = selectedOption ? selectedOption.dataset.supplierId : "";
+    const selectedSupplierId = getSelectedSupplierId();
+
+    if (selectedSupplierId && supplierId && selectedSupplierId !== supplierId) {
+        showSupplierFormError("Only one supplier can be selected when purchasing stocks. Remove the selected items first or create a separate supplier expense.");
+        return;
+    }
 
     if (!productId || quantity < 1 || Number.isNaN(quantity)) {
         showSupplierFormError("Please select a supplier product and enter a valid quantity.");
@@ -47,6 +68,7 @@ function addSupplierItem() {
         id: productId,
         name: selectedOption.dataset.name,
         company: selectedOption.dataset.company,
+        supplierId: supplierId,
         price: selectedOption.dataset.price,
         image: selectedOption.dataset.image,
         quantity: quantity

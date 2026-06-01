@@ -916,7 +916,11 @@ def buy_supplier_products(request):
         supplier_product__isnull=False
     ).order_by('-expense_date', '-created_at')
 
-    supplier_products = SupplierProduct.objects.all().order_by(
+    supplier_products = SupplierProduct.objects.select_related(
+        'supplier',
+        'product'
+    ).order_by(
+        'supplier__supplier_name',
         'product__product_name'
     )
 
@@ -983,6 +987,18 @@ def buy_supplier_products(request):
             supplier_product_map = SupplierProduct.objects.filter(
                 pk__in=purchase_quantities.keys()
             ).select_related('supplier', 'product').in_bulk()
+
+            selected_supplier_ids = {
+                supplier_product.supplier_id
+                for supplier_product in supplier_product_map.values()
+                if supplier_product
+            }
+
+            if len(selected_supplier_ids) > 1:
+                add_supplier_purchase_error(
+                    'Please select products from only one supplier when purchasing from the suppliers. Create a separate supplier expense for another supplier.'
+                )
+                has_error = True
 
             for product_id, quantity in purchase_quantities.items():
                 supplier_product = supplier_product_map.get(product_id)

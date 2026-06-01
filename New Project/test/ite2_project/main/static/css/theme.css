@@ -756,10 +756,10 @@ body.theme-dark .sortable-table-header.is-active .sortable-table-icon {
 }
 
 .edit-modal-panel {
-    width: min(92vw, 860px) !important;
-    max-height: 88vh !important;
+    width: min(calc(100vw - 2rem), 780px) !important;
+    max-height: min(88vh, 760px) !important;
     overflow-y: auto !important;
-    padding: 1.5rem !important;
+    padding: 1.25rem !important;
     border-radius: 1.5rem !important;
     box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28) !important;
     animation: edit-modal-panel-in 180ms ease-out both;
@@ -772,8 +772,8 @@ body.theme-dark .sortable-table-header.is-active .sortable-table-icon {
 .edit-modal-footer {
     position: sticky;
     bottom: -1.5rem;
-    margin: 1rem -1.5rem -1.5rem;
-    padding: 1rem 1.5rem 1.5rem;
+    margin: 1rem -1.25rem -1.25rem;
+    padding: 1rem 1.25rem 1.25rem;
     background: linear-gradient(to top, #ffffff 82%, rgba(255, 255, 255, 0.88));
     border-top: 1px solid #e2e8f0;
     border-bottom-left-radius: 1.5rem;
@@ -793,7 +793,7 @@ tr[id^="edit-"] > td {
 }
 
 tr[id^="edit-"] > td > form {
-    max-width: 860px;
+    max-width: 780px;
     margin: 1rem auto;
     border-radius: 1.5rem;
     border: 1px solid #e2e8f0;

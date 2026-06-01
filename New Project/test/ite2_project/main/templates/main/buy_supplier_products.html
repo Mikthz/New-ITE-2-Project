@@ -16,7 +16,7 @@
                 New Supplier Expense
             </h2>
             <p class="text-sm text-slate-500">
-            Select supplier products and quantities.{% comment %} This creates supplier expense records first. Accepting a supplier expense creates the supplier purchase, marks the supplier delivery as delivered, and updates product stock. {% endcomment %}
+                Select products from one supplier at a time. This keeps each supplier expense tied to one supplier delivery.
             </p>
         </div>
     </div>
@@ -92,6 +92,7 @@
                         value="{{ item.pk }}"
                         data-name="{% if item.product %}{{ item.product.product_name }}{% else %}No product selected{% endif %}"
                         data-company="{{ item.supplier.company_name }}"
+                        data-supplier-id="{{ item.supplier_id }}"
                         data-price="{{ item.unit_price }}"
                         data-image="{% if item.product.product_image %}{{ item.product.product_image.url }}{% else %}{% static 'images/default-product.png' %}{% endif %}"
                     >
