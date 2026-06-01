@@ -188,6 +188,12 @@ urlpatterns = [
         views.create_supplier_delivery,
         name='create_supplier_delivery'
     ),
+
+    path(
+        'supplier-deliveries/<int:pk>/',
+        views.supplier_delivery_details,
+        name='supplier_delivery_details'
+    ),
     
         path(
         'supplier-deliveries/edit/<int:pk>/',
@@ -214,6 +220,12 @@ urlpatterns = [
         ),
 
     path(
+        'expenses/<int:pk>/',
+        views.expense_details,
+        name='expense_details'
+    ),
+
+    path(
         'expenses/edit/<int:pk>/',
         views.edit_expense,
         name='edit_expense'
@@ -236,6 +248,12 @@ urlpatterns = [
         views.create_invoice,
         name='create_invoice'
         ),
+
+    path(
+        'invoices/<int:pk>/',
+        views.invoice_details,
+        name='invoice_details'
+    ),
 
     path(
         'invoices/edit/<int:pk>/',

@@ -40,11 +40,11 @@
             <tbody>
                 {% for delivery in deliveries %}
                 <tr class="table-row">
-                    <td class="p-4 font-bold">{{ delivery.display_id }}</td>
+                    <td class="p-4 font-bold">{{ delivery.group_display_id|default:delivery.display_id }}</td>
                     <td class="p-4 font-bold">{{ delivery.supplier_purchase.supplier_product.supplier.supplier_name }}</td>
                     <td class="p-4">{{ delivery.supplier_purchase.supplier_product.supplier.address }}</td>
                     <td class="p-4">{{ delivery.supplier_purchase.supplier_product.supplier.contact_number }}</td>
-                    <td class="p-4">{{ delivery.supplier_purchase }}</td>
+                    <td class="p-4">{{ delivery.group_purchase_summary|default:delivery.supplier_purchase }}</td>
                     <td class="p-4">{{ delivery.expected_delivery_date|default:"N/A" }}</td>
 
                     <td class="p-4">
@@ -60,6 +60,9 @@
                     {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="flex justify-end gap-2">
+                            <a href="{% url 'supplier_delivery_details' delivery.pk %}" class="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-500 text-white">
+                                <i class="fa-solid fa-eye text-xs"></i>
+                            </a>
                             <button onclick="toggleEditSupplierDelivery('{{ delivery.pk }}')" class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500 text-white">
                                 <i class="fa-solid fa-pen text-xs"></i>
                             </button>

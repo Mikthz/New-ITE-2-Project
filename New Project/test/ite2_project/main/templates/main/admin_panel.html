@@ -184,18 +184,18 @@
             </div>
 
             <!-- INDEV -->
-             {% comment %}
+             
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 ">
                     <i class="fa-solid fa-file-lines"></i>
                     Expenses
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'expenses' %}" class="sidebar-sublink font-bold hidden">
+                    <a href="{% url 'expenses' %}" class="sidebar-sublink font-bold">
                         All Expenses
                     </a>
-
+                {% comment %}
                     {% if current_user.is_admin %}
                     <a href="{% url 'create_expense' %}" class="sidebar-sublink font-bold hidden">
                         Create Expense
@@ -206,18 +206,18 @@
             </div>
             {% endcomment %}
             <!-- INDEV -->
-             {% comment %}
+            
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 ">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
                     Invoices
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'invoices' %}" class="sidebar-sublink font-bold hidden">
+                    <a href="{% url 'invoices' %}" class="sidebar-sublink font-bold">
                         All Invoices
                     </a>
-
+                {% comment %}
                     {% if current_user.is_admin %}
                     <a href="{% url 'create_invoice' %}" class="sidebar-sublink font-bold hidden">
                         Create Invoice
@@ -226,24 +226,24 @@
                     
                 </div>
             </div>
-
+            {% endcomment %}
             <div>
-                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 hidden">
+                <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 ">
                     <i class="fa-solid fa-chart-line"></i>
                     Reports
                 </p>
 
                 <div class="space-y-1">
-                    <a href="{% url 'sales_report' %}" class="sidebar-sublink font-bold hidden">
+                    <a href="{% url 'sales_report' %}" class="sidebar-sublink font-bold">
                         Sales Report
                     </a>
 
-                    <a href="{% url 'income_report' %}" class="sidebar-sublink font-bold hidden">
+                    <a href="{% url 'income_report' %}" class="sidebar-sublink font-bold">
                         Income Report
                     </a>
                 </div>
             </div>
-            {% endcomment %}
+            
         </nav>
 
         <div class="my-4 border-t border-orange-200"></div>

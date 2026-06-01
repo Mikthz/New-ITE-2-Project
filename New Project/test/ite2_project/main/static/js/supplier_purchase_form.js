@@ -1,5 +1,26 @@
 let selectedSupplierItems = {};
 
+function showSupplierFormError(message) {
+    const errorBox = document.getElementById("supplierFormClientError");
+    const errorText = document.getElementById("supplierFormClientErrorText");
+
+    if (!errorBox || !errorText) return;
+
+    errorText.textContent = message;
+    errorBox.classList.remove("hidden");
+    errorBox.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function clearSupplierFormError() {
+    const errorBox = document.getElementById("supplierFormClientError");
+    const errorText = document.getElementById("supplierFormClientErrorText");
+
+    if (!errorBox || !errorText) return;
+
+    errorText.textContent = "";
+    errorBox.classList.add("hidden");
+}
+
 function selectSuggestedSupplierProduct(id, name, company, price, image) {
     selectedSupplierItems[id] = { id, name, company, price, image, quantity: 1 };
     renderSelectedSupplierItems();
@@ -16,9 +37,11 @@ function addSupplierItem() {
     const quantity = parseInt(quantityInput.value, 10);
 
     if (!productId || quantity < 1 || Number.isNaN(quantity)) {
-        alert("Please select a supplier product and enter a valid quantity.");
+        showSupplierFormError("Please select a supplier product and enter a valid quantity.");
         return;
     }
+
+    clearSupplierFormError();
 
     selectedSupplierItems[productId] = {
         id: productId,
@@ -78,3 +101,17 @@ function renderSelectedSupplierItems() {
             <input type="hidden" name="quantities[]" value="${item.quantity}">`;
     });
 }
+
+
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("multiPurchaseForm");
+
+    if (!form) return;
+
+    form.addEventListener("submit", function (event) {
+        if (Object.keys(selectedSupplierItems).length === 0) {
+            event.preventDefault();
+            showSupplierFormError("Please add at least one supplier product before creating a supplier expense.");
+        }
+    });
+});

@@ -111,9 +111,9 @@
 </div>
 
 {% for user in users %}
-<div id="editUser{{ user.pk }}" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/40 p-4">
-    <div class="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-xl">
-        <div class="mb-5 flex items-center justify-between">
+<div id="editUser{{ user.pk }}" class="edit-modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div class="edit-modal-panel relative w-full overflow-y-auto rounded-3xl bg-white shadow-xl dark:bg-slate-800">
+        <div class="edit-modal-header flex items-start justify-between gap-4">
             <h2 class="text-xl font-bold text-slate-900">Edit {{ user.username }}</h2>
             <button type="button" onclick="closeEditModal('editUser{{ user.pk }}')" class="text-slate-400 hover:text-slate-700">
                 <i class="fa-solid fa-xmark"></i>

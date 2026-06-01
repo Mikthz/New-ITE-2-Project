@@ -74,7 +74,7 @@
                     <th class="p-4">Amount</th>
                     <th class="p-4">Status</th>
                     {% if current_user.is_admin %}
-                    <th class="p-4 text-right">Actions</th>
+                    <th class="p-4 min-w-[270px] text-right">Actions</th>
                     {% endif %}
                 </tr>
             </thead>
@@ -82,26 +82,37 @@
             <tbody>
                 {% for expense in expenses %}
                 <tr class="border-b last:border-0 hover:bg-orange-50/40">
-                    <td class="p-4 font-bold">{{ expense.display_id }}</td>
-                    <td class="p-4">{{ expense.company_name }}</td>
-                    <td class="p-4">{{ expense.display_product.product_name|default:"N/A" }}</td>
+                    <td class="p-4 font-bold">{{ expense.group_display_id }}</td>
+                    <td class="p-4">{{ expense.group_company_name }}</td>
+                    <td class="p-4">
+                        <p class="font-semibold text-slate-900">{{ expense.group_product_summary }}</p>
+                        <p class="text-xs text-slate-400">{{ expense.group_item_count|default:1 }} item(s)</p>
+                    </td>
                     <td class="p-4">{{ expense.expense_date }}</td>
                     <td class="p-4">{{ expense.valid_until }}</td>
-                    <td class="p-4">{{ expense.quantity }}</td>
-                    <td class="p-4 font-bold text-orange-600">₱{{ expense.total_price }}</td>
-                    <td class="p-4">{{ expense.status }}</td>
+                    <td class="p-4">{{ expense.group_total_quantity }}</td>
+                    <td class="p-4 font-bold text-orange-600">₱{{ expense.group_total_price }}</td>
+                    <td class="p-4">{{ expense.group_status }}</td>
                     {% if current_user.is_admin %}
-                    <td class="p-4 text-right">
-                        <button onclick="document.getElementById('editExpense{{ expense.pk }}').classList.remove('hidden')" class="btn-secondary mr-2">
+                <td class="p-4 min-w-[270px]">
+                    <div class="flex flex-nowrap items-center justify-end gap-2">
+                        <a href="{% url 'expense_details' expense.pk %}" class="inline-flex min-w-[74px] items-center justify-center rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-orange-50 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
+                            <i class="fa-solid fa-eye mr-1"></i>
+                            View
+                        </a>
+
+                        <button onclick="document.getElementById('editExpense{{ expense.pk }}').classList.remove('hidden'); document.getElementById('editExpense{{ expense.pk }}').classList.add('flex')" class="inline-flex min-w-[74px] items-center justify-center rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-orange-50 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
                             Edit
                         </button>
-                        <form method="POST" action="{% url 'delete_expense' expense.pk %}" class="inline">
+
+                        <form method="POST" action="{% url 'delete_expense' expense.pk %}" class="inline-flex">
                             {% csrf_token %}
-                            <button type="submit" class="btn-danger" onclick="return confirm('Delete this expense?')">
+                            <button type="submit" onclick="return confirm('Delete this record?');" class="inline-flex min-w-[74px] items-center justify-center rounded-xl bg-red-500 px-3 py-2 text-sm font-bold text-white transition hover:bg-red-600 dark:text-white">
                                 Delete
                             </button>
                         </form>
-                    </td>
+                    </div>
+                </td>
                     {% endif %}
                 </tr>
                 {% empty %}
@@ -118,47 +129,64 @@
 
 {% if current_user.is_admin %}
     {% for expense in expenses %}
-    <div id="editExpense{{ expense.pk }}" class="fixed inset-0 z-50 hidden bg-black/40 p-4">
-        <div class="mx-auto mt-10 max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
-            <div class="mb-6 flex items-center justify-between">
-                <h2 class="text-xl font-bold text-slate-900">Edit Expense {{ expense.display_id }}</h2>
-                <button type="button" onclick="document.getElementById('editExpense{{ expense.pk }}').classList.add('hidden')">
+    <div id="editExpense{{ expense.pk }}" class="edit-modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="edit-modal-panel relative w-full overflow-y-auto rounded-3xl bg-white shadow-2xl dark:bg-slate-800">
+            <div class="edit-modal-header flex items-start justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">
+                        Edit Expense {{ expense.group_display_id|default:expense.display_id }}
+                    </h2>
+                </div>
+
+                <button type="button" onclick="document.getElementById('editExpense{{ expense.pk }}').classList.add('hidden'); document.getElementById('editExpense{{ expense.pk }}').classList.remove('flex')" class="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-red-500 dark:text-slate-300 dark:hover:bg-slate-700">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
 
-            <form method="POST" action="{% url 'edit_expense' expense.pk %}" class="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <div class="mb-5 grid grid-cols-1 gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm dark:border-slate-600 dark:bg-slate-700/70 md:grid-cols-2">
+                <div>
+                    <p class="text-xs font-bold uppercase text-slate-400">Company / Supplier</p>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ expense.group_company_name }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold uppercase text-slate-400">Items</p>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ expense.group_item_count|default:1 }} item(s)</p>
+                </div>
+
+                <div class="md:col-span-2">
+                    <p class="text-xs font-bold uppercase text-slate-400">Products</p>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ expense.group_product_summary }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold uppercase text-slate-400">Total Quantity</p>
+                    <p class="font-semibold text-slate-900 dark:text-slate-100">{{ expense.group_total_quantity }}</p>
+                </div>
+
+                <div>
+                    <p class="text-xs font-bold uppercase text-slate-400">Total Cost</p>
+                    <p class="font-semibold text-orange-600">₱{{ expense.group_total_price }}</p>
+                </div>
+            </div>
+
+            <form method="POST" action="{% url 'edit_expense' expense.pk %}" class="grid grid-cols-1 gap-4 md:grid-cols-2">
                 {% csrf_token %}
 
                 <div class="md:col-span-2">
                     <label class="mb-2 block text-sm font-semibold">Company / Supplier Name</label>
-                    <input type="text" name="customer_name" value="{{ expense.customer_name }}" class="input">
-                </div>
 
-                <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-semibold">Direct Product Expense</label>
-                    <select name="product" class="search-select input">
-                        <option value="">Select customer product</option>
-                        {% for product in expense_form.fields.product.queryset %}
-                            <option value="{{ product.pk }}" {% if expense.product and product.pk == expense.product.pk %}selected{% endif %}>{{ product.product_name }} - ₱{{ product.price }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-semibold">Supplier Product</label>
-                    <select name="supplier_product" class="search-select input">
-                        <option value="">Select supplier product</option>
-                        {% for supplier_product in expense_form.fields.supplier_product.queryset %}
-                            <option value="{{ supplier_product.pk }}" {% if expense.supplier_product and supplier_product.pk == expense.supplier_product.pk %}selected{% endif %}>{{ supplier_product.supplier.company_name }} - {% if supplier_product.product %}{{ supplier_product.product.product_name }}{% else %}No product selected{% endif %} - ₱{{ supplier_product.unit_price }}</option>
-                        {% endfor %}
-                    </select>
-                    <p class="mt-1 text-xs text-slate-500">Select either a direct product expense or supplier product expense, not both.</p>
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-sm font-semibold">Quantity</label>
-                    <input type="number" name="quantity" min="1" value="{{ expense.quantity }}" class="input" required>
+                    {% if expense.supplier_product %}
+                    <div class="input flex items-center bg-slate-50 text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                        {{ expense.group_company_name }}
+                    </div>
+                    <input type="hidden" name="customer_name" value="{{ expense.customer_name|default:'' }}">
+                    <p class="mt-1 text-xs text-slate-400">
+                        Supplier-linked expenses use the supplier company name automatically.
+                    </p>
+                    {% else %}
+                    <input type="text" name="customer_name" value="{{ expense.customer_name|default:'' }}" class="input">
+                    {% endif %}
                 </div>
 
                 <div>
@@ -171,24 +199,24 @@
                     <input type="date" name="valid_until" value="{{ expense.valid_until|date:'Y-m-d' }}" class="input">
                 </div>
 
-                <div>
+                <div class="md:col-span-2">
                     <label class="mb-2 block text-sm font-semibold">Status</label>
                     <select name="status" class="input">
-                        <option value="Draft" {% if expense.status == 'Draft' %}selected{% endif %}>Draft</option>
-                        <option value="Sent" {% if expense.status == 'Sent' %}selected{% endif %}>Sent</option>
-                        <option value="Accepted" {% if expense.status == 'Accepted' %}selected{% endif %}>Accepted</option>
-                        <option value="Rejected" {% if expense.status == 'Rejected' %}selected{% endif %}>Rejected</option>
-                        <option value="Converted" {% if expense.status == 'Converted' %}selected{% endif %}>Converted</option>
+                        <option value="Draft" {% if expense.group_status == 'Draft' or expense.status == 'Draft' %}selected{% endif %}>Draft</option>
+                        <option value="Sent" {% if expense.group_status == 'Sent' or expense.status == 'Sent' %}selected{% endif %}>Sent</option>
+                        <option value="Accepted" {% if expense.group_status == 'Accepted' or expense.status == 'Accepted' %}selected{% endif %}>Accepted</option>
+                        <option value="Rejected" {% if expense.group_status == 'Rejected' or expense.status == 'Rejected' %}selected{% endif %}>Rejected</option>
+                        <option value="Converted" {% if expense.group_status == 'Converted' or expense.status == 'Converted' %}selected{% endif %}>Converted</option>
                     </select>
                 </div>
 
                 <div class="md:col-span-2">
                     <label class="mb-2 block text-sm font-semibold">Remarks</label>
-                    <textarea name="remarks" class="input" rows="4">{{ expense.remarks }}</textarea>
+                    <textarea name="remarks" class="input" rows="4">{{ expense.group_clean_remarks|default:expense.remarks }}</textarea>
                 </div>
 
-                <div class="md:col-span-2 flex justify-end">
-                    <button type="submit" class="btn-primary">Save Changes</button>
+                <div class="edit-modal-footer md:col-span-2 flex justify-end">
+                    <button type="submit" class="btn-primary">Save Group Changes</button>
                 </div>
             </form>
         </div>

@@ -64,6 +64,20 @@
     <form method="POST" id="multiPurchaseForm" class="space-y-6">
         {% csrf_token %}
 
+        <div
+            id="supplierFormClientError"
+            class="hidden rounded-2xl border border-red-200 bg-red-500 px-5 py-4 text-white shadow-lg"
+        >
+            <div class="flex items-start gap-3">
+                <i class="fa-solid fa-circle-exclamation mt-1 text-lg"></i>
+
+                <div>
+                    <h3 class="font-bold">Form Error</h3>
+                    <p id="supplierFormClientErrorText" class="mt-1 text-sm text-red-100"></p>
+                </div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
             <div class="md:col-span-2">
                 <label class="mb-2 block text-sm font-semibold text-slate-700">

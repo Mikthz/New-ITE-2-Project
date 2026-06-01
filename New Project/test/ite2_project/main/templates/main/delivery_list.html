@@ -44,7 +44,7 @@
                     <td class="p-4 font-bold">{{ delivery.customer_name }}</td>
                     <td class="p-4">{{ delivery.contact_number|default:"N/A" }}</td>
                     <td class="p-4">{{ delivery.delivery_address }}</td>
-                    <td class="p-4">{{ delivery.sale|default:"N/A" }}</td>
+                    <td class="p-4">{{ delivery.group_product_summary|default:delivery.sale }}</td>
                     <td class="p-4">{{ delivery.expected_delivery_date|default:"N/A" }}</td>
 
                     <td class="p-4">

@@ -31,6 +31,222 @@ def clean_missing_profile_picture(user):
         user.profile_picture = None
         user.save(update_fields=['profile_picture'])
 
+
+def generate_delivery_group_code():
+    next_number = (Delivery.objects.order_by('-pk').values_list('pk', flat=True).first() or 0) + 1
+
+    while True:
+        code = f"D{next_number:04d}"
+        if not Delivery.objects.filter(Q(delivery_group=code) | Q(delivery_code=code)).exists():
+            return code
+        next_number += 1
+
+
+def generate_supplier_batch_code():
+    next_number = (SupplierDelivery.objects.order_by('-pk').values_list('pk', flat=True).first() or 0) + 1
+
+    while True:
+        code = f"SD{next_number:04d}"
+        if (
+            not Expense.objects.filter(remarks__icontains=f"SUPPLIER_BATCH={code}").exists() and
+            not SupplierDelivery.objects.filter(delivery_code=code).exists()
+        ):
+            return code
+        next_number += 1
+
+
+def get_supplier_batch_code_from_expense(expense):
+    if not expense or not expense.remarks:
+        return ''
+
+    for part in expense.remarks.split():
+        if part.startswith('SUPPLIER_BATCH='):
+            return part.split('=', 1)[1].strip()
+
+    return ''
+
+
+def strip_supplier_batch_marker(remarks):
+    if not remarks:
+        return ''
+
+    cleaned_parts = [
+        part for part in str(remarks).split()
+        if not part.startswith('SUPPLIER_BATCH=')
+    ]
+
+    return ' '.join(cleaned_parts).strip()
+
+
+def get_invoice_group_queryset(invoice):
+    if not invoice or not invoice.sale_id:
+        return Invoice.objects.filter(pk=invoice.pk)
+
+    delivery_group = get_delivery_group_for_sale_map([invoice.sale_id]).get(invoice.sale_id)
+
+    if not delivery_group:
+        return Invoice.objects.filter(pk=invoice.pk)
+
+    sale_ids = Delivery.objects.filter(
+        Q(delivery_group=delivery_group) |
+        Q(delivery_code=delivery_group)
+    ).exclude(
+        sale_id__isnull=True
+    ).values_list('sale_id', flat=True)
+
+    return Invoice.objects.filter(sale_id__in=sale_ids)
+
+
+def get_expense_group_queryset(expense):
+    if not expense:
+        return Expense.objects.none()
+
+    supplier_batch_code = get_supplier_batch_code_from_expense(expense)
+
+    if not supplier_batch_code:
+        return Expense.objects.filter(pk=expense.pk)
+
+    return Expense.objects.filter(
+        remarks__icontains=f'SUPPLIER_BATCH={supplier_batch_code}'
+    )
+
+
+def get_supplier_delivery_group_code(delivery):
+    try:
+        expense = delivery.supplier_purchase.expense
+    except Expense.DoesNotExist:
+        expense = None
+    except AttributeError:
+        expense = None
+
+    return get_supplier_batch_code_from_expense(expense) or delivery.display_id
+
+
+def summarize_customer_delivery_items(deliveries):
+    item_labels = []
+
+    for item in deliveries:
+        if item.sale and item.sale.product:
+            item_labels.append(f"{item.sale.product.product_name} - {item.sale.quantity_sold}")
+
+    if not item_labels:
+        return 'N/A'
+
+    return ', '.join(item_labels)
+
+
+def summarize_supplier_delivery_items(deliveries):
+    item_labels = []
+
+    for item in deliveries:
+        purchase = item.supplier_purchase
+        supplier_product = purchase.supplier_product
+        product = supplier_product.product
+        product_name = product.product_name if product else str(supplier_product)
+        item_labels.append(f"{product_name} - {purchase.quantity}")
+
+    if not item_labels:
+        return 'N/A'
+
+    return ', '.join(item_labels)
+
+
+
+def summarize_invoice_items(invoices):
+    item_labels = []
+
+    for invoice in invoices:
+        sale = invoice.sale
+        if sale and sale.product:
+            item_labels.append(f"{sale.product.product_name} - {sale.quantity_sold}")
+
+    if not item_labels:
+        return 'N/A'
+
+    return ', '.join(item_labels)
+
+
+def summarize_expense_items(expenses):
+    item_labels = []
+
+    for expense in expenses:
+        product = expense.display_product
+        product_name = product.product_name if product else 'N/A'
+        item_labels.append(f"{product_name} - {expense.quantity}")
+
+    if not item_labels:
+        return 'N/A'
+
+    return ', '.join(item_labels)
+
+
+def summarize_statuses(records):
+    statuses = []
+
+    for record in records:
+        status = getattr(record, 'status', None)
+        if status and status not in statuses:
+            statuses.append(status)
+
+    if not statuses:
+        return 'N/A'
+
+    if len(statuses) == 1:
+        return statuses[0]
+
+    return 'Mixed'
+
+
+def get_delivery_group_for_sale_map(sale_ids):
+    delivery_group_map = {}
+
+    if not sale_ids:
+        return delivery_group_map
+
+    delivery_rows = Delivery.objects.filter(
+        sale_id__in=sale_ids
+    ).values('sale_id', 'delivery_group', 'delivery_code', 'id')
+
+    for delivery in delivery_rows:
+        group_code = delivery['delivery_group'] or delivery['delivery_code']
+        delivery_group_map[delivery['sale_id']] = group_code
+
+    return delivery_group_map
+
+
+def get_delivery_display_for_sale_map(sale_ids):
+    delivery_display_map = {}
+
+    if not sale_ids:
+        return delivery_display_map
+
+    delivery_rows = Delivery.objects.filter(
+        sale_id__in=sale_ids
+    ).values('sale_id', 'delivery_group', 'delivery_code', 'id')
+
+    group_display_cache = {}
+
+    for delivery in delivery_rows:
+        group_code = delivery['delivery_group'] or delivery['delivery_code']
+
+        if group_code not in group_display_cache:
+            if delivery['delivery_group']:
+                first_delivery = Delivery.objects.filter(
+                    delivery_group=delivery['delivery_group']
+                ).order_by('pk').first()
+
+                group_display_cache[group_code] = (
+                    first_delivery.display_id
+                    if first_delivery
+                    else delivery['delivery_code']
+                )
+            else:
+                group_display_cache[group_code] = delivery['delivery_code']
+
+        delivery_display_map[delivery['sale_id']] = group_display_cache[group_code]
+
+    return delivery_display_map
+
 def dashboard(request):
     current_user = get_current_admin(request)
 
@@ -731,6 +947,11 @@ def buy_supplier_products(request):
                 'Please add at least one supplier product before creating a supplier expense.'
             )
 
+        elif len(product_ids) != len(quantities):
+            add_supplier_purchase_error(
+                'The selected supplier products and quantities do not match.'
+            )
+
         else:
             has_error = False
             purchase_quantities = {}
@@ -752,6 +973,12 @@ def buy_supplier_products(request):
                 purchase_quantities[product_id] = (
                     purchase_quantities.get(product_id, 0) + quantity
                 )
+
+            if not purchase_quantities and not has_error:
+                add_supplier_purchase_error(
+                    'Please select a supplier product and enter a valid quantity.'
+                )
+                has_error = True
 
             supplier_product_map = SupplierProduct.objects.filter(
                 pk__in=purchase_quantities.keys()
@@ -796,6 +1023,8 @@ def buy_supplier_products(request):
                             break
 
                     if not has_error:
+                        supplier_batch_code = generate_supplier_batch_code()
+
                         for product_id, quantity in purchase_quantities.items():
                             supplier_product = locked_supplier_products[product_id]
 
@@ -803,7 +1032,7 @@ def buy_supplier_products(request):
                                 supplier_product=supplier_product,
                                 quantity=quantity,
                                 status='Sent',
-                                remarks='Auto-generated from Buy Supplier Products. Accept or convert this expense to create the supplier purchase and delivery.'
+                                remarks=f'SUPPLIER_BATCH={supplier_batch_code} Auto-generated from Buy Supplier Products. Accept or convert this expense to create the supplier purchase and delivery.'
                             )
 
                 if not has_error:
@@ -1004,7 +1233,7 @@ def delivery_list(request):
         return redirect('login')
 
     delivery_sort_map = {
-        'delivery_id': 'delivery_code',
+        'delivery_id': 'delivery_group',
         'customer': 'customer_name',
         'contact': 'contact_number',
         'address': 'delivery_address',
@@ -1018,7 +1247,31 @@ def delivery_list(request):
         ['-created_at']
     )
 
-    deliveries = Delivery.objects.select_related('sale', 'sale__product').order_by(*delivery_ordering)
+    delivery_queryset = Delivery.objects.select_related(
+        'sale',
+        'sale__product'
+    ).order_by(*delivery_ordering)
+
+    grouped_delivery_map = {}
+
+    for delivery in delivery_queryset:
+        group_key = delivery.delivery_group or f'pk-{delivery.pk}'
+
+        if group_key not in grouped_delivery_map:
+            delivery.group_items = []
+            grouped_delivery_map[group_key] = delivery
+
+        grouped_delivery_map[group_key].group_items.append(delivery)
+
+    deliveries = list(grouped_delivery_map.values())
+
+    for delivery in deliveries:
+        group_items = getattr(delivery, 'group_items', [delivery])
+        delivery.group_display_id = delivery.display_id
+        delivery.group_product_summary = summarize_customer_delivery_items(group_items)
+        delivery.group_total_quantity = sum(
+            item.sale.quantity_sold for item in group_items if item.sale
+        )
 
     return render(
         request,
@@ -1031,7 +1284,6 @@ def delivery_list(request):
         }
     )
     
-
 def delivery_detail(request, pk):
     current_user = get_current_admin(request)
 
@@ -1112,6 +1364,8 @@ def create_delivery(request):
         if not customer_name:
             custom_errors.append('Customer name is required.')
 
+        selected_quantities = {}
+
         for product_id, quantity in zip(product_ids, quantities):
             try:
                 product_id = int(product_id)
@@ -1124,7 +1378,11 @@ def create_delivery(request):
                 custom_errors.append('Quantity must be greater than zero.')
                 continue
 
-            selected_items.append((product_id, quantity))
+            selected_quantities[product_id] = (
+                selected_quantities.get(product_id, 0) + quantity
+            )
+
+        selected_items = list(selected_quantities.items())
 
         if product_ids and not selected_items and not custom_errors:
             custom_errors.append('Please select a product and enter a valid quantity.')
@@ -1133,7 +1391,7 @@ def create_delivery(request):
             delivery_form.add_error(None, error)
 
         if delivery_is_valid and not delivery_form.errors and selected_items:
-            delivery_group = uuid.uuid4().hex
+            delivery_group = generate_delivery_group_code()
 
             with transaction.atomic():
                 locked_products = {
@@ -1158,27 +1416,35 @@ def create_delivery(request):
                 if delivery_form.errors:
                     transaction.set_rollback(True)
                 else:
-                    for product_id, quantity in selected_items:
-                        product = locked_products[product_id]
+                    delivery_data = delivery_form.cleaned_data
 
-                        sale = Sale.objects.create(
-                            product=product,
-                            customer_name=customer_name,
-                            quantity_sold=quantity
-                        )
+                    try:
+                        for product_id, quantity in selected_items:
+                            product = locked_products[product_id]
 
-                        delivery = delivery_form.save(commit=False)
-                        delivery.pk = None
-                        delivery.delivery_code = None
-                        delivery.sale = sale
-                        delivery.customer_name = customer_name
-                        delivery.delivery_group = delivery_group
-                        delivery.save()
+                            sale = Sale.objects.create(
+                                product=product,
+                                customer_name=customer_name,
+                                quantity_sold=quantity
+                            )
 
-                        Invoice.objects.get_or_create(
-                            sale=sale,
-                            defaults={'status': 'Paid'}
-                        )
+                            Delivery.objects.create(
+                                sale=sale,
+                                customer_name=customer_name,
+                                contact_number=delivery_data.get('contact_number'),
+                                delivery_address=delivery_data.get('delivery_address'),
+                                expected_delivery_date=delivery_data.get('expected_delivery_date'),
+                                status=delivery_data.get('status') or 'Pending',
+                                delivery_group=delivery_group
+                            )
+
+                            Invoice.objects.get_or_create(
+                                sale=sale,
+                                defaults={'status': 'Paid'}
+                            )
+                    except ValueError as error:
+                        delivery_form.add_error(None, str(error))
+                        transaction.set_rollback(True)
 
             if not delivery_form.errors:
                 return redirect('delivery_list')
@@ -1217,15 +1483,30 @@ def edit_delivery(request, pk):
             with transaction.atomic():
                 edited_delivery = form.save(commit=False)
 
-                if delivery.sale:
-                    sale = Sale.objects.select_for_update().get(
-                        pk=delivery.sale.pk
-                    )
-                    sale.customer_name = request.POST.get('customer_name', edited_delivery.customer_name)
-                    sale.save(update_fields=['customer_name'])
+                delivery_items = Delivery.objects.select_for_update().filter(
+                    delivery_group=delivery.delivery_group
+                ) if delivery.delivery_group else Delivery.objects.select_for_update().filter(pk=delivery.pk)
 
-                edited_delivery.customer_name = request.POST.get('customer_name', edited_delivery.customer_name)
-                edited_delivery.save()
+                customer_name = request.POST.get('customer_name', edited_delivery.customer_name)
+
+                for item in delivery_items:
+                    if item.sale:
+                        item.sale.customer_name = customer_name
+                        item.sale.save(update_fields=['customer_name'])
+
+                    item.customer_name = customer_name
+                    item.contact_number = edited_delivery.contact_number
+                    item.delivery_address = edited_delivery.delivery_address
+                    item.expected_delivery_date = edited_delivery.expected_delivery_date
+                    item.status = edited_delivery.status
+                    item.save(update_fields=[
+                        'customer_name',
+                        'contact_number',
+                        'delivery_address',
+                        'expected_delivery_date',
+                        'status',
+                        'updated_at'
+                    ])
 
     return redirect('delivery_list')
 
@@ -1244,21 +1525,26 @@ def delete_delivery(request, pk):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                sale = delivery.sale
+                delivery_items = Delivery.objects.select_for_update().filter(
+                    delivery_group=delivery.delivery_group
+                ) if delivery.delivery_group else Delivery.objects.select_for_update().filter(pk=delivery.pk)
 
-                if sale:
-                    product = Product.objects.select_for_update().get(
-                        pk=sale.product.pk
-                    )
+                for item in delivery_items:
+                    sale = item.sale
 
-                    product.stock_quantity += sale.quantity_sold
-                    product.save(update_fields=['stock_quantity'])
+                    if sale:
+                        product = Product.objects.select_for_update().get(
+                            pk=sale.product.pk
+                        )
 
-                    Invoice.objects.filter(sale=sale).delete()
-                    delivery.delete()
-                    sale.delete()
-                else:
-                    delivery.delete()
+                        product.stock_quantity += sale.quantity_sold
+                        product.save(update_fields=['stock_quantity'])
+
+                        Invoice.objects.filter(sale=sale).delete()
+                        item.delete()
+                        sale.delete()
+                    else:
+                        item.delete()
 
         except ProtectedError:
             return HttpResponseForbidden(
@@ -1273,7 +1559,33 @@ def supplier_delivery_list(request):
     if not current_user:
         return redirect('login')
 
-    deliveries = SupplierDelivery.objects.all().order_by('-created_at')
+    supplier_delivery_queryset = SupplierDelivery.objects.select_related(
+        'supplier_purchase',
+        'supplier_purchase__supplier_product',
+        'supplier_purchase__supplier_product__supplier',
+        'supplier_purchase__supplier_product__product'
+    ).order_by('-created_at')
+
+    grouped_supplier_delivery_map = {}
+
+    for delivery in supplier_delivery_queryset:
+        group_key = get_supplier_delivery_group_code(delivery)
+
+        if group_key not in grouped_supplier_delivery_map:
+            delivery.group_items = []
+            delivery.group_display_id = group_key
+            grouped_supplier_delivery_map[group_key] = delivery
+
+        grouped_supplier_delivery_map[group_key].group_items.append(delivery)
+
+    deliveries = list(grouped_supplier_delivery_map.values())
+
+    for delivery in deliveries:
+        group_items = getattr(delivery, 'group_items', [delivery])
+        delivery.group_purchase_summary = summarize_supplier_delivery_items(group_items)
+        delivery.group_total_quantity = sum(
+            item.supplier_purchase.quantity for item in group_items
+        )
 
     return render(
         request,
@@ -1281,6 +1593,63 @@ def supplier_delivery_list(request):
         {
             'current_user': current_user,
             'deliveries': deliveries
+        }
+
+    )
+
+
+def supplier_delivery_details(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    delivery = get_object_or_404(
+        SupplierDelivery.objects.select_related(
+            'supplier_purchase',
+            'supplier_purchase__supplier_product',
+            'supplier_purchase__supplier_product__supplier',
+            'supplier_purchase__supplier_product__product'
+        ),
+        pk=pk
+    )
+
+    group_code = get_supplier_delivery_group_code(delivery)
+    delivery_items = []
+
+    for item in SupplierDelivery.objects.select_related(
+        'supplier_purchase',
+        'supplier_purchase__supplier_product',
+        'supplier_purchase__supplier_product__supplier',
+        'supplier_purchase__supplier_product__product'
+    ).order_by('pk'):
+        if get_supplier_delivery_group_code(item) == group_code:
+            delivery_items.append(item)
+
+    if not delivery_items:
+        delivery_items = [delivery]
+
+    total_quantity = sum(
+        item.supplier_purchase.quantity for item in delivery_items
+        if item.supplier_purchase
+    )
+    total_amount = sum(
+        item.supplier_purchase.total_price or 0 for item in delivery_items
+        if item.supplier_purchase
+    )
+    statuses = summarize_statuses(delivery_items)
+
+    return render(
+        request,
+        'main/supplier_delivery_details.html',
+        {
+            'current_user': current_user,
+            'delivery': delivery,
+            'delivery_items': delivery_items,
+            'group_display_id': group_code,
+            'total_quantity': total_quantity,
+            'total_amount': total_amount,
+            'group_status': statuses,
         }
     )
     
@@ -1327,7 +1696,20 @@ def edit_supplier_delivery(request, pk):
         form = SupplierDeliveryForm(request.POST, instance=delivery)
 
         if form.is_valid():
-            form.save()
+            edited_delivery = form.save(commit=False)
+            group_code = get_supplier_delivery_group_code(delivery)
+
+            related_deliveries = []
+            for item in SupplierDelivery.objects.select_related('supplier_purchase').all():
+                if get_supplier_delivery_group_code(item) == group_code:
+                    related_deliveries.append(item.pk)
+
+            SupplierDelivery.objects.filter(pk__in=related_deliveries or [delivery.pk]).update(
+                delivery_address=edited_delivery.delivery_address,
+                expected_delivery_date=edited_delivery.expected_delivery_date,
+                status=edited_delivery.status,
+                updated_at=timezone.now()
+            )
 
     return redirect('supplier_delivery_list')
 
@@ -1343,7 +1725,14 @@ def delete_supplier_delivery(request, pk):
     delivery = get_object_or_404(SupplierDelivery, pk=pk)
 
     if request.method == 'POST':
-        delivery.delete()
+        group_code = get_supplier_delivery_group_code(delivery)
+        related_delivery_ids = []
+
+        for item in SupplierDelivery.objects.select_related('supplier_purchase').all():
+            if get_supplier_delivery_group_code(item) == group_code:
+                related_delivery_ids.append(item.pk)
+
+        SupplierDelivery.objects.filter(pk__in=related_delivery_ids or [delivery.pk]).delete()
 
     return redirect('supplier_delivery_list')
 
@@ -1357,7 +1746,7 @@ def expenses(request):
 
     period, start, end = get_period_bounds(request)
 
-    expense_list = Expense.objects.select_related(
+    expense_queryset = Expense.objects.select_related(
         'product',
         'sale',
         'supplier_product',
@@ -1370,10 +1759,38 @@ def expenses(request):
         Q(product__product_name__icontains=search) |
         Q(supplier_product__supplier__supplier_name__icontains=search) |
         Q(supplier_product__product__product_name__icontains=search) |
-        Q(status__icontains=search)
+        Q(status__icontains=search) |
+        Q(remarks__icontains=search)
     ).order_by('-expense_date', '-created_at')
 
-    expense_list = filter_queryset_by_date_period(expense_list, 'expense_date', start, end)
+    expense_queryset = filter_queryset_by_date_period(expense_queryset, 'expense_date', start, end)
+
+    grouped_expense_map = {}
+
+    for expense in expense_queryset:
+        supplier_batch_code = get_supplier_batch_code_from_expense(expense)
+        group_key = supplier_batch_code if supplier_batch_code else f'expense-{expense.pk}'
+
+        if group_key not in grouped_expense_map:
+            expense.group_items = []
+            expense.group_key = group_key
+            expense.group_display_id = supplier_batch_code or expense.display_id
+            expense.group_supplier_batch_code = supplier_batch_code
+            grouped_expense_map[group_key] = expense
+
+        grouped_expense_map[group_key].group_items.append(expense)
+
+    expense_list = list(grouped_expense_map.values())
+
+    for expense in expense_list:
+        group_items = getattr(expense, 'group_items', [expense])
+        expense.group_product_summary = summarize_expense_items(group_items)
+        expense.group_total_quantity = sum(item.quantity for item in group_items)
+        expense.group_total_price = sum(item.total_price or 0 for item in group_items)
+        expense.group_status = summarize_statuses(group_items)
+        expense.group_item_count = len(group_items)
+        expense.group_company_name = expense.company_name
+        expense.group_clean_remarks = strip_supplier_batch_marker(expense.remarks)
 
     return render(
         request,
@@ -1386,6 +1803,60 @@ def expenses(request):
             'start_date': start,
             'end_date': end,
             'expense_form': ExpenseForm()
+        }
+
+    )
+
+
+def expense_details(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    expense = get_object_or_404(
+        Expense.objects.select_related(
+            'product',
+            'sale',
+            'supplier_product',
+            'supplier_product__supplier',
+            'supplier_product__product',
+            'supplier_purchase'
+        ),
+        pk=pk
+    )
+
+    expense_items = list(
+        get_expense_group_queryset(expense).select_related(
+            'product',
+            'sale',
+            'supplier_product',
+            'supplier_product__supplier',
+            'supplier_product__product',
+            'supplier_purchase'
+        ).order_by('pk')
+    )
+
+    supplier_batch_code = get_supplier_batch_code_from_expense(expense)
+    group_display_id = supplier_batch_code or expense.display_id
+    total_quantity = sum(item.quantity for item in expense_items)
+    total_amount = sum(item.total_price or 0 for item in expense_items)
+    group_status = summarize_statuses(expense_items)
+    product_summary = summarize_expense_items(expense_items)
+
+    return render(
+        request,
+        'main/expense_details.html',
+        {
+            'current_user': current_user,
+            'expense': expense,
+            'expense_items': expense_items,
+            'group_display_id': group_display_id,
+            'total_quantity': total_quantity,
+            'total_amount': total_amount,
+            'group_status': group_status,
+            'product_summary': product_summary,
+            'clean_remarks': strip_supplier_batch_marker(expense.remarks),
         }
     )
     
@@ -1432,12 +1903,39 @@ def edit_expense(request, pk):
     expense = get_object_or_404(Expense, pk=pk)
 
     if request.method == 'POST':
-        form = ExpenseForm(request.POST, instance=expense)
+        group_expenses = get_expense_group_queryset(expense)
+        supplier_batch_code = get_supplier_batch_code_from_expense(expense)
 
-        if form.is_valid():
-            with transaction.atomic():
-                expense = form.save()
-                sync_expense_income(expense)
+        customer_name = request.POST.get('customer_name', '').strip()
+        expense_date = request.POST.get('expense_date') or None
+        valid_until = request.POST.get('valid_until') or None
+        status = request.POST.get('status', '').strip()
+        remarks = request.POST.get('remarks', '').strip()
+
+        if supplier_batch_code and f'SUPPLIER_BATCH={supplier_batch_code}' not in remarks:
+            remarks = f'{remarks} SUPPLIER_BATCH={supplier_batch_code}'.strip()
+
+        with transaction.atomic():
+            for item in group_expenses.select_for_update():
+                update_fields = [
+                    'expense_date',
+                    'valid_until',
+                    'status',
+                    'remarks',
+                    'updated_at'
+                ]
+
+                if not item.supplier_product_id:
+                    item.customer_name = customer_name
+                    update_fields.insert(0, 'customer_name')
+
+                item.expense_date = expense_date
+                item.valid_until = valid_until
+                item.status = status
+                item.remarks = remarks
+                item.save(update_fields=update_fields)
+
+                sync_expense_income(item)
 
     return redirect('expenses')
 
@@ -1474,7 +1972,7 @@ def invoices(request):
 
     period, start, end = get_period_bounds(request)
 
-    invoice_list = Invoice.objects.select_related(
+    invoice_queryset = Invoice.objects.select_related(
         'sale',
         'sale__product'
     ).filter(
@@ -1484,7 +1982,38 @@ def invoices(request):
         Q(status__icontains=search)
     ).order_by('-invoice_date', '-created_at')
 
-    invoice_list = filter_queryset_by_date_period(invoice_list, 'invoice_date', start, end)
+    invoice_queryset = filter_queryset_by_date_period(invoice_queryset, 'invoice_date', start, end)
+
+    invoice_rows = list(invoice_queryset)
+    sale_ids = [invoice.sale_id for invoice in invoice_rows if invoice.sale_id]
+    delivery_group_map = get_delivery_group_for_sale_map(sale_ids)
+    delivery_display_map = get_delivery_display_for_sale_map(sale_ids)
+
+    grouped_invoice_map = {}
+
+    for invoice in invoice_rows:
+        group_key = delivery_group_map.get(invoice.sale_id) or f'invoice-{invoice.pk}'
+
+        if group_key not in grouped_invoice_map:
+            invoice.group_items = []
+            invoice.group_key = group_key
+            invoice.group_delivery_code = delivery_display_map.get(invoice.sale_id, '')
+            invoice.group_display_id = delivery_display_map.get(invoice.sale_id) or invoice.display_id
+            grouped_invoice_map[group_key] = invoice
+
+        grouped_invoice_map[group_key].group_items.append(invoice)
+
+    invoice_list = list(grouped_invoice_map.values())
+
+    for invoice in invoice_list:
+        group_items = getattr(invoice, 'group_items', [invoice])
+        invoice.group_product_summary = summarize_invoice_items(group_items)
+        invoice.group_total_quantity = sum(item.sale.quantity_sold for item in group_items if item.sale)
+        invoice.group_total_amount = sum(item.amount or 0 for item in group_items)
+        invoice.group_status = summarize_statuses(group_items)
+        invoice.group_item_count = len(group_items)
+        invoice.group_sale_summary = ', '.join(f"#{item.sale.pk}" for item in group_items if item.sale) or 'N/A'
+        invoice.group_customer_name = invoice.sale.customer_name if invoice.sale else 'N/A'
 
     return render(
         request,
@@ -1497,6 +2026,49 @@ def invoices(request):
             'start_date': start,
             'end_date': end,
             'invoice_form': InvoiceForm()
+        }
+
+    )
+
+
+def invoice_details(request, pk):
+    current_user = get_current_admin(request)
+
+    if not current_user:
+        return redirect('login')
+
+    invoice = get_object_or_404(
+        Invoice.objects.select_related('sale', 'sale__product'),
+        pk=pk
+    )
+
+    invoice_items = list(
+        get_invoice_group_queryset(invoice).select_related(
+            'sale',
+            'sale__product'
+        ).order_by('pk')
+    )
+
+    sale_ids = [item.sale_id for item in invoice_items if item.sale_id]
+    delivery_display_map = get_delivery_display_for_sale_map(sale_ids)
+    group_display_id = delivery_display_map.get(invoice.sale_id) or invoice.display_id
+    total_quantity = sum(item.sale.quantity_sold for item in invoice_items if item.sale)
+    total_amount = sum(item.amount or 0 for item in invoice_items)
+    group_status = summarize_statuses(invoice_items)
+    product_summary = summarize_invoice_items(invoice_items)
+
+    return render(
+        request,
+        'main/invoice_details.html',
+        {
+            'current_user': current_user,
+            'invoice': invoice,
+            'invoice_items': invoice_items,
+            'group_display_id': group_display_id,
+            'total_quantity': total_quantity,
+            'total_amount': total_amount,
+            'group_status': group_status,
+            'product_summary': product_summary,
         }
     )
 
@@ -1542,10 +2114,20 @@ def edit_invoice(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
 
     if request.method == 'POST':
-        form = InvoiceForm(request.POST, instance=invoice)
+        group_invoices = get_invoice_group_queryset(invoice)
 
-        if form.is_valid():
-            form.save()
+        invoice_date = request.POST.get('invoice_date') or None
+        due_date = request.POST.get('due_date') or None
+        status = request.POST.get('status', '').strip()
+        notes = request.POST.get('notes', '').strip()
+
+        with transaction.atomic():
+            group_invoices.select_for_update().update(
+                invoice_date=invoice_date,
+                due_date=due_date,
+                status=status,
+                notes=notes
+            )
 
     return redirect('invoices')
 
