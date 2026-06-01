@@ -26,13 +26,13 @@ function openEditModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
         modal.classList.remove("hidden");
-        modal.classList.add("flex");
+        modal.classList.add("is-open");
     }
 }
 function closeEditModal(id) {
     const modal = document.getElementById(id);
     if (modal) {
         modal.classList.add("hidden");
-        modal.classList.remove("flex");
+        modal.classList.remove("is-open");
     }
 }

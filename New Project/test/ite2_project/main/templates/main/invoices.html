@@ -101,7 +101,7 @@
                                 View
                             </a>
 
-                            <button onclick="document.getElementById('editInvoice{{ invoice.pk }}').classList.remove('hidden'); document.getElementById('editInvoice{{ invoice.pk }}').classList.add('flex')" class="inline-flex min-w-[74px] items-center justify-center rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-orange-50 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
+                            <button onclick="openEditModal('editInvoice{{ invoice.pk }}')" class="inline-flex min-w-[74px] items-center justify-center rounded-xl border border-orange-200 bg-white px-3 py-2 text-sm font-bold text-slate-700 shadow-sm transition hover:bg-orange-50 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600">
                                 Edit
                             </button>
 
@@ -129,8 +129,8 @@
 
 {% if current_user.is_admin %}
     {% for invoice in invoices %}
-    <div id="editInvoice{{ invoice.pk }}" class="edit-modal-overlay fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="edit-modal-panel relative w-full overflow-y-auto rounded-3xl bg-white shadow-2xl dark:bg-slate-800">
+    <div id="editInvoice{{ invoice.pk }}" class="edit-modal-overlay hidden">
+        <div class="edit-modal-panel relative rounded-3xl bg-white shadow-2xl dark:bg-slate-800">
             <div class="edit-modal-header flex items-start justify-between gap-4">
                 <div>
                     <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">
@@ -141,7 +141,7 @@
                     </p>
                 </div>
 
-                <button type="button" onclick="document.getElementById('editInvoice{{ invoice.pk }}').classList.add('hidden'); document.getElementById('editInvoice{{ invoice.pk }}').classList.remove('flex')" class="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-red-500 dark:text-slate-300 dark:hover:bg-slate-700">
+                <button type="button" onclick="closeEditModal('editInvoice{{ invoice.pk }}')" class="flex h-9 w-9 items-center justify-center rounded-full text-slate-500 transition hover:bg-slate-100 hover:text-red-500 dark:text-slate-300 dark:hover:bg-slate-700">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
