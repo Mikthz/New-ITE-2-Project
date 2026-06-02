@@ -15,6 +15,9 @@ from django.utils.dateparse import parse_date
 from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
 from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm, ChangePINForm, ChangePasswordForm
 
+CREATE_EXPENSE_PAGE_DISABLED = True
+CREATE_INVOICE_PAGE_DISABLED = True
+
 def get_current_admin(request):
     admin_pk = request.session.get('admin_id')
 
@@ -349,8 +352,11 @@ def get_period_bounds(request):
         start = today.replace(month=1, day=1)
         end = today
     elif period == 'custom' and start_date and end_date:
-        start = start_date
-        end = end_date
+        start = parse_date(start_date)
+        end = parse_date(end_date)
+
+        if not start or not end:
+            start = end = None
     else:
         start = end = None
 
@@ -1901,7 +1907,7 @@ def create_expense(request):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    if request.method == 'POST':
+    if request.method == 'POST' and not CREATE_EXPENSE_PAGE_DISABLED:
         form = ExpenseForm(request.POST)
 
         if form.is_valid():
@@ -2155,7 +2161,7 @@ def create_invoice(request):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    if request.method == 'POST':
+    if request.method == 'POST' and not CREATE_INVOICE_PAGE_DISABLED:
         form = InvoiceForm(request.POST)
 
         if form.is_valid():

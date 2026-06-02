@@ -635,29 +635,11 @@ class InvoiceForm(forms.ModelForm):
 
 
 class AccountOverviewForm(forms.ModelForm):
-    current_password = forms.CharField(
-        required=False,
-        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'Current password'})
-    )
-    new_password = forms.CharField(
-        required=False,
-        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'New password'})
-    )
-    confirm_new_password = forms.CharField(
-        required=False,
-        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'Confirm new password'})
-    )
-    pin_code = forms.CharField(
-        required=False,
-        max_length=6,
-        widget=forms.PasswordInput(attrs={'class': 'input', 'placeholder': 'Optional 4-6 digit PIN', 'inputmode': 'numeric'})
-    )
-
     class Meta:
         model = Admin
         fields = [
             'username', 'first_name', 'last_name', 'email',
-            'contact_number', 'address', 'profile_picture', 'pin_code'
+            'contact_number', 'address', 'profile_picture'
         ]
         widgets = {
             'username': forms.TextInput(attrs={'class': 'input'}),
@@ -677,37 +659,6 @@ class AccountOverviewForm(forms.ModelForm):
         if qs.exists():
             raise ValidationError('Username already exists.')
         return username
-
-    def clean_pin_code(self):
-        pin = self.cleaned_data.get('pin_code')
-        if pin and (not pin.isdigit() or len(pin) < 4 or len(pin) > 6):
-            raise ValidationError('PIN must be 4 to 6 digits only.')
-        return pin
-
-    def clean(self):
-        cleaned_data = super().clean()
-        current_password = cleaned_data.get('current_password')
-        new_password = cleaned_data.get('new_password')
-        confirm_new_password = cleaned_data.get('confirm_new_password')
-
-        if new_password or confirm_new_password:
-            if current_password != self.instance.password:
-                self.add_error('current_password', 'Current password is incorrect.')
-            if new_password != confirm_new_password:
-                self.add_error('confirm_new_password', 'New passwords do not match.')
-            if new_password and len(new_password) < 8:
-                self.add_error('new_password', 'Password must be at least 8 characters.')
-
-        return cleaned_data
-
-    def save(self, commit=True):
-        admin = super().save(commit=False)
-        new_password = self.cleaned_data.get('new_password')
-        if new_password:
-            admin.password = new_password
-        if commit:
-            admin.save()
-        return admin
 
 
 class ContactSupportForm(forms.ModelForm):

@@ -53,11 +53,11 @@
         </form>
     </div>
 
-    <div class="overflow-x-auto">
-        <table class="sortable-table w-full min-w-[1200px] table-fixed text-sm" data-sort-table="true" data-sort-has-index="true">
+    <div class="product-list-table-scroll overflow-x-auto">
+        <table class="sortable-table product-list-table w-full min-w-[1200px] table-fixed text-sm" data-sort-table="true" data-sort-has-index="true">
             <colgroup>
                 <col class="w-[55px]">
-                <col class="w-[470px]">
+                <col class="w-[440px]">
                 <col class="w-[110px]">
                 <col class="w-[150px]">
                 <col class="w-[120px]">
@@ -65,7 +65,7 @@
                 <col class="w-[110px]">
                 <col class="w-[130px]">
                 {% if current_user.is_admin %}
-                <col class="w-[120px]">
+                <col class="w-[150px]">
                 {% endif %}
             </colgroup>
 
@@ -158,22 +158,22 @@
                         ₱{{ product.price }}
                     </td>
 
-                    <td class="p-4">
+                    <td class="product-list-status-cell p-4">
                         {% if product.stock_quantity <= 0 %}
 
-                        <span class="inline-flex min-w-[110px] items-center justify-center whitespace-nowrap rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600">
+                        <span class="product-list-status-pill inline-flex min-w-[110px] items-center justify-center whitespace-nowrap rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-600">
                             Out of Stock
                         </span>
 
                         {% elif product.stock_quantity <= product.low_stock_threshold %}
 
-                        <span class="inline-flex min-w-[110px] items-center justify-center whitespace-nowrap rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
+                        <span class="product-list-status-pill inline-flex min-w-[110px] items-center justify-center whitespace-nowrap rounded-full bg-orange-100 px-3 py-1 text-xs font-bold text-orange-600">
                             Low&nbsp;Stock
                         </span>
 
                         {% else %}
 
-                        <span class="inline-flex min-w-[110px] items-center justify-center whitespace-nowrap rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
+                        <span class="product-list-status-pill inline-flex min-w-[110px] items-center justify-center whitespace-nowrap rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-600">
                             Available
                         </span>
 
@@ -182,7 +182,7 @@
 
                     {% if current_user.is_admin %}
                     <td class="p-4">
-                        <div class="table-action-group">
+                        <div class="table-action-group product-list-action-group">
                             <a href="{% url 'product_detail' product.pk %}" class="table-action-button table-action-view">
                                 <i class="fa-solid fa-eye table-action-icon"></i>
                             </a>
