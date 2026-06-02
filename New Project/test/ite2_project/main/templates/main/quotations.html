@@ -1,4 +1,17 @@
-{% comment "" %}
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Quotations{% endblock %}
+
+{% block content %}
+
+<div class="card p-8 text-center">
+    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100">Quotations Temporarily Disabled</h1>
+    <p class="mt-3 text-sm text-slate-500 dark:text-slate-300">
+        The quotations page is currently disabled while the expenses and invoices workflow is being finalized.
+    </p>
+</div>
+
+{% comment "Temporarily disabled" %}
 {% extends "main/admin_panel.html" %}
 
 {% block title %}Quotations{% endblock %}
@@ -166,21 +179,6 @@
     </div>
     {% endfor %}
 {% endif %}
-
-{% endblock %}
 {% endcomment %}
-
-{% extends "main/admin_panel.html" %}
-
-{% block title %}Quotations{% endblock %}
-
-{% block content %}
-
-<div class="card p-8 text-center">
-    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100">Quotations Temporarily Disabled</h1>
-    <p class="mt-3 text-sm text-slate-500 dark:text-slate-300">
-        The quotations page is currently disabled while the expenses and invoices workflow is being finalized.
-    </p>
-</div>
 
 {% endblock %}
