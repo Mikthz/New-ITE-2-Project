@@ -749,6 +749,23 @@ class ChangePINForm(forms.Form):
         })
     )
 
+    def clean(self):
+        cleaned_data = super().clean()
+        pin_code = cleaned_data.get('pin_code')
+        confirm_pin_code = cleaned_data.get('confirm_pin_code')
+
+        for field_name, pin_value in (
+            ('pin_code', pin_code),
+            ('confirm_pin_code', confirm_pin_code),
+        ):
+            if pin_value and (not pin_value.isdigit() or len(pin_value) < 4 or len(pin_value) > 6):
+                self.add_error(field_name, 'PIN must be 4 to 6 digits only.')
+
+        if pin_code and confirm_pin_code and pin_code != confirm_pin_code:
+            self.add_error('confirm_pin_code', 'PIN codes do not match.')
+
+        return cleaned_data
+
 class ChangePasswordForm(forms.Form):
     current_password = forms.CharField(
         required=True,
@@ -773,3 +790,16 @@ class ChangePasswordForm(forms.Form):
             'placeholder': 'Confirm New Password'
         })
     )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
+
+        if new_password and len(new_password) < 8:
+            self.add_error('new_password', 'Password must be at least 8 characters.')
+
+        if new_password and confirm_password and new_password != confirm_password:
+            self.add_error('confirm_password', 'New passwords do not match.')
+
+        return cleaned_data

@@ -1600,10 +1600,24 @@ def supplier_delivery_list(request):
 
     for delivery in deliveries:
         group_items = getattr(delivery, 'group_items', [delivery])
+        first_purchase = delivery.supplier_purchase
+        first_supplier_product = first_purchase.supplier_product if first_purchase else None
+        first_supplier = first_supplier_product.supplier if first_supplier_product else None
+
         delivery.group_purchase_summary = summarize_supplier_delivery_items(group_items)
         delivery.group_total_quantity = sum(
             item.supplier_purchase.quantity for item in group_items
+            if item.supplier_purchase
         )
+        delivery.group_total_amount = sum(
+            item.supplier_purchase.total_price or 0 for item in group_items
+            if item.supplier_purchase
+        )
+        delivery.group_status = summarize_statuses(group_items)
+        delivery.group_item_count = len(group_items)
+        delivery.group_company_name = first_supplier.supplier_name if first_supplier else 'N/A'
+        delivery.group_address = first_supplier.address if first_supplier else 'N/A'
+        delivery.group_contact_number = first_supplier.contact_number if first_supplier else 'N/A'
 
     return render(
         request,
@@ -2211,7 +2225,10 @@ def delete_invoice(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk)
 
     if request.method == 'POST':
-        invoice.delete()
+        invoice_ids = list(
+            get_invoice_group_queryset(invoice).values_list('pk', flat=True)
+        )
+        Invoice.objects.filter(pk__in=invoice_ids or [invoice.pk]).delete()
 
     return redirect('invoices')
 
@@ -2747,6 +2764,7 @@ def edit_user(request, pk):
         return HttpResponseForbidden('Access Forbidden')
 
     user = get_object_or_404(Admin, pk=pk)
+    original_role = user.role
     clean_missing_profile_picture(user)
 
     if request.method == 'POST':
@@ -2760,7 +2778,7 @@ def edit_user(request, pk):
             edited_user = form.save(commit=False)
 
             if user.pk == current_user.pk:
-                edited_user.role = user.role
+                edited_user.role = original_role
 
             edited_user.save()
 
