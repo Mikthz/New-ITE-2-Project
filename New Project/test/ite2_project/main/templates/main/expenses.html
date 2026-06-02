@@ -172,38 +172,51 @@
 
                     <div class="edit-summary-items mt-6">
                         <div class="mb-3 flex items-center justify-between gap-4">
-                            <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Products</p>
+                            <div>
+                                <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Products</p>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">
+                                    {{ expense.group_item_count|default:1 }} item(s)
+                                </p>
+                            </div>
+
                             <p class="text-xs font-bold uppercase tracking-wide text-slate-400">Quantity</p>
                         </div>
 
-                        <div class="rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-600 dark:bg-slate-800/70">
-                            {% for item_name, item_qty in expense.group_item_pairs %}
-                            <div class="edit-summary-item-row flex items-start justify-between gap-4 border-b border-slate-200 py-3 first:pt-0 last:border-b-0 last:pb-0 dark:border-slate-600">
-                                <div>
-                                    <p class="font-bold leading-6 text-slate-900 dark:text-slate-100">{{ item_name }}</p>
+                        <div class="receipt-list rounded-2xl border border-slate-200 bg-white/70 p-4 dark:border-slate-600 dark:bg-slate-800/70">
+                            {% for item in expense.group_receipt_items %}
+                            <div class="receipt-list-row">
+                                <div class="receipt-list-main">
+                                    <p class="receipt-list-product">{{ item.name }}</p>
+                                    <p class="receipt-list-meta">
+                                        ₱{{ item.unit_price }} each
+                                    </p>
                                 </div>
-                                <p class="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-100">{{ item_qty }}</p>
+
+                                <div class="receipt-list-side">
+                                    <p class="receipt-list-qty">{{ item.quantity }}</p>
+                                    <p class="receipt-list-price">₱{{ item.line_total }}</p>
+                                </div>
                             </div>
                             {% empty %}
-                            <div class="edit-summary-item-row flex items-start justify-between gap-4">
-                                <div>
-                                    <p class="font-bold leading-6 text-slate-900 dark:text-slate-100">
+                            <div class="receipt-list-row">
+                                <div class="receipt-list-main">
+                                    <p class="receipt-list-product">
                                         {{ expense.group_product_summary|default:expense.display_product.product_name|default:"N/A" }}
                                     </p>
-                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-300">
-                                        {{ expense.group_item_count|default:1 }} item(s)
+                                    <p class="receipt-list-meta">
+                                        ₱{{ expense.unit_price }} each
                                     </p>
                                 </div>
-                                <p class="shrink-0 rounded-full bg-slate-100 px-3 py-1 text-sm font-bold text-slate-700 dark:bg-slate-700 dark:text-slate-100">
-                                    {{ expense.group_total_quantity|default:expense.quantity }}
-                                </p>
+
+                                <div class="receipt-list-side">
+                                    <p class="receipt-list-qty">
+                                        {{ expense.group_total_quantity|default:expense.quantity }}
+                                    </p>
+                                    <p class="receipt-list-price">₱{{ expense.group_total_price|default:expense.total_price }}</p>
+                                </div>
                             </div>
                             {% endfor %}
                         </div>
-
-                        <p class="mt-2 text-xs text-slate-500 dark:text-slate-300">
-                            {{ expense.group_item_count|default:1 }} item(s)
-                        </p>
                     </div>
 
                     <div class="mt-5 border-t border-slate-200 pt-4 dark:border-slate-600">

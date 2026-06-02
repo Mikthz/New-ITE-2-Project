@@ -184,6 +184,43 @@ def summarize_expense_items(expenses):
     return ', '.join(item_labels)
 
 
+
+def build_invoice_receipt_items(invoices):
+    receipt_items = []
+
+    for invoice in invoices:
+        sale = invoice.sale
+
+        if not sale or not sale.product:
+            continue
+
+        receipt_items.append({
+            'name': sale.product.product_name,
+            'quantity': sale.quantity_sold,
+            'unit_price': sale.product.price,
+            'line_total': invoice.amount or sale.total_price or 0,
+        })
+
+    return receipt_items
+
+
+def build_expense_receipt_items(expenses):
+    receipt_items = []
+
+    for expense in expenses:
+        product = expense.display_product
+        product_name = product.product_name if product else 'N/A'
+
+        receipt_items.append({
+            'name': product_name,
+            'quantity': expense.quantity,
+            'unit_price': expense.unit_price,
+            'line_total': expense.total_price or 0,
+        })
+
+    return receipt_items
+
+
 def summarize_statuses(records):
     statuses = []
 
@@ -1826,6 +1863,7 @@ def expenses(request):
     for expense in expense_list:
         group_items = getattr(expense, 'group_items', [expense])
         expense.group_product_summary = summarize_expense_items(group_items)
+        expense.group_receipt_items = build_expense_receipt_items(group_items)
         expense.group_total_quantity = sum(item.quantity for item in group_items)
         expense.group_total_price = sum(item.total_price or 0 for item in group_items)
         expense.group_status = summarize_statuses(group_items)
@@ -2090,6 +2128,7 @@ def invoices(request):
     for invoice in invoice_list:
         group_items = getattr(invoice, 'group_items', [invoice])
         invoice.group_product_summary = summarize_invoice_items(group_items)
+        invoice.group_receipt_items = build_invoice_receipt_items(group_items)
         invoice.group_total_quantity = sum(item.sale.quantity_sold for item in group_items if item.sale)
         invoice.group_total_amount = sum(item.amount or 0 for item in group_items)
         invoice.group_status = summarize_statuses(group_items)

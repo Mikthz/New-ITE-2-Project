@@ -1214,35 +1214,116 @@ body.theme-dark .edit-modal-header {
 }
 
 
-/* Invoice/expense edit summary list layout */
-.edit-summary-card .border-b:first-child {
-    padding-bottom: 0.85rem !important;
-    margin-bottom: 1.15rem !important;
+/* Receipt-style invoice/expense modal item list */
+.receipt-list {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
 }
 
-.edit-summary-field {
-    margin-top: 1.25rem !important;
+.receipt-list-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(7rem, auto);
+    gap: 1rem;
+    align-items: start;
+    padding: 0.9rem 0;
+    border-bottom: 1px dashed #cbd5e1;
 }
 
-.edit-summary-items {
-    margin-top: 1.5rem !important;
+.receipt-list-row:first-child {
+    padding-top: 0;
 }
 
-.edit-summary-item-row {
-    min-height: 3rem;
+.receipt-list-row:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
 }
 
-.edit-summary-item-row p {
+.receipt-list-main {
+    min-width: 0;
+}
+
+.receipt-list-product {
+    color: #0f172a !important;
+    font-weight: 800;
+    line-height: 1.45;
     word-break: break-word;
 }
 
+.receipt-list-meta {
+    margin-top: 0.25rem;
+    color: #64748b !important;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.receipt-list-side {
+    text-align: right;
+}
+
+.receipt-list-qty {
+    display: inline-flex;
+    min-width: 2.25rem;
+    justify-content: center;
+    border-radius: 9999px;
+    background: #e2e8f0 !important;
+    padding: 0.3rem 0.7rem;
+    color: #0f172a !important;
+    font-weight: 800;
+}
+
+.receipt-list-price {
+    margin-top: 0.45rem;
+    color: #ea580c !important;
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+html[data-theme="dark"] .receipt-list,
+body.theme-dark .receipt-list {
+    background: #1e293b !important;
+    border-color: #64748b !important;
+}
+
+html[data-theme="dark"] .receipt-list-row,
+body.theme-dark .receipt-list-row {
+    border-bottom-color: #64748b !important;
+}
+
+html[data-theme="dark"] .receipt-list-product,
+body.theme-dark .receipt-list-product {
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .receipt-list-meta,
+body.theme-dark .receipt-list-meta {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .receipt-list-qty,
+body.theme-dark .receipt-list-qty {
+    background: #334155 !important;
+    color: #e2e8f0 !important;
+    border: 1px solid #64748b !important;
+}
+
+html[data-theme="dark"] .receipt-list-price,
+body.theme-dark .receipt-list-price {
+    color: #67e8f9 !important;
+}
+
 @media (max-width: 640px) {
-    .edit-summary-item-row {
-        flex-direction: column;
-        gap: 0.75rem !important;
+    .receipt-list-row {
+        grid-template-columns: 1fr;
     }
 
-    .edit-summary-item-row > p {
-        align-self: flex-start;
+    .receipt-list-side {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        text-align: left;
+    }
+
+    .receipt-list-price {
+        margin-top: 0;
     }
 }
