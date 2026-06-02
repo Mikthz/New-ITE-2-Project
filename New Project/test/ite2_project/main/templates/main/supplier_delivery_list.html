@@ -10,13 +10,14 @@
         <h1 class="text-3xl font-bold text-slate-900">Supplier Deliveries</h1>
         <p class="mt-1 text-sm text-slate-500">Track incoming supplier deliveries</p>
     </div>
-
+    {% comment "IN DEV" %}
     {% if current_user.is_admin %}
     <a href="{% url 'create_supplier_delivery' %}" class="btn-primary">
         <i class="fa-solid fa-plus mr-2"></i>
         Create Supplier Delivery
     </a>
     {% endif %}
+    {% endcomment %}
 </div>
 
 <div class="card overflow-hidden">
@@ -40,18 +41,21 @@
             <tbody>
                 {% for delivery in deliveries %}
                 <tr class="table-row">
-                    <td class="p-4 font-bold">{{ delivery.display_id }}</td>
-                    <td class="p-4 font-bold">{{ delivery.supplier_purchase.supplier_product.supplier.supplier_name }}</td>
-                    <td class="p-4">{{ delivery.supplier_purchase.supplier_product.supplier.address }}</td>
-                    <td class="p-4">{{ delivery.supplier_purchase.supplier_product.supplier.contact_number }}</td>
-                    <td class="p-4">{{ delivery.supplier_purchase }}</td>
+                    <td class="p-4 font-bold">{{ delivery.group_display_id|default:delivery.display_id }}</td>
+                    <td class="p-4 font-bold">{{ delivery.group_company_name|default:delivery.supplier_purchase.supplier_product.supplier.supplier_name }}</td>
+                    <td class="p-4">{{ delivery.group_address|default:delivery.supplier_purchase.supplier_product.supplier.address|default:"N/A" }}</td>
+                    <td class="p-4">{{ delivery.group_contact_number|default:delivery.supplier_purchase.supplier_product.supplier.contact_number|default:"N/A" }}</td>
+                    <td class="p-4">
+                        <p class="font-semibold text-slate-900 dark:text-slate-100">{{ delivery.group_purchase_summary|default:delivery.supplier_purchase }}</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-300">{{ delivery.group_item_count|default:1 }} item(s)</p>
+                    </td>
                     <td class="p-4">{{ delivery.expected_delivery_date|default:"N/A" }}</td>
 
                     <td class="p-4">
-                        {% if delivery.status == "Delivered" %}
+                        {% if delivery.group_status == "Delivered" or delivery.status == "Delivered" %}
                         <span class="status-success">Delivered</span>
-                        {% elif delivery.status == "Approved" %}
-                        <span class="status-warning">Approved</span>
+                        {% elif delivery.group_status == "Approved" or delivery.status == "Approved" or delivery.group_status == "Mixed" %}
+                        <span class="status-warning">{{ delivery.group_status|default:"Approved" }}</span>
                         {% else %}
                         <span class="status-neutral">Pending</span>
                         {% endif %}
@@ -60,7 +64,11 @@
                     {% if current_user.is_admin %}
                     <td class="p-4">
                         <div class="table-action-group">
-                            <button onclick="toggleEditSupplierDelivery('{{ delivery.pk }}')" class="table-action-button table-action-edit">
+                            <a href="{% url 'supplier_delivery_details' delivery.pk %}" class="table-action-button table-action-view" aria-label="View supplier delivery">
+                                <i class="fa-solid fa-eye table-action-icon"></i>
+                            </a>
+
+                            <button onclick="toggleEditSupplierDelivery('{{ delivery.pk }}')" class="table-action-button table-action-edit" aria-label="Edit supplier delivery">
                                 <i class="fa-solid fa-pen table-action-icon"></i>
                             </button>
 
@@ -85,9 +93,9 @@
                             <input type="date" name="expected_delivery_date" value="{{ delivery.expected_delivery_date|date:'Y-m-d' }}" class="input">
 
                             <select name="status" class="input">
-                                <option value="Pending" {% if delivery.status == "Pending" %}selected{% endif %}>Pending</option>
-                                <option value="Approved" {% if delivery.status == "Approved" %}selected{% endif %}>Approved</option>
-                                <option value="Delivered" {% if delivery.status == "Delivered" %}selected{% endif %}>Delivered</option>
+                                <option value="Pending" {% if delivery.group_status == "Pending" or delivery.status == "Pending" %}selected{% endif %}>Pending</option>
+                                <option value="Approved" {% if delivery.group_status == "Approved" or delivery.status == "Approved" %}selected{% endif %}>Approved</option>
+                                <option value="Delivered" {% if delivery.group_status == "Delivered" or delivery.status == "Delivered" %}selected{% endif %}>Delivered</option>
                             </select>
 
                             <button class="btn-primary md:col-span-2">Save Changes</button>

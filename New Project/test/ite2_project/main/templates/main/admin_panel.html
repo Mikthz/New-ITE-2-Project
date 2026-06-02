@@ -195,16 +195,15 @@
                     <a href="{% url 'expenses' %}" class="sidebar-sublink font-bold">
                         All Expenses
                     </a>
-                {% comment %}
+                    {% comment "Temporarily disabled" %}
                     {% if current_user.is_admin %}
                     <a href="{% url 'create_expense' %}" class="sidebar-sublink font-bold hidden">
                         Create Expense
                     </a>
                     {% endif %}
-
+                    {% endcomment %}
                 </div>
             </div>
-            {% endcomment %}
             <!-- INDEV -->
             
             <div>
@@ -217,16 +216,15 @@
                     <a href="{% url 'invoices' %}" class="sidebar-sublink font-bold">
                         All Invoices
                     </a>
-                {% comment %}
+                    {% comment "Temporarily disabled" %}
                     {% if current_user.is_admin %}
                     <a href="{% url 'create_invoice' %}" class="sidebar-sublink font-bold hidden">
                         Create Invoice
                     </a>
                     {% endif %}
-                    
+                    {% endcomment %}
                 </div>
             </div>
-            {% endcomment %}
             <div>
                 <p class="mb-2 flex items-center gap-3 px-4 text-sm font-bold text-orange-700 ">
                     <i class="fa-solid fa-chart-line"></i>

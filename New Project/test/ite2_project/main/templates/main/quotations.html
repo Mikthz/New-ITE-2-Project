@@ -9,13 +9,14 @@
         <h1 class="text-3xl font-bold text-slate-900">Quotations</h1>
         <p class="mt-1 text-sm text-slate-500">Manage customer quotations for income and supplier quotations for purchases</p>
     </div>
-
+    {% comment "IN DEV" %}
     {% if current_user.is_admin %}
     <a href="{% url 'create_quotation' %}" class="btn-primary">
         <i class="fa-solid fa-plus mr-2"></i>
         Create Quotation
     </a>
     {% endif %}
+    {% endcomment %}
 </div>
 
 <div class="card overflow-hidden">
