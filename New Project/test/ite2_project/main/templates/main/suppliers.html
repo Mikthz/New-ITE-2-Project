@@ -53,15 +53,15 @@
                     <td class="p-4">{{ supplier.address|default:"N/A" }}</td>
                     {% if current_user.is_admin %}
                     <td class="p-4">
-                        <div class="flex justify-end gap-2">
-                            <button onclick="toggleEditSupplier('{{ supplier.pk }}')" class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500 text-white" type="button">
-                                <i class="fa-solid fa-pen text-xs"></i>
+                        <div class="table-action-group">
+                            <button onclick="toggleEditSupplier('{{ supplier.pk }}')" class="table-action-button table-action-edit" type="button">
+                                <i class="fa-solid fa-pen table-action-icon"></i>
                             </button>
 
-                            <form method="POST" action="{% url 'delete_supplier' supplier.pk %}" onsubmit="return confirm('Delete this supplier?');">
+                            <form method="POST" action="{% url 'delete_supplier' supplier.pk %}" onsubmit="return confirm('Delete this supplier?');" class="table-action-form">
                                 {% csrf_token %}
-                                <button class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500 text-white">
-                                    <i class="fa-solid fa-trash text-xs"></i>
+                                <button class="table-action-button table-action-delete">
+                                    <i class="fa-solid fa-trash table-action-icon"></i>
                                 </button>
                             </form>
                         </div>

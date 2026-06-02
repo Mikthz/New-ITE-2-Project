@@ -731,110 +731,93 @@ body.theme-dark .sortable-table-header.is-active .sortable-table-icon {
     color: #67e8f9;
 }
 
-
-.edit-modal-overlay {
-    position: fixed !important;
-    inset: 0 !important;
-    z-index: 9999 !important;
+/* Consistent icon-only table action buttons */
+.table-action-group {
     display: flex !important;
     align-items: center !important;
+    justify-content: flex-end !important;
+    gap: 0.5rem !important;
+    flex-wrap: nowrap !important;
+}
+
+.table-action-form {
+    display: inline-flex !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.table-action-button {
+    display: inline-flex !important;
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    min-width: 2.5rem !important;
+    min-height: 2.5rem !important;
+    align-items: center !important;
     justify-content: center !important;
-    padding: 1rem !important;
-    background: rgba(15, 23, 42, 0.48) !important;
-    backdrop-filter: blur(4px);
-    overflow-y: auto !important;
-    opacity: 1;
-    animation: edit-modal-tint-in 160ms ease-out both;
+    border-radius: 0.75rem !important;
+    padding: 0 !important;
+    border: 0 !important;
+    cursor: pointer !important;
+    line-height: 1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 5px 0 rgba(154, 52, 18, 0.75), 0 10px 16px rgba(154, 52, 18, 0.18) !important;
+    transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease, background-color 150ms ease !important;
 }
 
-.edit-modal-overlay.hidden {
-    display: none !important;
+.table-action-button:hover {
+    filter: brightness(1.05) !important;
 }
 
-.edit-modal-overlay.is-open {
-    display: flex !important;
+.table-action-button:active,
+.table-action-button.is-pressed {
+    transform: translateY(4px) !important;
+    box-shadow: 0 1px 0 rgba(154, 52, 18, 0.80), 0 4px 8px rgba(154, 52, 18, 0.16) !important;
 }
 
-.edit-modal-panel {
-    width: min(calc(100vw - 2rem), 780px) !important;
-    max-height: min(88vh, 760px) !important;
-    overflow-y: auto !important;
-    padding: 1.25rem !important;
-    border-radius: 1.5rem !important;
-    box-shadow: 0 28px 70px rgba(15, 23, 42, 0.28) !important;
-    animation: edit-modal-panel-in 180ms ease-out both;
+.table-action-button .table-action-icon,
+.table-action-button i {
+    margin: 0 !important;
+    font-size: 0.875rem !important;
+    line-height: 1 !important;
+    color: #ffffff !important;
 }
 
-.edit-modal-header {
-    margin-bottom: 1rem !important;
+.table-action-view {
+    background: #14b8a6 !important;
 }
 
-.edit-modal-footer {
-    position: sticky;
-    bottom: -1.5rem;
-    margin: 1rem -1.25rem -1.25rem;
-    padding: 1rem 1.25rem 1.25rem;
-    background: linear-gradient(to top, #ffffff 82%, rgba(255, 255, 255, 0.88));
-    border-top: 1px solid #e2e8f0;
-    border-bottom-left-radius: 1.5rem;
-    border-bottom-right-radius: 1.5rem;
+.table-action-edit {
+    background: #f97316 !important;
 }
 
-html[data-theme="dark"] .edit-modal-footer,
-body.theme-dark .edit-modal-footer {
-    background: linear-gradient(to top, #1e293b 82%, rgba(30, 41, 59, 0.88));
-    border-top-color: #475569;
+.table-action-delete {
+    background: #ef4444 !important;
 }
 
-tr[id^="edit-"] > td {
-    background: rgba(15, 23, 42, 0.10) !important;
-    backdrop-filter: blur(2px);
-    animation: edit-modal-tint-in 160ms ease-out both;
+html[data-theme="dark"] .table-action-button,
+body.theme-dark .table-action-button {
+    box-shadow: 0 5px 0 rgba(14, 116, 144, 0.75), 0 10px 16px rgba(8, 145, 178, 0.20) !important;
 }
 
-tr[id^="edit-"] > td > form {
-    max-width: 780px;
-    margin: 1rem auto;
-    border-radius: 1.5rem;
-    border: 1px solid #e2e8f0;
-    background: #ffffff;
-    padding: 1.25rem;
-    box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
-    animation: edit-modal-panel-in 180ms ease-out both;
+html[data-theme="dark"] .table-action-button:active,
+html[data-theme="dark"] .table-action-button.is-pressed,
+body.theme-dark .table-action-button:active,
+body.theme-dark .table-action-button.is-pressed {
+    box-shadow: 0 1px 0 rgba(14, 116, 144, 0.85), 0 4px 8px rgba(8, 145, 178, 0.16) !important;
 }
 
-html[data-theme="dark"] tr[id^="edit-"] > td,
-body.theme-dark tr[id^="edit-"] > td {
-    background: rgba(15, 23, 42, 0.45) !important;
+html[data-theme="dark"] .table-action-view,
+body.theme-dark .table-action-view {
+    background: #0891b2 !important;
 }
 
-html[data-theme="dark"] tr[id^="edit-"] > td > form,
-body.theme-dark tr[id^="edit-"] > td > form {
-    border-color: #475569;
-    background: #1e293b;
-    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.24);
+html[data-theme="dark"] .table-action-edit,
+body.theme-dark .table-action-edit {
+    background: #0284c7 !important;
 }
 
-@keyframes edit-modal-tint-in {
-    from {
-        opacity: 0;
-        backdrop-filter: blur(0);
-    }
-
-    to {
-        opacity: 1;
-        backdrop-filter: blur(4px);
-    }
+html[data-theme="dark"] .table-action-delete,
+body.theme-dark .table-action-delete {
+    background: #dc2626 !important;
 }
 
-@keyframes edit-modal-panel-in {
-    from {
-        opacity: 0;
-        transform: translateY(12px) scale(0.985);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
-}
