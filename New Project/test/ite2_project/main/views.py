@@ -11,6 +11,7 @@ import uuid
 
 from django.db.models import Sum, Avg
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
 from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm, ChangePINForm, ChangePasswordForm
 
@@ -1288,6 +1289,7 @@ def delivery_list(request):
         delivery.group_total_quantity = sum(
             item.sale.quantity_sold for item in group_items if item.sale
         )
+        delivery.group_status = summarize_statuses(group_items)
 
     return render(
         request,
@@ -1923,8 +1925,10 @@ def edit_expense(request, pk):
         supplier_batch_code = get_supplier_batch_code_from_expense(expense)
 
         company_name = request.POST.get('company_name', '').strip()
-        expense_date = request.POST.get('expense_date') or None
-        valid_until = request.POST.get('valid_until') or None
+        expense_date_value = request.POST.get('expense_date') or None
+        valid_until_value = request.POST.get('valid_until') or None
+        expense_date = parse_date(expense_date_value) if expense_date_value else None
+        valid_until = parse_date(valid_until_value) if valid_until_value else None
         status = request.POST.get('status', '').strip()
         remarks = request.POST.get('remarks', '').strip()
 
@@ -1935,7 +1939,9 @@ def edit_expense(request, pk):
             locked_expenses = list(
                 group_expenses.select_for_update().select_related(
                     'supplier_product',
-                    'supplier_product__supplier'
+                    'supplier_product__supplier',
+                    'supplier_purchase',
+                    'sale'
                 )
             )
 
@@ -1949,6 +1955,12 @@ def edit_expense(request, pk):
                 Supplier.objects.filter(pk__in=supplier_ids).update(supplier_name=company_name)
 
             for item in locked_expenses:
+                previous_income_status = item.status in ['Accepted', 'Converted']
+                new_income_status = status in ['Accepted', 'Converted']
+
+                if previous_income_status and not new_income_status:
+                    remove_expense_income(item)
+
                 update_fields = [
                     'expense_date',
                     'valid_until',
@@ -1961,13 +1973,14 @@ def edit_expense(request, pk):
                     item.customer_name = company_name
                     update_fields.insert(0, 'customer_name')
 
-                item.expense_date = expense_date
+                item.expense_date = expense_date or item.expense_date
                 item.valid_until = valid_until
                 item.status = status
                 item.remarks = remarks
                 item.save(update_fields=update_fields)
 
-                sync_expense_income(item)
+                if new_income_status:
+                    sync_expense_income(item)
 
     return redirect('expenses')
 
@@ -1986,8 +1999,22 @@ def delete_expense(request, pk):
     if request.method == 'POST':
         try:
             with transaction.atomic():
-                remove_expense_income(expense)
-                expense.delete()
+                grouped_expenses = list(
+                    get_expense_group_queryset(expense).select_for_update().select_related(
+                        'sale',
+                        'sale__product',
+                        'supplier_purchase',
+                        'supplier_purchase__supplier_product',
+                        'supplier_purchase__supplier_product__product'
+                    )
+                )
+
+                for item in grouped_expenses:
+                    remove_expense_income(item)
+
+                Expense.objects.filter(
+                    pk__in=[item.pk for item in grouped_expenses]
+                ).delete()
         except ValueError as error:
             return HttpResponseForbidden(str(error))
 
