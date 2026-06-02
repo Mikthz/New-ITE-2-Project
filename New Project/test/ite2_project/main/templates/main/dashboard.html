@@ -41,7 +41,7 @@
         <p class="dashboard-stat-text-out text-xs font-bold uppercase tracking-wide text-red-500">Out of Stock Items</p>
         <div class="mt-8 flex flex-wrap items-center gap-3">
             <span class="dashboard-stat-value-out text-3xl font-bold text-red-600">{{ out_of_stock_count }}</span>
-            <span class="dashboard-stat-pill-out rounded-full border border-red-300 px-3 py-1 text-xs font-bold text-red-600">Out of stock</span>
+            <span class="dashboard-stat-pill-out rounded-full border border-red-300 px-3 py-1 text-xs font-bold text-red-600">Empty asset</span>
         </div>
     </section>
 </div>
@@ -76,8 +76,19 @@
     <div class="divide-y divide-slate-300 dark:divide-slate-600">
         {% for sale in recent_sales %}
         <div class="p-5">
-            <p class="font-bold text-slate-900">{{ sale.product.product_name }}</p>
-            <p class="mt-1 text-xs text-slate-500">Sold {{ sale.quantity_sold }} item(s) to {{ sale.customer_name|default:"N/A" }}</p>
+            <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <p class="font-bold text-slate-900">{{ sale.product.product_name }}</p>
+                    <p class="mt-1 text-xs text-slate-500">
+                        Sold {{ sale.quantity_sold }} item(s) to {{ sale.customer_name|default:"N/A" }}
+                    </p>
+                </div>
+
+                <div class="inline-flex w-fit items-center gap-2 rounded-full border border-slate-300 px-3 py-1 text-xs font-bold text-slate-500 dark:border-slate-500 dark:text-slate-300">
+                    <i class="fa-regular fa-clock"></i>
+                    {{ sale.sale_date|date:"M d, Y • h:i A" }}
+                </div>
+            </div>
         </div>
         {% empty %}
         <div class="p-10 text-center text-slate-400">No recent activity yet.</div>

@@ -86,21 +86,30 @@ function removeSupplierItem(productId) {
 }
 
 function renderSelectedSupplierItems() {
-    const box = document.getElementById("selectedItemsBox");
     const list = document.getElementById("selectedItemsList");
     const hiddenInputs = document.getElementById("hiddenInputs");
-    if (!box || !list || !hiddenInputs) return;
+    if (!list || !hiddenInputs) return;
 
     list.innerHTML = "";
     hiddenInputs.innerHTML = "";
     const items = Object.values(selectedSupplierItems);
 
     if (items.length === 0) {
-        box.classList.add("hidden");
+        list.innerHTML = `
+            <div id="emptySelectedState" class="flex min-h-[110px] items-center rounded-2xl border border-dashed border-orange-300 bg-white/70 p-5">
+                <div class="flex items-center gap-5">
+                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-orange-100 text-orange-500">
+                        <i class="fa-solid fa-box-open text-2xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-base font-bold text-slate-700">No supplier products selected yet</p>
+                        <p class="mt-1 text-sm text-slate-400">Add supplier products to build the supplier expense.</p>
+                    </div>
+                </div>
+            </div>`;
         return;
     }
 
-    box.classList.remove("hidden");
     items.forEach(function (item) {
         list.innerHTML += `
             <div class="flex flex-col gap-4 rounded-2xl border border-orange-200 bg-white p-4 shadow-sm md:flex-row md:items-center md:justify-between">
