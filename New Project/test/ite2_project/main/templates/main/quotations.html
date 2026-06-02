@@ -1,3 +1,4 @@
+{% comment "" %}
 {% extends "main/admin_panel.html" %}
 
 {% block title %}Quotations{% endblock %}
@@ -9,14 +10,12 @@
         <h1 class="text-3xl font-bold text-slate-900">Quotations</h1>
         <p class="mt-1 text-sm text-slate-500">Manage customer quotations for income and supplier quotations for purchases</p>
     </div>
-    {% comment "IN DEV" %}
     {% if current_user.is_admin %}
     <a href="{% url 'create_quotation' %}" class="btn-primary">
         <i class="fa-solid fa-plus mr-2"></i>
         Create Quotation
     </a>
     {% endif %}
-    {% endcomment %}
 </div>
 
 <div class="card overflow-hidden">
@@ -167,5 +166,21 @@
     </div>
     {% endfor %}
 {% endif %}
+
+{% endblock %}
+{% endcomment %}
+
+{% extends "main/admin_panel.html" %}
+
+{% block title %}Quotations{% endblock %}
+
+{% block content %}
+
+<div class="card p-8 text-center">
+    <h1 class="text-3xl font-bold text-slate-900 dark:text-slate-100">Quotations Temporarily Disabled</h1>
+    <p class="mt-3 text-sm text-slate-500 dark:text-slate-300">
+        The quotations page is currently disabled while the expenses and invoices workflow is being finalized.
+    </p>
+</div>
 
 {% endblock %}
