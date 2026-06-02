@@ -1922,7 +1922,7 @@ def edit_expense(request, pk):
         group_expenses = get_expense_group_queryset(expense)
         supplier_batch_code = get_supplier_batch_code_from_expense(expense)
 
-        customer_name = request.POST.get('customer_name', '').strip()
+        company_name = request.POST.get('company_name', '').strip()
         expense_date = request.POST.get('expense_date') or None
         valid_until = request.POST.get('valid_until') or None
         status = request.POST.get('status', '').strip()
@@ -1932,7 +1932,23 @@ def edit_expense(request, pk):
             remarks = f'{remarks} SUPPLIER_BATCH={supplier_batch_code}'.strip()
 
         with transaction.atomic():
-            for item in group_expenses.select_for_update():
+            locked_expenses = list(
+                group_expenses.select_for_update().select_related(
+                    'supplier_product',
+                    'supplier_product__supplier'
+                )
+            )
+
+            supplier_ids = {
+                item.supplier_product.supplier_id
+                for item in locked_expenses
+                if item.supplier_product_id and item.supplier_product and item.supplier_product.supplier_id
+            }
+
+            if company_name and supplier_ids:
+                Supplier.objects.filter(pk__in=supplier_ids).update(supplier_name=company_name)
+
+            for item in locked_expenses:
                 update_fields = [
                     'expense_date',
                     'valid_until',
@@ -1942,7 +1958,7 @@ def edit_expense(request, pk):
                 ]
 
                 if not item.supplier_product_id:
-                    item.customer_name = customer_name
+                    item.customer_name = company_name
                     update_fields.insert(0, 'customer_name')
 
                 item.expense_date = expense_date
@@ -2132,13 +2148,21 @@ def edit_invoice(request, pk):
     if request.method == 'POST':
         group_invoices = get_invoice_group_queryset(invoice)
 
+        customer_name = request.POST.get('customer_name', '').strip()
         invoice_date = request.POST.get('invoice_date') or None
         due_date = request.POST.get('due_date') or None
         status = request.POST.get('status', '').strip()
         notes = request.POST.get('notes', '').strip()
 
         with transaction.atomic():
-            group_invoices.select_for_update().update(
+            locked_invoices = list(group_invoices.select_for_update().select_related('sale'))
+            sale_ids = [item.sale_id for item in locked_invoices if item.sale_id]
+
+            if customer_name and sale_ids:
+                Sale.objects.filter(pk__in=sale_ids).update(customer_name=customer_name)
+                Delivery.objects.filter(sale_id__in=sale_ids).update(customer_name=customer_name)
+
+            Invoice.objects.filter(pk__in=[item.pk for item in locked_invoices]).update(
                 invoice_date=invoice_date,
                 due_date=due_date,
                 status=status,

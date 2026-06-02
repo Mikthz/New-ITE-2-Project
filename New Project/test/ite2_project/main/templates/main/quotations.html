@@ -63,7 +63,7 @@
                     <td class="p-4">{{ quotation.status }}</td>
                     {% if current_user.is_admin %}
                     <td class="p-4 text-right">
-                        <button onclick="document.getElementById('editQuotation{{ quotation.pk }}').classList.remove('hidden')" class="btn-secondary mr-2">
+                        <button onclick="openEditModal('editQuotation{{ quotation.pk }}')" class="btn-secondary mr-2">
                             Edit
                         </button>
                         <form method="POST" action="{% url 'delete_quotation' quotation.pk %}" class="inline">
@@ -89,11 +89,11 @@
 
 {% if current_user.is_admin %}
     {% for quotation in quotations %}
-    <div id="editQuotation{{ quotation.pk }}" class="fixed inset-0 z-50 hidden bg-black/40 p-4">
-        <div class="mx-auto mt-10 max-w-3xl rounded-3xl bg-white p-8 shadow-2xl">
+    <div id="editQuotation{{ quotation.pk }}" class="edit-modal-overlay hidden">
+        <div class="edit-modal-panel rounded-3xl bg-white shadow-2xl dark:bg-slate-800">
             <div class="mb-6 flex items-center justify-between">
-                <h2 class="text-xl font-bold text-slate-900">Edit Quotation {{ quotation.display_id }}</h2>
-                <button type="button" onclick="document.getElementById('editQuotation{{ quotation.pk }}').classList.add('hidden')">
+                <h2 class="text-xl font-bold text-slate-900 dark:text-slate-100">Edit Quotation {{ quotation.display_id }}</h2>
+                <button type="button" onclick="closeEditModal('editQuotation{{ quotation.pk }}')">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
@@ -102,12 +102,12 @@
                 {% csrf_token %}
 
                 <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-semibold">Customer / Company Name</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Customer / Company Name</label>
                     <input type="text" name="customer_name" value="{{ quotation.customer_name }}" class="input">
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-semibold">Customer Product</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Customer Product</label>
                     <select name="product" class="search-select input">
                         <option value="">Select customer product</option>
                         {% for product in quotation_form.fields.product.queryset %}
@@ -117,7 +117,7 @@
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-semibold">Supplier Product</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Supplier Product</label>
                     <select name="supplier_product" class="search-select input">
                         <option value="">Select supplier product</option>
                         {% for supplier_product in quotation_form.fields.supplier_product.queryset %}
@@ -128,22 +128,22 @@
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-semibold">Quantity</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Quantity</label>
                     <input type="number" name="quantity" min="1" value="{{ quotation.quantity }}" class="input" required>
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-semibold">Quotation Date</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Quotation Date</label>
                     <input type="date" name="quotation_date" value="{{ quotation.quotation_date|date:'Y-m-d' }}" class="input" required>
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-semibold">Valid Until</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Valid Until</label>
                     <input type="date" name="valid_until" value="{{ quotation.valid_until|date:'Y-m-d' }}" class="input">
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-sm font-semibold">Status</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Status</label>
                     <select name="status" class="input">
                         <option value="Draft" {% if quotation.status == 'Draft' %}selected{% endif %}>Draft</option>
                         <option value="Sent" {% if quotation.status == 'Sent' %}selected{% endif %}>Sent</option>
@@ -154,7 +154,7 @@
                 </div>
 
                 <div class="md:col-span-2">
-                    <label class="mb-2 block text-sm font-semibold">Remarks</label>
+                    <label class="mb-2 block text-sm font-semibold text-slate-800 dark:text-slate-100">Remarks</label>
                     <textarea name="remarks" class="input" rows="4">{{ quotation.remarks }}</textarea>
                 </div>
 

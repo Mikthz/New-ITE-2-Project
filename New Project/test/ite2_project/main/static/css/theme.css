@@ -821,3 +821,65 @@ body.theme-dark .table-action-delete {
     background: #dc2626 !important;
 }
 
+.edit-modal-overlay {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+    background: rgba(15, 23, 42, 0.46) !important;
+    backdrop-filter: blur(4px);
+    overflow-y: auto !important;
+    animation: edit-modal-tint-in 180ms ease-out both;
+}
+
+.edit-modal-overlay.hidden {
+    display: none !important;
+}
+
+.edit-modal-panel {
+    width: min(100%, 820px) !important;
+    max-height: 88vh !important;
+    overflow-y: auto !important;
+    margin: auto !important;
+    padding: 1.5rem !important;
+    border: 1px solid rgba(226, 232, 240, 0.95);
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.30) !important;
+    animation: edit-modal-panel-in 190ms ease-out both;
+}
+
+html[data-theme="dark"] .edit-modal-panel,
+body.theme-dark .edit-modal-panel {
+    border-color: rgba(71, 85, 105, 0.9);
+    box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42) !important;
+}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+@keyframes edit-modal-tint-in {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0);
+    }
+
+    to {
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+}
+
+@keyframes edit-modal-panel-in {
+    from {
+        opacity: 0;
+        transform: translateY(12px) scale(0.985);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
