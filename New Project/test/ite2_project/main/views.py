@@ -336,6 +336,9 @@ def get_period_bounds(request):
     start_date = request.GET.get('start_date')
     end_date = request.GET.get('end_date')
 
+    if start_date and end_date:
+        period = 'custom'
+
     if period == 'daily':
         start = end = today
     elif period == 'monthly':

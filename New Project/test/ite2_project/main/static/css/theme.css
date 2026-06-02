@@ -1153,3 +1153,96 @@ body.theme-dark *::-webkit-scrollbar-thumb:hover {
     width: 8px;
     height: 8px;
 }
+
+
+/* Edit invoice/expense modal spacing refinements */
+.edit-modal-panel {
+    padding: 2.25rem 2rem 1.75rem !important;
+}
+
+.edit-modal-header {
+    margin-top: 0.75rem !important;
+    margin-bottom: 2rem !important;
+    padding-bottom: 1.35rem !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.65) !important;
+    gap: 1.5rem !important;
+}
+
+.edit-modal-header > div:first-child {
+    padding-right: 1.5rem !important;
+}
+
+.edit-modal-header h2 {
+    margin-top: 0.25rem !important;
+    line-height: 1.35 !important;
+}
+
+.edit-modal-header p {
+    margin-top: 0.75rem !important;
+    line-height: 1.65 !important;
+    max-width: 52rem !important;
+}
+
+.edit-modal-header button {
+    margin-top: 0.15rem !important;
+    flex-shrink: 0 !important;
+}
+
+.edit-modal-header + form {
+    margin-top: 0.5rem !important;
+}
+
+.edit-modal-header + form > .rounded-2xl:first-child {
+    margin-top: 0.25rem !important;
+}
+
+html[data-theme="dark"] .edit-modal-header,
+body.theme-dark .edit-modal-header {
+    border-bottom-color: rgba(100, 116, 139, 0.75) !important;
+}
+
+@media (max-width: 640px) {
+    .edit-modal-panel {
+        padding: 1.75rem 1.25rem 1.5rem !important;
+    }
+
+    .edit-modal-header {
+        margin-top: 0.5rem !important;
+        margin-bottom: 1.5rem !important;
+        padding-bottom: 1rem !important;
+    }
+}
+
+
+/* Invoice/expense edit summary list layout */
+.edit-summary-card .border-b:first-child {
+    padding-bottom: 0.85rem !important;
+    margin-bottom: 1.15rem !important;
+}
+
+.edit-summary-field {
+    margin-top: 1.25rem !important;
+}
+
+.edit-summary-items {
+    margin-top: 1.5rem !important;
+}
+
+.edit-summary-item-row {
+    min-height: 3rem;
+}
+
+.edit-summary-item-row p {
+    word-break: break-word;
+}
+
+@media (max-width: 640px) {
+    .edit-summary-item-row {
+        flex-direction: column;
+        gap: 0.75rem !important;
+    }
+
+    .edit-summary-item-row > p {
+        align-self: flex-start;
+    }
+}
