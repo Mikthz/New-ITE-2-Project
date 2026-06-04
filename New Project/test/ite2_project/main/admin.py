@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from .models import (
-    Admin,
+    User,
     Category,
     Supplier,
     Product,
@@ -14,8 +14,8 @@ from .models import (
     Delivery
 )
 
-@admin.register(Admin)
-class AdminAdmin(admin.ModelAdmin):
+@admin.register(User)
+class UserModelAdmin(admin.ModelAdmin):
 
     list_display = (
         'username',

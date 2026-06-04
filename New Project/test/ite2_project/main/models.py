@@ -67,7 +67,7 @@ class Supplier(models.Model):
         return self.supplier_name
 
 
-class Admin(models.Model):
+class User(models.Model):
     ROLE_CHOICES = [
         ('Admin', 'Admin'),
         ('Staff', 'Staff'),
@@ -144,6 +144,9 @@ class Admin(models.Model):
 
     def __str__(self):
         return self.username
+
+    class Meta:
+        db_table = 'main_admin'
 
 
 class Product(models.Model):
@@ -883,7 +886,7 @@ class ContactSupport(models.Model):
     ]
 
     admin = models.ForeignKey(
-        Admin,
+        User,
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -894,6 +897,7 @@ class ContactSupport(models.Model):
     email = models.EmailField(blank=True, null=True)
     subject = models.CharField(max_length=200)
     message = models.TextField()
+    admin_notes = models.TextField(blank=True, null=True)
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default='Normal')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
     created_at = models.DateTimeField(auto_now_add=True)

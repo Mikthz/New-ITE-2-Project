@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from .models import (
-    Admin,
+    User,
     Category,
     Supplier,
     Product,
@@ -284,7 +284,7 @@ class SaleForm(forms.ModelForm):
 
         return cleaned_data
 
-class AdminForm(forms.ModelForm):
+class UserForm(forms.ModelForm):
     confirm_password = forms.CharField(
         widget=forms.PasswordInput(attrs={
             'class': 'input',
@@ -301,7 +301,7 @@ class AdminForm(forms.ModelForm):
     
 
     class Meta:
-        model = Admin
+        model = User
         fields = [
             'username',
             'first_name',
@@ -365,7 +365,7 @@ class AdminForm(forms.ModelForm):
     def clean_username(self):
         username = self.cleaned_data.get('username')
 
-        qs = Admin.objects.filter(
+        qs = User.objects.filter(
             username=username
         )
 
@@ -420,9 +420,9 @@ class AdminForm(forms.ModelForm):
 
         return cleaned_data
 
-class AdminUpdateForm(forms.ModelForm):
+class UserUpdateForm(forms.ModelForm):
     class Meta:
-        model = Admin
+        model = User
         fields = [
             'username',
             'first_name',
@@ -471,7 +471,7 @@ class AdminUpdateForm(forms.ModelForm):
     def clean_username(self):
         username = self.cleaned_data.get('username')
 
-        qs = Admin.objects.filter(
+        qs = User.objects.filter(
             username=username
         )
 
@@ -636,7 +636,7 @@ class InvoiceForm(forms.ModelForm):
 
 class AccountOverviewForm(forms.ModelForm):
     class Meta:
-        model = Admin
+        model = User
         fields = [
             'username', 'first_name', 'last_name', 'email',
             'contact_number', 'address', 'profile_picture'
@@ -653,7 +653,7 @@ class AccountOverviewForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        qs = Admin.objects.filter(username=username)
+        qs = User.objects.filter(username=username)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():

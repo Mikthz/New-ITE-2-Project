@@ -1327,3 +1327,119 @@ body.theme-dark .receipt-list-price {
         margin-top: 0;
     }
 }
+
+
+/* Support ticket UI polish */
+.support-ticket-card,
+.support-ticket-detail-card {
+    border-color: #fed7aa !important;
+}
+
+.support-ticket-row {
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+.support-status-pill {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    border-radius: 9999px;
+    padding: 0.35rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+}
+
+.support-status-open {
+    background: #cffafe !important;
+    color: #0e7490 !important;
+}
+
+.support-status-in-progress {
+    background: #ffedd5 !important;
+    color: #c2410c !important;
+}
+
+.support-status-closed {
+    background: #dcfce7 !important;
+    color: #047857 !important;
+}
+
+html[data-theme="dark"] .support-ticket-card,
+html[data-theme="dark"] .support-ticket-detail-card,
+body.theme-dark .support-ticket-card,
+body.theme-dark .support-ticket-detail-card {
+    border-color: #475569 !important;
+    background: #334155 !important;
+}
+
+html[data-theme="dark"] .support-message-box,
+body.theme-dark .support-message-box {
+    border: 1px solid #475569 !important;
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .support-update-form,
+body.theme-dark .support-update-form {
+    border-color: #0891b2 !important;
+    background: rgba(15, 23, 42, 0.35) !important;
+}
+
+html[data-theme="dark"] .support-status-open,
+body.theme-dark .support-status-open {
+    background: rgba(8, 145, 178, 0.28) !important;
+    color: #67e8f9 !important;
+    border: 1px solid rgba(103, 232, 249, 0.35) !important;
+}
+
+html[data-theme="dark"] .support-status-in-progress,
+body.theme-dark .support-status-in-progress {
+    background: rgba(124, 45, 18, 0.48) !important;
+    color: #fdba74 !important;
+    border: 1px solid rgba(251, 146, 60, 0.35) !important;
+}
+
+html[data-theme="dark"] .support-status-closed,
+body.theme-dark .support-status-closed {
+    background: rgba(6, 78, 59, 0.45) !important;
+    color: #86efac !important;
+    border: 1px solid rgba(134, 239, 172, 0.35) !important;
+}
+
+/* User management dark-mode button/table polish */
+html[data-theme="dark"] .user-action-edit,
+body.theme-dark .user-action-edit {
+    background: #0891b2 !important;
+    color: #ffffff !important;
+    border-color: #0e7490 !important;
+}
+
+html[data-theme="dark"] .user-action-edit:hover,
+body.theme-dark .user-action-edit:hover {
+    background: #0284c7 !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="dark"] .user-action-delete,
+body.theme-dark .user-action-delete {
+    background: #dc2626 !important;
+    color: #ffffff !important;
+    border-color: #b91c1c !important;
+}
+
+html[data-theme="dark"] .user-action-delete:hover,
+body.theme-dark .user-action-delete:hover {
+    background: #ef4444 !important;
+    color: #ffffff !important;
+}
+
+.user-action-edit *,
+.user-action-delete *,
+html[data-theme="dark"] .user-action-edit *,
+html[data-theme="dark"] .user-action-delete *,
+body.theme-dark .user-action-edit *,
+body.theme-dark .user-action-delete * {
+    color: inherit !important;
+}

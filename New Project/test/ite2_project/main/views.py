@@ -12,8 +12,8 @@ import uuid
 from django.db.models import Sum, Avg
 from django.utils import timezone
 from django.utils.dateparse import parse_date
-from .models import Admin, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
-from .forms import AdminForm, AdminUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm, ChangePINForm, ChangePasswordForm
+from .models import User, Category, Product, Supplier, SupplierProduct, SupplierPurchase, SupplierDelivery, Delivery, Sale, Expense, Invoice, ContactSupport
+from .forms import UserForm, UserUpdateForm, AccountOverviewForm, ContactSupportForm, CategoryForm, ProductForm, SaleForm, SupplierForm, SupplierProductForm, SupplierPurchaseForm, SupplierDeliveryForm, DeliveryForm, ExpenseForm, InvoiceForm, ChangePINForm, ChangePasswordForm
 
 CREATE_EXPENSE_PAGE_DISABLED = True
 CREATE_INVOICE_PAGE_DISABLED = True
@@ -25,8 +25,8 @@ def get_current_admin(request):
         return None
 
     try:
-        return Admin.objects.get(pk=admin_pk)
-    except Admin.DoesNotExist:
+        return User.objects.get(pk=admin_pk)
+    except User.DoesNotExist:
         request.session.flush()
         return None
 
@@ -419,7 +419,7 @@ def login_view(request):
         password = request.POST.get('password')
 
         try:
-            admin_user = Admin.objects.get(
+            admin_user = User.objects.get(
                 username=username,
                 password=password
             )
@@ -440,7 +440,7 @@ def login_view(request):
 
             return redirect('product_list')
 
-        except Admin.DoesNotExist:
+        except User.DoesNotExist:
             return render(
                 request,
                 'main/login.html',
@@ -2718,6 +2718,22 @@ def support_ticket_detail(request, pk):
     else:
         ticket = get_object_or_404(ContactSupport, pk=pk, admin=current_user)
 
+    if request.method == 'POST':
+        if not current_user.is_admin:
+            return HttpResponseForbidden('Access Forbidden')
+
+        status = request.POST.get('status', ticket.status)
+        admin_notes = request.POST.get('admin_notes', '').strip()
+        valid_statuses = [choice[0] for choice in ContactSupport.STATUS_CHOICES]
+
+        if status in valid_statuses:
+            ticket.status = status
+
+        ticket.admin_notes = admin_notes
+        ticket.save(update_fields=['status', 'admin_notes', 'updated_at'])
+
+        return redirect('support_ticket_detail', pk=ticket.pk)
+
     return render(request, 'main/support_ticket_detail.html', {
         'current_user': current_user,
         'ticket': ticket
@@ -2733,7 +2749,7 @@ def account_creation(request):
 
     if request.method == 'POST':
 
-        form = AdminForm(
+        form = UserForm(
             request.POST,
             request.FILES
         )
@@ -2754,7 +2770,7 @@ def account_creation(request):
 
     else:
 
-        form = AdminForm()
+        form = UserForm()
 
     template_name = (
         'main/admin_account_creation.html'
@@ -2784,7 +2800,7 @@ def user_management(request):
 
     search = request.GET.get('search', '').strip()
 
-    users = Admin.objects.filter(
+    users = User.objects.filter(
         Q(username__icontains=search) |
         Q(first_name__icontains=search) |
         Q(last_name__icontains=search) |
@@ -2811,12 +2827,12 @@ def edit_user(request, pk):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    user = get_object_or_404(Admin, pk=pk)
+    user = get_object_or_404(User, pk=pk)
     original_role = user.role
     clean_missing_profile_picture(user)
 
     if request.method == 'POST':
-        form = AdminUpdateForm(
+        form = UserUpdateForm(
             request.POST,
             request.FILES or None,
             instance=user
@@ -2841,7 +2857,7 @@ def delete_user(request, pk):
     if not current_user.is_admin:
         return HttpResponseForbidden('Access Forbidden')
 
-    user = get_object_or_404(Admin, pk=pk)
+    user = get_object_or_404(User, pk=pk)
 
     if user.is_admin and user.pk != current_user.pk:
         return HttpResponseForbidden(
