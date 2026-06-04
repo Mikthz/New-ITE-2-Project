@@ -32,8 +32,8 @@
     </button>
 </form>
 
-<div class="overflow-x-auto rounded-3xl border border-orange-100 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-700/70">
-    <table class="w-full border-collapse text-left text-sm">
+<div class="mobile-card-table-wrap overflow-x-auto rounded-3xl border border-orange-100 bg-white shadow-sm dark:border-slate-600 dark:bg-slate-700/70">
+    <table class="mobile-card-table user-management-mobile-table w-full border-collapse text-left text-sm">
         <thead class="bg-orange-50 text-xs uppercase tracking-wide text-orange-700 dark:bg-slate-800 dark:text-cyan-200">
             <tr>
                 <th class="px-5 py-4">User</th>
@@ -46,7 +46,7 @@
         <tbody class="divide-y divide-orange-100 dark:divide-slate-600">
             {% for user in users %}
             <tr class="align-top hover:bg-orange-50/40 dark:hover:bg-slate-700/60">
-                <td class="px-5 py-4">
+                <td class="px-5 py-4" data-label="User">
                     <div class="flex items-center gap-3">
                         <img
                             src="{% if user.profile_picture %}{{ user.profile_picture.url }}{% else %}/media/profiles/default-avatar.jpg{% endif %}"
@@ -67,18 +67,19 @@
                     </div>
                 </td>
 
-                <td class="px-5 py-4 text-slate-600 dark:text-slate-300">
+                <td class="px-5 py-4 text-slate-600 dark:text-slate-300" data-label="Contact">
                     <p>{{ user.email|default:"N/A" }}</p>
                     <p class="text-xs">{{ user.contact_number|default:"N/A" }}</p>
                 </td>
 
-                <td class="px-5 py-4">
+                <td class="px-5 py-4" data-label="Role">
                     <span class="rounded-full px-3 py-1 text-xs font-bold {% if user.is_admin %}bg-red-100 text-red-700{% else %}bg-green-100 text-green-700{% endif %}">
                         {{ user.role }}
                     </span>
                 </td>
 
-                <td class="px-5 py-4 text-right">
+                <td class="px-5 py-4 text-right" data-label="Actions">
+                    <div class="user-mobile-actions">
                     <button
                         type="button"
                         onclick="openEditModal('editUser{{ user.pk }}')"
@@ -97,6 +98,7 @@
                     {% else %}
                     <span class="ml-2 text-xs text-slate-400">Protected admin</span>
                     {% endif %}
+                    </div>
                 </td>
             </tr>
             {% empty %}
